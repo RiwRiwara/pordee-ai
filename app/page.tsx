@@ -1,50 +1,76 @@
-import { Link } from "@heroui/link";
-import { Snippet } from "@heroui/snippet";
-import { Code } from "@heroui/code";
-import { button as buttonStyles } from "@heroui/theme";
+"use client";
 
-import { siteConfig } from "@/config/site";
-import { title, subtitle } from "@/components/primitives";
-import { GithubIcon } from "@/components/icons";
+import { Button } from "@heroui/button";
+import { useRouter } from "next/navigation";
+import { useGuest } from "@/context/GuestContext";
+import { useCustomToast } from '@/components/ui/ToastNotification';
 
 export default function Home() {
+  const router = useRouter();
+  const { enterGuestMode } = useGuest();
+  const { showNotification } = useCustomToast();
+
+
+
   return (
-    <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-      <div className="inline-block max-w-xl text-center justify-center">
-        <span className={title()}>Make&nbsp;</span>
-        <span className={title({ color: "violet" })}>beautiful&nbsp;</span>
-        <br />
-        <span className={title()}>
-          websites regardless of your design experience.
-        </span>
-        <div className={subtitle({ class: "mt-4" })}>
-          Beautiful, fast and modern React UI library.
+    <section className="flex min-h-[85vh] flex-col items-center justify-center gap-8 py-8 md:py-10">
+      <div className="flex flex-col items-center">
+        <h1 className="mb-4 text-4xl font-bold tracking-tight">PORDEE</h1>
+
+        <div className="mb-2 text-center text-xl">
+          <span className="text-blue-500">Balance</span>
+          <span className="mx-2">Your</span>
+          <span className="text-orange-500">Debt</span>
+        </div>
+
+        <div className="mb-8 text-center text-xl">
+          <span className="text-orange-500">Sustain</span>
+          <span className="mx-2">Your</span>
+          <span className="text-blue-500">Life</span>
+        </div>
+
+        <div className="mb-8 text-center text-gray-600">
+          <p>ให้เรา​ช่วยบริหาร</p>
+          <p>จัดการหนี้ของคุณนะ</p>
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Link
-          isExternal
-          className={buttonStyles({
-            color: "primary",
-            radius: "full",
-            variant: "shadow",
-          })}
-          href={siteConfig.links.docs}
+      <div className="flex w-full max-w-xs flex-col gap-4">
+        <Button
+          color="primary"
+          size="lg"
+          className="w-full"
+          onPress={() => {
+            enterGuestMode();
+            showNotification(
+              "เข้าสู่โหมดผู้เยี่ยมชม",
+              "คุณสามารถใช้งานแอปได้โดยไม่ต้องลงทะเบียน",
+              "solid",
+              "success"
+            );
+
+            router.push("/dashboard");
+          }}
         >
-          Documentation
-        </Link>
-        <Link
-          isExternal
-          className={buttonStyles({ variant: "bordered", radius: "full" })}
-          href={siteConfig.links.github}
+          เริ่มต้น!
+        </Button>
+
+        <div className="flex items-center justify-center gap-3">
+          <div className="h-px flex-1 bg-gray-300"></div>
+          <span className="text-sm text-gray-500">มีบัญชีอยู่แล้ว ?</span>
+          <div className="h-px flex-1 bg-gray-300"></div>
+        </div>
+
+        <Button
+          color="warning"
+          variant="flat"
+          size="lg"
+          className="w-full bg-[#FFBC34] text-white"
+          onPress={() => router.push("/auth/login")}
         >
-          <GithubIcon size={20} />
-          GitHub
-        </Link>
+          เข้าสู่ระบบ
+        </Button>
       </div>
-
-
     </section>
   );
 }
