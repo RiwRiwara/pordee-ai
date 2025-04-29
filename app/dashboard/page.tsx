@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { useAuth } from "@/context/AuthContext";
 import BackButton from "@/components/ui/BackButton";
@@ -12,6 +12,7 @@ import IncomeExpenseSection from "@/components/ui/IncomeExpenseSection";
 import AllDebtSection from "@/components/ui/AllDebtSection";
 import SummarySection from "@/components/ui/SummarySection";
 import PlanSection from "@/components/ui/PlanSection";
+import type { DebtContext } from "@/lib/aiService";
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -44,9 +45,9 @@ export default function Dashboard() {
     let totalMonthlyDebtPayment = 0;
 
     debts.forEach((debt) => {
-      if (debt.installmentAmount) {
+      if (debt.minimumPayment) {
         totalMonthlyDebtPayment += parseFloat(
-          debt.installmentAmount.replace(/,/g, ""),
+          debt.minimumPayment.toString().replace(/,/g, ""),
         );
       }
     });
@@ -84,6 +85,29 @@ export default function Dashboard() {
       default:
         return "installment"; // Fallback
     }
+  };
+
+  // Create a DebtContext object for the RiskMeter component
+  const createDebtContext = (): DebtContext => {
+    // Format debt items according to DebtContext interface
+    const debtItems = debts.map((debt) => ({
+      id: debt._id || String(debt.id) || "",
+      name: debt.name || "",
+      debtType: debt.debtType || "",
+      totalAmount: String(debt.remainingAmount || 0),
+      minimumPayment: String(debt.minimumPayment || 0),
+      interestRate: String(debt.interestRate || 0),
+      dueDate: debt.dueDate || "",
+      paymentStatus: debt.paymentStatus || "",
+    }));
+
+    // Create the debt context object
+    return {
+      debtItems,
+      income: monthlyIncome.replace(/,/g, ""),
+      expense: monthlyExpense.replace(/,/g, ""),
+      riskPercentage: debtRiskPercentage,
+    };
   };
 
   // Load data when component mounts or auth state changes
@@ -218,9 +242,8 @@ export default function Dashboard() {
       {/* Risk Meter */}
       <div className="mb-6 px-4">
         <RiskMeter
-          riskPercentage={debtRiskPercentage}
+          debtContext={createDebtContext()}
           onPlanClick={() => {
-            setIsIncomeExpenseDrawerOpen(true);
           }}
         />
       </div>
@@ -245,7 +268,7 @@ export default function Dashboard() {
 
                 if (!response.ok) {
                 }
-              } catch (error) {}
+              } catch (error) { }
             }
           }}
         />

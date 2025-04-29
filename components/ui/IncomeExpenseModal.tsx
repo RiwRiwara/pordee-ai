@@ -214,13 +214,13 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
         files.map((f) =>
           f.name === file.name
             ? {
-                ...f,
-                isProcessing: false,
-                isOcrProcessed: true,
-                ocrText,
-                ocrAmount: amount,
-                ocrCategory: category,
-              }
+              ...f,
+              isProcessing: false,
+              isOcrProcessed: true,
+              ocrText,
+              ocrAmount: amount,
+              ocrCategory: category,
+            }
             : f,
         );
 

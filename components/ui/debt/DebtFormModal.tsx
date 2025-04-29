@@ -382,7 +382,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         </ModalHeader>
         <ModalBody>
           <div className="px-6 py-4 border-b border-gray-200">
-            <p className="text-sm text-gray-500">กรอกข้อมูลหนี้ของคุณ</p>
+            <p className="text-sm text-gray-500 text-center">กรอกข้อมูลหนี้ของคุณ</p>
           </div>
 
           <div className="px-6 py-4 max-h-[60vh] md:max-h-[500px] overflow-y-auto">

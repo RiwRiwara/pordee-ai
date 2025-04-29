@@ -87,11 +87,11 @@ export default function AllDebtSection({
 
   return (
     <div className="flex flex-col gap-4">
+      <h2 className="mb-3 text-lg font-semibold">
+        หนี้หมุนเวียน (Revolving Debt)
+      </h2>
       <div className="">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">
-            หนี้หมุนเวียน (Revolving Debt)
-          </h2>
           {revolving.map((debt) => (
             <div
               key={debt._id}
@@ -131,11 +131,11 @@ export default function AllDebtSection({
       </div>
 
       {/* Installment Debt Section */}
+      <h2 className="mb-3 text-lg font-semibold">
+        หนี้ส่งผ่อน (Installment Debt)
+      </h2>
       <div className="">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">
-            หนี้ส่งผ่อน (Installment Debt)
-          </h2>
           {installment.map((debt) => (
             <div
               key={debt._id}
@@ -174,7 +174,7 @@ export default function AllDebtSection({
         </div>
         {/* Add Debt Button */}
         <Button
-          className="mt-1 w-full border border-dashed border-gray-300 py-6 text-gray-500"
+          className="mt-4 w-full border border-dashed border-gray-300 py-6 text-gray-500"
           variant="flat"
           onPress={onAddDebt}
         >
