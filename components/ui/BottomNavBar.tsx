@@ -20,20 +20,19 @@ const BottomNavBar = () => {
   return (
     <div className="fixed bottom-0 left-0 z-50 h-20 w-full border-t border-gray-200 bg-yellow-400 rounded-t-3xl">
       {/* Top border indicator - darker line */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-black rounded-full opacity-50"></div>
-      
-      <div className="mx-auto grid h-full max-w-lg grid-cols-3 pt-2">
+
+      <div className="mx-auto grid h-full max-w-lg grid-cols-3">
         {/* Dashboard / Wallet */}
         <Link
           href="/dashboard"
           className="group flex flex-col items-center justify-center"
         >
-          <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center ${isActive('/dashboard') ? 'border-2 border-black' : ''}`}>
-            <svg 
-              className={`w-7 h-7 ${isActive('/dashboard') ? 'text-black' : 'text-gray-700'}`} 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
+          <div className={`w-12 h-12 rounded-full  flex items-center justify-center ${isActive('/dashboard') ? 'border-2 border-black bg-white' : ''}`}>
+            <svg
+              className={`w-7 h-7 ${isActive('/dashboard') ? 'text-black' : 'text-gray-700'}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               strokeWidth="2"
             >
               <path d="M3 3h18v18H3z" />
@@ -48,12 +47,12 @@ const BottomNavBar = () => {
           href="/calendar"
           className="group flex flex-col items-center justify-center"
         >
-          <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center ${isActive('/calendar') ? 'border-2 border-black' : ''}`}>
-            <svg 
-              className={`w-7 h-7 ${isActive('/calendar') ? 'text-black' : 'text-gray-700'}`} 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isActive('/calendar') ? 'border-2 border-black bg-white' : ''}`}>
+            <svg
+              className={`w-7 h-7 ${isActive('/calendar') ? 'text-black' : 'text-gray-700'}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               strokeWidth="2"
             >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -87,12 +86,12 @@ const BottomNavBar = () => {
           }}
           className="group flex flex-col items-center justify-center cursor-pointer"
         >
-          <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center ${isActive('/profile') ? 'border-2 border-black' : ''}`}>
-            <svg 
-              className={`w-7 h-7 ${isActive('/profile') ? 'text-black' : 'text-gray-700'}`} 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isActive('/profile') ? 'border-2 border-black bg-white' : ''}`}>
+            <svg
+              className={`w-7 h-7 ${isActive('/profile') ? 'text-black' : 'text-gray-700'}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               strokeWidth="2"
             >
               <circle cx="12" cy="8" r="5" />

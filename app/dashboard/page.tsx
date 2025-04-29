@@ -11,6 +11,7 @@ import { useCustomToast } from '@/components/ui/ToastNotification';
 import IncomeExpenseSection from '@/components/ui/IncomeExpenseSection';
 import AllDebtSection from '@/components/ui/AllDebtSection';
 import SummarySection from '@/components/ui/SummarySection';
+import PlanSection from '@/components/ui/PlanSection';
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -96,6 +97,13 @@ export default function Dashboard() {
               'primary'
             );
           }}
+        />
+      </div>
+
+
+      {/* Plan selected section */}
+      <div className="mb-6 px-4">
+        <PlanSection
         />
       </div>
 
