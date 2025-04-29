@@ -34,27 +34,20 @@ const plans: Plan[] = [
 ];
 
 interface PlanSectionProps {
-    selectedPlan?: PlanType;
-    onPlanChange?: (plan: PlanType) => void;
+    selectedPlan: 'quick' | 'save' | 'balanced' | null;
+    onPlanChange: (plan: 'quick' | 'save' | 'balanced' | null) => void;
 }
 
-export default function PlanSection({
-    selectedPlan = null,
-    onPlanChange
-}: PlanSectionProps) {
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [localSelectedPlan, setLocalSelectedPlan] = useState<PlanType>(selectedPlan);
+export default function PlanSection({ selectedPlan, onPlanChange }: PlanSectionProps) {
+    const [isPlanDrawerOpen, setIsPlanDrawerOpen] = useState(false);
     const { showNotification } = useCustomToast();
 
-    const handlePlanChange = (planId: PlanType) => {
-        setLocalSelectedPlan(planId);
+    const handleSelectPlan = (plan: 'quick' | 'save' | 'balanced' | null) => {
+        onPlanChange(plan);
+        setIsPlanDrawerOpen(false);
     };
 
     const handleSave = () => {
-        if (onPlanChange) {
-            onPlanChange(localSelectedPlan);
-        }
-
         showNotification(
             'เลือกแผนสำเร็จ',
             'แผนการชำระหนี้ของคุณถูกบันทึกแล้ว',
@@ -62,18 +55,16 @@ export default function PlanSection({
             'success'
         );
 
-        setIsDrawerOpen(false);
+        setIsPlanDrawerOpen(false);
     };
 
     const handleCancel = () => {
-        // Reset to the previous selection
-        setLocalSelectedPlan(selectedPlan);
-        setIsDrawerOpen(false);
+        setIsPlanDrawerOpen(false);
     };
 
     const getSelectedPlanDetails = () => {
-        if (!localSelectedPlan) return null;
-        return plans.find(plan => plan.id === localSelectedPlan);
+        if (!selectedPlan) return null;
+        return plans.find(plan => plan.id === selectedPlan);
     };
 
     const selectedPlanDetails = getSelectedPlanDetails();
@@ -88,7 +79,7 @@ export default function PlanSection({
                         color="primary"
                         size="sm"
                         className="text-primary"
-                        onPress={() => setIsDrawerOpen(true)}
+                        onPress={() => setIsPlanDrawerOpen(true)}
                     >
                         เปลี่ยน
                     </Button>
@@ -110,6 +101,11 @@ export default function PlanSection({
                         <div>
                             <h3 className="font-medium">{selectedPlanDetails.title}</h3>
                             <p className="text-sm text-gray-500">{selectedPlanDetails.description}</p>
+                            {selectedPlan === 'balanced' && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                    สมดุลระหว่างจ่ายเร็วและประหยัดดอกเบี้ย
+                                </div>
+                            )}
                         </div>
                     </div>
                 ) : (
@@ -136,7 +132,7 @@ export default function PlanSection({
 
             {/* Plan Selection Drawer */}
             <Drawer
-                isOpen={isDrawerOpen}
+                isOpen={isPlanDrawerOpen}
                 onClose={handleCancel}
                 placement="bottom"
                 className="rounded-t-xl"
@@ -170,42 +166,46 @@ export default function PlanSection({
                         </div>
                     </DrawerHeader>
 
-                    <DrawerBody className="px-4 py-4">
+                    <div className="px-4 py-3">
                         <RadioGroup
-                            value={localSelectedPlan ? localSelectedPlan : ""}
-                            onValueChange={(value) => handlePlanChange(value as PlanType)}
+                            value={selectedPlan !== null ? selectedPlan : ''}
+                            onValueChange={(value) => {
+                                // Handle value as appropriate PlanType
+                                if (value === '') {
+                                    handleSelectPlan(null);
+                                } else {
+                                    handleSelectPlan(value as 'quick' | 'save' | 'balanced');
+                                }
+                            }}
+                            className="space-y-4"
                         >
                             {plans.map((plan) => (
                                 <Radio
                                     key={plan.id}
                                     value={plan.id}
-                                    className="mb-4 p-4 border rounded-xl"
+                                    className="p-4 border rounded-xl"
                                     description={plan.description}
                                 >
                                     {plan.title}
                                 </Radio>
                             ))}
                         </RadioGroup>
-                    </DrawerBody>
+                    </div>
 
-                    <DrawerFooter className="px-4 py-3 flex gap-2">
+                    <div className="mt-6 flex justify-end space-x-2">
                         <Button
-                            variant="flat"
                             color="default"
-                            className="w-full py-3"
                             onPress={handleCancel}
                         >
-                            ไม่ใช่
+                            ยกเลิก
                         </Button>
                         <Button
                             color="primary"
-                            className="w-full py-3"
                             onPress={handleSave}
-                            isDisabled={!localSelectedPlan}
                         >
-                            แนะนำ
+                            บันทึก
                         </Button>
-                    </DrawerFooter>
+                    </div>
                 </DrawerContent>
             </Drawer>
         </>

@@ -2,17 +2,17 @@ import React from 'react';
 import { Button } from '@heroui/button';
 
 interface SummarySectionProps {
-  totalDebts?: number;
-  totalAmount?: string;
-  monthlyPayment?: string;
-  interestRate?: string;
+  totalDebts: number;
+  totalAmount: string;
+  monthlyPayment: string;
+  interestRate: string;
 }
 
 export default function SummarySection({
-  totalDebts = 2,
-  totalAmount = '130,001.00',
-  monthlyPayment = '5,000.00',
-  interestRate = '8.5%'
+  totalDebts,
+  totalAmount,
+  monthlyPayment,
+  interestRate
 }: SummarySectionProps) {
   return (
     <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
@@ -31,26 +31,26 @@ export default function SummarySection({
       <div className="grid grid-cols-2 gap-4">
         {/* Number of Debts */}
         <div className="bg-gray-50 border border-gray-100 p-3 rounded-lg">
-          <p className="text-sm text-gray-500 mb-1">หนี้ทั้งหมด</p>
-          <p className="text-xl font-bold">{totalDebts} ก้อน</p>
+          <div className="text-sm text-gray-500">รายการทั้งหมด</div>
+          <div className="text-lg font-bold">{totalDebts} ก้อน</div>
         </div>
 
         {/* Total Debt Amount */}
         <div className="bg-gray-50 border border-gray-100 p-3 rounded-lg">
-          <p className="text-sm text-gray-500 mb-1">ยอดหนี้รวม</p>
-          <p className="text-xl font-bold">{totalAmount} บาท</p>
+          <div className="text-sm text-gray-500">ยอดรวม</div>
+          <div className="text-lg font-bold">{totalAmount} บาท</div>
         </div>
 
         {/* Monthly Payment */}
         <div className="bg-gray-50 border border-gray-100 p-3 rounded-lg">
-          <p className="text-sm text-gray-500 mb-1">ยอดชำระต่อเดือน</p>
-          <p className="text-xl font-bold text-yellow-500">{monthlyPayment} บาท</p>
+          <div className="text-sm text-gray-500">จ่ายต่อเดือน</div>
+          <div className="text-lg font-bold text-yellow-500">{monthlyPayment} บาท</div>
         </div>
 
         {/* Average Interest Rate */}
         <div className="bg-gray-50 border border-gray-100 p-3 rounded-lg">
-          <p className="text-sm text-gray-500 mb-1">อัตราดอกเบี้ยเฉลี่ย</p>
-          <p className="text-xl font-bold">{interestRate}</p>
+          <div className="text-sm text-gray-500">ดอกเบี้ยเฉลี่ย</div>
+          <div className="text-lg font-bold">{interestRate}</div>
         </div>
       </div>
     </div>

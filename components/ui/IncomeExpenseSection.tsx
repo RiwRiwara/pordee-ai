@@ -1,7 +1,5 @@
 import { Button } from '@heroui/button'
-import React, { useState } from 'react'
-import IncomeExpenseDrawer from './IncomeExpenseDrawer'
-import { useCustomToast } from './ToastNotification';
+import React from 'react'
 import { FaMoneyBill } from "react-icons/fa";
 import { LuWallet } from "react-icons/lu";
 
@@ -13,9 +11,9 @@ interface IncomeExpenseSectionProps {
 }
 
 export default function IncomeExpenseSection({ monthlyIncome, monthlyExpense, disposableIncome, setIsIncomeExpenseDrawerOpen }: IncomeExpenseSectionProps) {
-    const { showNotification } = useCustomToast();
     return (
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
+            
             <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-md  font-semibold">รายได้ / รายจ่าย</h2>
                 <Button

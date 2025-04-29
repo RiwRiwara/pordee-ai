@@ -11,6 +11,7 @@ export interface IUser extends Document {
   role: 'user' | 'admin';
   isActive: boolean;
   lastLogin?: Date;
+  context?: string; // AI context storage
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +37,10 @@ const UserSchema: Schema = new Schema(
     isActive: {
       type: Boolean,
       default: true
+    },
+    context: {
+      type: String,
+      default: ''
     },
     lastLogin: {
       type: Date

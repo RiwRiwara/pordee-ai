@@ -1,68 +1,88 @@
 import React from 'react'
 import { Button } from '@heroui/button';
 
-interface AllDebtSectionProps {
-  setIsDebtFormOpen: (open: boolean) => void;
+interface DebtItem {
+  _id: string;
+  name: string;
+  debtType: 'revolving' | 'installment';
+  totalAmount: number;
+  remainingAmount: number;
+  interestRate: number;
+  minimumPayment?: number;
+  paymentDueDay?: number;
+  startDate?: string;
+  estimatedPayoffDate?: string;
+  notes?: string;
+  attachments?: any[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export default function AllDebtSection({ setIsDebtFormOpen }: AllDebtSectionProps) {
+interface AllDebtSectionProps {
+  debts: DebtItem[];
+  onAddDebt: () => void;
+}
+
+export default function AllDebtSection({ debts = [], onAddDebt }: AllDebtSectionProps) {
+  // Format with commas for display
+  const formatNumber = (num: number) => {
+    return num.toLocaleString('th-TH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // Show loading state when no debts are available yet
+  if (debts.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">หนี้ทั้งหมด</h2>
+          <Button color="primary" size="sm" onPress={onAddDebt}>
+            <span className="mr-1">+</span>
+            เพิ่มหนี้
+          </Button>
+        </div>
+        <p className="text-gray-500 text-center py-6">ไม่พบรายการหนี้ กรุณาเพิ่มหนี้เพื่อวางแผน</p>
+      </div>
+    );
+  }
+
+  const revolving = debts.filter(debt => debt.debtType === 'revolving');
+  const installment = debts.filter(debt => debt.debtType === 'installment');
+
   return (
     <div>
       <div className="mb-4 px-4">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">หนี้หมุนเวียน (Revolving Debt)</h2>
-
-          {/* Credit Card 1 */}
-          <div className="mb-3 rounded-lg bg-white p-4 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-medium">บัตร KBANK</h3>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-500">วันที่ชำระ:</span>
-                  <span className="ml-1 text-sm font-medium">ทุกวันที่ 25</span>
+          {revolving.map(debt => (
+            <div key={debt._id} className="mb-3 rounded-lg bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-medium">{debt.name}</h3>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-500">วันที่ชำระ:</span>
+                    <span className="ml-1 text-sm font-medium">{debt.paymentDueDay} ทุกเดือน</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold">{formatNumber(debt.remainingAmount)} THB</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold">25,000 THB</p>
-              </div>
-            </div>
 
-            <div className="mt-2 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">ขั้นต่ำต่อเดือน:</p>
-                <p className="font-medium">2,500 THB</p>
-              </div>
-              <div className="flex h-8 items-center justify-center rounded-md bg-blue-500 px-3 text-white">
-                <p className="text-sm font-bold">16%</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Credit Card 2 */}
-          <div className="mb-3 rounded-lg bg-white p-4 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-medium">บัตร Speedy Cash</h3>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-500">วันที่ชำระ:</span>
-                  <span className="ml-1 text-sm font-medium">ทุกวันที่ 20</span>
+              <div className="mt-2 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">ขั้นต่ำต่อเดือน:</p>
+                  <p className="font-medium">{formatNumber(debt.minimumPayment || 0)} THB</p>
+                </div>
+                <div className="flex h-8 items-center justify-center rounded-md bg-blue-500 px-3 text-white">
+                  <p className="text-sm font-bold">{debt.interestRate}%</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold">18,000 THB</p>
-              </div>
             </div>
-
-            <div className="mt-2 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">ขั้นต่ำต่อเดือน:</p>
-                <p className="font-medium">1,500 THB</p>
-              </div>
-              <div className="flex h-8 items-center justify-center rounded-md bg-blue-600 px-3 text-white">
-                <p className="text-sm font-bold">20%</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -70,42 +90,38 @@ export default function AllDebtSection({ setIsDebtFormOpen }: AllDebtSectionProp
       <div className="mb-6 px-4">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">หนี้ส่งผ่อน (Installment Debt)</h2>
-
-          {/* Installment 1 */}
-          <div className="mb-3 rounded-lg bg-white p-4 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-medium">iPhone</h3>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-500">วันที่ชำระ:</span>
-                  <span className="ml-1 text-sm font-medium">ทุกวันที่ 15</span>
+          {installment.map(debt => (
+            <div key={debt._id} className="mb-3 rounded-lg bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-medium">{debt.name}</h3>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-500">วันที่ชำระ:</span>
+                    <span className="ml-1 text-sm font-medium">{debt.paymentDueDay} ทุกเดือน</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold">{formatNumber(debt.remainingAmount)} THB</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold">12,000 THB</p>
+
+              <div className="mt-2 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">ค่าผ่อนต่อเดือน:</p>
+                  <p className="font-medium">{formatNumber(debt.minimumPayment || 0)} THB</p>
+                </div>
+                <div className="flex h-8 items-center justify-center rounded-md bg-green-500 px-3 text-white">
+                  <p className="text-sm font-bold">{debt.interestRate}%</p>
+                </div>
               </div>
             </div>
-
-            <div className="mt-2 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">ค่าผ่อนต่อเดือน:</p>
-                <p className="font-medium">1,000 THB</p>
-              </div>
-              <div className="flex h-8 items-center justify-center rounded-md bg-green-500 px-3 text-white">
-                <p className="text-sm font-bold">0%</p>
-              </div>
-            </div>
-          </div>
-
-
-
-
+          ))}
         </div>
         {/* Add Debt Button */}
         <Button
           variant="flat"
           className="mt-2 w-full border border-dashed border-gray-300 py-3 text-gray-500"
-          onPress={() => setIsDebtFormOpen(true)}
+          onPress={onAddDebt}
         >
           + เพิ่มรายการหนี้
         </Button>

@@ -20,6 +20,7 @@ export interface LocalDebtItem {
   }>;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
 const LOCAL_STORAGE_DEBTS_KEY = 'pordee-guest-debts';
@@ -29,7 +30,7 @@ const LOCAL_STORAGE_DEBTS_KEY = 'pordee-guest-debts';
  */
 export function getLocalDebts(): LocalDebtItem[] {
   if (typeof window === 'undefined') return [];
-  
+
   try {
     const storedDebts = localStorage.getItem(LOCAL_STORAGE_DEBTS_KEY);
     return storedDebts ? JSON.parse(storedDebts) : [];
@@ -42,17 +43,20 @@ export function getLocalDebts(): LocalDebtItem[] {
 /**
  * Save a new debt to localStorage
  */
-export function saveLocalDebt(debt: Omit<LocalDebtItem, 'id' | 'createdAt' | 'updatedAt'>): LocalDebtItem {
+export function saveLocalDebt(
+  debt: Omit<LocalDebtItem, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>
+): LocalDebtItem {
   const debts = getLocalDebts();
-  
+
   const now = new Date().toISOString();
   const newDebt: LocalDebtItem = {
     ...debt,
     id: `local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
+    deletedAt: ""
   };
-  
+
   localStorage.setItem(LOCAL_STORAGE_DEBTS_KEY, JSON.stringify([newDebt, ...debts]));
   return newDebt;
 }
@@ -63,15 +67,16 @@ export function saveLocalDebt(debt: Omit<LocalDebtItem, 'id' | 'createdAt' | 'up
 export function updateLocalDebt(updatedDebt: LocalDebtItem): LocalDebtItem | null {
   const debts = getLocalDebts();
   const index = debts.findIndex(debt => debt.id === updatedDebt.id);
-  
+
   if (index === -1) return null;
-  
+
   const now = new Date().toISOString();
   const newDebt = {
     ...updatedDebt,
-    updatedAt: now
+    updatedAt: now,
+    deletedAt: ""
   };
-  
+
   debts[index] = newDebt;
   localStorage.setItem(LOCAL_STORAGE_DEBTS_KEY, JSON.stringify(debts));
   return newDebt;
@@ -83,9 +88,9 @@ export function updateLocalDebt(updatedDebt: LocalDebtItem): LocalDebtItem | nul
 export function deleteLocalDebt(id: string): boolean {
   const debts = getLocalDebts();
   const filteredDebts = debts.filter(debt => debt.id !== id);
-  
+
   if (filteredDebts.length === debts.length) return false;
-  
+
   localStorage.setItem(LOCAL_STORAGE_DEBTS_KEY, JSON.stringify(filteredDebts));
   return true;
 }

@@ -42,6 +42,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
             showValueLabel={true}
             strokeWidth={4}
             value={riskPercentage}
+            aria-label={`ระดับความเสี่ยงอยู่ที่ ${riskPercentage} เปอร์เซ็นต์ ระดับ: ${getRiskLabel()}`}
           />
         </div>
       </div>
@@ -67,6 +68,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
         color="primary"
         className="w-full bg-blue-500 text-white py-3"
         onPress={onPlanClick}
+        aria-label="เริ่มวางแผนจัดการหนี้"
       >
         เริ่มวางแผนจัดการหนี้
       </Button>
