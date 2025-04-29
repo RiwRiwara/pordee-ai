@@ -16,7 +16,7 @@ const config = {
       // overwrite heroui colors
       colors: {
         ...heroui.colors,
-        primary: '#4387E7',
+        primary: '#3C7DD1',
         info: '#1E3E67',
         secondary: '#FFBC34',
         warning: '#FFBC34',
@@ -29,7 +29,24 @@ const config = {
     },
   },
   darkMode: "class",
-  plugins: [heroui()],
+  plugins: [heroui(
+    {
+      themes: {
+        light: {
+          primary: {
+            DEFAULT: '#3C7DD1',
+            500: '#3C7DD1',
+          },
+        },
+        dark: {
+          primary: {
+            DEFAULT: '#60A5FA',
+            500: '#60A5FA',
+          },
+        },
+      },
+    }
+  )],
 }
 
 module.exports = config;

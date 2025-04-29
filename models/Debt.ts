@@ -1,6 +1,14 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from './User';
 
+export interface IAttachment {
+  url: string;
+  name: string;
+  size: number;
+  type: string;
+  uploadedAt: Date;
+}
+
 export interface IDebt extends Document {
   userId: IUser['_id'];
   name: string;
@@ -13,6 +21,7 @@ export interface IDebt extends Document {
   startDate?: Date;
   estimatedPayoffDate?: Date;
   notes?: string;
+  attachments?: IAttachment[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -64,6 +73,13 @@ const DebtSchema: Schema = new Schema(
     notes: { 
       type: String 
     },
+    attachments: [{
+      url: { type: String, required: true },
+      name: { type: String, required: true },
+      size: { type: Number, required: true },
+      type: { type: String, required: true },
+      uploadedAt: { type: Date, default: Date.now }
+    }],
     isActive: { 
       type: Boolean, 
       default: true 

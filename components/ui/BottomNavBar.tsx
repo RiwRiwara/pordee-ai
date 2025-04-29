@@ -14,69 +14,91 @@ const BottomNavBar = () => {
   const { isAuthenticated } = useAuth();
   const { showNotification } = useCustomToast();
 
+  // Helper function to determine active state
+  const isActive = (path: string) => pathname === path;
+
   return (
-    <div className="fixed bottom-0 left-0 z-50 h-16 w-full border-t border-gray-200 bg-yellow-400">
-      <div className="mx-auto grid h-full max-w-lg grid-cols-3">
+    <div className="fixed bottom-0 left-0 z-50 h-20 w-full border-t border-gray-200 bg-yellow-400 rounded-t-3xl">
+      {/* Top border indicator - darker line */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-1/3 h-1 bg-black rounded-full opacity-50"></div>
+      
+      <div className="mx-auto grid h-full max-w-lg grid-cols-3 pt-2">
+        {/* Dashboard / Wallet */}
         <Link
           href="/dashboard"
-          className={`group inline-flex flex-col items-center justify-center ${pathname === '/dashboard' ? 'text-primary' : 'text-gray-700'
-            }`}
+          className="group flex flex-col items-center justify-center"
         >
-          <svg
-            className="mb-1 h-6 w-6"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5z"></path>
-            <path d="M11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-          </svg>
-          <span className="text-sm">หน้าหลัก</span>
+          <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center ${isActive('/dashboard') ? 'border-2 border-black' : ''}`}>
+            <svg 
+              className={`w-7 h-7 ${isActive('/dashboard') ? 'text-black' : 'text-gray-700'}`} 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <path d="M3 3h18v18H3z" />
+              <path d="M3 9h18" />
+              <path d="M15 16h2" />
+            </svg>
+          </div>
         </Link>
 
+        {/* Calendar */}
         <Link
           href="/calendar"
-          className={`group inline-flex flex-col items-center justify-center ${pathname === '/calendar' ? 'text-primary' : 'text-gray-700'
-            }`}
+          className="group flex flex-col items-center justify-center"
         >
-          <svg
-            className="mb-1 h-6 w-6"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"></path>
-          </svg>
-          <span className="text-sm">ปฏิทิน</span>
+          <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center ${isActive('/calendar') ? 'border-2 border-black' : ''}`}>
+            <svg 
+              className={`w-7 h-7 ${isActive('/calendar') ? 'text-black' : 'text-gray-700'}`} 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+              <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+            </svg>
+          </div>
         </Link>
 
+        {/* Profile */}
         <div
           onClick={() => {
-            if (isGuestMode && !isAuthenticated) {
+            if (isGuestMode) {
+              // Redirect to login for guest users
+              router.push('/auth/login');
+            } else if (isAuthenticated) {
+              // Redirect to profile for authenticated users
+              router.push('/profile');
+            } else {
+              // Show notification for edge cases
               showNotification(
-                'ต้องเข้าสู่ระบบก่อน',
-                'กรุณาเข้าสู่ระบบเพื่อดูโปรไฟล์ของคุณ',
+                'กรุณาเข้าสู่ระบบ',
+                'คุณจำเป็นต้องเข้าสู่ระบบเพื่อดูโปรไฟล์',
                 'flat',
-                'success'
+                'warning',
               );
               router.push('/auth/login');
-            } else {
-              router.push('/profile');
             }
           }}
-          className={`group inline-flex cursor-pointer flex-col items-center justify-center ${(
-            pathname === '/profile' ? 'text-primary' : 'text-gray-700'
-          )}`}
+          className="group flex flex-col items-center justify-center cursor-pointer"
         >
-          <svg
-            className="mb-1 h-6 w-6"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path>
-          </svg>
-          <span className="text-sm">โปรไฟล์</span>
+          <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center ${isActive('/profile') ? 'border-2 border-black' : ''}`}>
+            <svg 
+              className={`w-7 h-7 ${isActive('/profile') ? 'text-black' : 'text-gray-700'}`} 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="8" r="5" />
+              <path d="M20 21v-2a7 7 0 0 0-14 0v2" />
+            </svg>
+          </div>
         </div>
       </div>
     </div>

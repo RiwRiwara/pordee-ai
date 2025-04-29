@@ -3,6 +3,7 @@ import connectToDatabase from '@/lib/mongodb';
 import Debt from '@/models/Debt';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth';
+import { IAttachment } from '@/models/Debt';
 
 // Get all debts for the authenticated user
 export async function GET(request: NextRequest) {
@@ -47,7 +48,8 @@ export async function POST(request: NextRequest) {
       minimumPayment,
       startDate,
       estimatedPayoffDate,
-      notes
+      notes,
+      attachments
     } = body;
 
     // Validate required fields
@@ -57,6 +59,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Format attachments with uploadedAt date if present
+    const formattedAttachments = attachments ? attachments.map((attachment: IAttachment) => ({
+      ...attachment,
+      uploadedAt: new Date()
+    })) : undefined;
 
     // Create new debt
     const newDebt = await Debt.create({
@@ -71,6 +79,7 @@ export async function POST(request: NextRequest) {
       startDate,
       estimatedPayoffDate,
       notes,
+      attachments: formattedAttachments,
       isActive: true
     });
 
