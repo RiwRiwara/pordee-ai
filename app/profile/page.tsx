@@ -79,7 +79,6 @@ export default function ProfilePage() {
       }
     } catch (error) {
       setMessage({ text: "เกิดข้อผิดพลาดในการบันทึกข้อมูล", type: "error" });
-      console.error(error);
     } finally {
       setIsSaving(false);
     }

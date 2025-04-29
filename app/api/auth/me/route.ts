@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import connectToDatabase from "@/lib/mongodb";
-import User from "@/models/User";
+import User, { IUser } from "@/models/User"; // Import IUser interface
 import { getUserInfo, withRoleAuth } from "@/lib/auth";
 
 // GET - Get current user info based on token/session
@@ -18,14 +18,14 @@ export const GET = withRoleAuth(
         // Find user in database
         const user = await User.findById(userInfo.userId)
           .select("-passwordHash") // Exclude sensitive data
-          .lean();
+          .lean<IUser>(); // Explicitly type the lean result as IUser
 
         if (user) {
           return NextResponse.json({
             authenticated: true,
             user: {
               ...user,
-              role: user.role || userInfo.role, // Use role from DB if available
+              role: user.role || userInfo.role, // Now TypeScript recognizes `role`
             },
           });
         }
@@ -38,8 +38,6 @@ export const GET = withRoleAuth(
         ...(userInfo.error && { error: userInfo.error }),
       });
     } catch (error) {
-      console.error("Error fetching user info:", error);
-
       return NextResponse.json(
         { authenticated: false, error: "Error retrieving user information" },
         { status: 500 },
@@ -47,4 +45,4 @@ export const GET = withRoleAuth(
     }
   },
   ["admin", "user"],
-); // Allow both admin and regular users to access this endpoint
+);

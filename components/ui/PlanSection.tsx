@@ -194,7 +194,7 @@ export default function PlanSection({
                   key={plan.id}
                   className="p-4 border rounded-xl"
                   description={plan.description}
-                  value={plan.id}
+                  value={plan.id as PlanType || "quick"}
                 >
                   {plan.title}
                 </Radio>

@@ -53,7 +53,6 @@ export default function RegisterPage() {
       }
     } catch (err) {
       setError("เกิดข้อผิดพลาด กรุณาลองอีกครั้ง");
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
