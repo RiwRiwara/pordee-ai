@@ -16,12 +16,14 @@ const config = {
       // overwrite heroui colors
       colors: {
         ...heroui.colors,
-        primary: '#3C7DD1',
+        primary: '#4387E7',
+        info: '#1E3E67',
         secondary: '#FFBC34',
         warning: '#FFBC34',
         yellow: {
           300: '#FFE5B1',
           400: '#FED174',
+          500: '#FFBC34',
         }
       },
     },

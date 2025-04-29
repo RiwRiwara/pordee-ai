@@ -1,16 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@heroui/button';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import BackButton from '@/components/ui/BackButton';
+import DebtFormDrawer from '@/components/ui/DebtFormDrawer';
+import { useCustomToast } from '@/components/ui/ToastNotification';
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [monthlyIncome, setMonthlyIncome] = useState('100,000.00');
   const [monthlyExpense, setMonthlyExpense] = useState('10,000.00');
   const [disposableIncome, setDisposableIncome] = useState('90,000.00');
+  const [isDebtFormOpen, setIsDebtFormOpen] = useState(false);
+  const [debts, setDebts] = useState<any[]>([]);
+  const { showNotification } = useCustomToast();
 
   // Sample plan suggestions based on the mobile app screenshot
   const planSuggestions = [
@@ -139,6 +143,14 @@ export default function Dashboard() {
             aria-label="Edit income/expense"
             size="sm"
             className="rounded-full"
+            onPress={() => {
+              showNotification(
+                'อยู่ระหว่างการพัฒนา',
+                'การแก้ไขรายได้/รายจ่ายกำลังอยู่ระหว่างการพัฒนา',
+                'flat',
+                'primary'
+              );
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
               <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z" />
@@ -280,10 +292,31 @@ export default function Dashboard() {
         <Button 
           variant="flat" 
           className="mt-2 w-full border border-dashed border-gray-300 py-3 text-gray-500"
-          onPress={() => {}}
+          onPress={() => setIsDebtFormOpen(true)}
         >
           + เพิ่มรายการหนี้
         </Button>
+        
+        {/* Debt Form Drawer */}
+        <DebtFormDrawer 
+          isOpen={isDebtFormOpen} 
+          onClose={() => setIsDebtFormOpen(false)}
+          onSave={(debtData) => {
+            // Add the new debt to the state
+            setDebts([...debts, debtData]);
+            
+            // Show success notification
+            showNotification(
+              'เพิ่มรายการหนี้สำเร็จ',
+              'รายการหนี้ถูกบันทึกเรียบร้อยแล้ว',
+              'solid',
+              'success'
+            );
+            
+            // Close the drawer
+            setIsDebtFormOpen(false);
+          }}
+        />
       </div>
     </div>
   );

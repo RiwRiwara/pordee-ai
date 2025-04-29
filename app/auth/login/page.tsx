@@ -24,9 +24,9 @@ export default function LoginPage() {
       const success = await login(email, password);
       
       if (success) {
-        router.push('/');
+        router.push('/dashboard');
       } else {
-        setError('Invalid email or password');
+        setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

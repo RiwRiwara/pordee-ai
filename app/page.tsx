@@ -3,12 +3,22 @@
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
 import { useGuest } from "@/context/GuestContext";
+import { useAuth } from "@/context/AuthContext";
 import { useCustomToast } from '@/components/ui/ToastNotification';
+import { useEffect } from "react";
 
 export default function Home() {
   const router = useRouter();
   const { enterGuestMode } = useGuest();
   const { showNotification } = useCustomToast();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
 
 

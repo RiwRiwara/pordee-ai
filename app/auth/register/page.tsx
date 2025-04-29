@@ -44,7 +44,7 @@ export default function RegisterPage() {
       const success = await register(formData);
       
       if (success) {
-        router.push('/');
+        router.push('/dashboard');
       } else {
         setError('การลงทะเบียนล้มเหลว กรุณาลองอีกครั้ง');
       }

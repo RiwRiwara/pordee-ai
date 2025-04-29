@@ -42,11 +42,11 @@ export default function RootLayout({
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="relative flex flex-col h-screen">
-            <main className="container mx-auto max-w-md px-4 pb-20 flex-grow">
+            <main className="mx-auto w-full max-w-md px-4 pb-20 flex-grow">
               {children}
             </main>
             {/* Only show bottom nav on authenticated pages */}
-            <div className="block">
+            <div className="mx-auto w-full max-w-md">
               <BottomNavBar />
             </div>
           </div>

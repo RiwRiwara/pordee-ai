@@ -8,6 +8,9 @@ export interface IUser extends Document {
   lastName?: string;
   profileImageUrl?: string;
   languagePreference: 'th' | 'en';
+  role: 'user' | 'admin';
+  isActive: boolean;
+  lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +27,18 @@ const UserSchema: Schema = new Schema(
       type: String, 
       enum: ['th', 'en'], 
       default: 'th' 
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user'
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+    lastLogin: {
+      type: Date
     },
   },
   { 
