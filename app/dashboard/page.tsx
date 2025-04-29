@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import type { DebtContext } from "@/lib/aiService";
+
+import React, { useState, useEffect } from "react";
 
 import { useAuth } from "@/context/AuthContext";
 import BackButton from "@/components/ui/BackButton";
@@ -12,7 +14,6 @@ import IncomeExpenseSection from "@/components/ui/IncomeExpenseSection";
 import AllDebtSection from "@/components/ui/AllDebtSection";
 import SummarySection from "@/components/ui/SummarySection";
 import PlanSection from "@/components/ui/PlanSection";
-import type { DebtContext } from "@/lib/aiService";
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -241,11 +242,7 @@ export default function Dashboard() {
 
       {/* Risk Meter */}
       <div className="mb-6 px-4">
-        <RiskMeter
-          debtContext={createDebtContext()}
-          onPlanClick={() => {
-          }}
-        />
+        <RiskMeter debtContext={createDebtContext()} onPlanClick={() => {}} />
       </div>
 
       {/* Plan selected section */}
@@ -268,7 +265,7 @@ export default function Dashboard() {
 
                 if (!response.ok) {
                 }
-              } catch (error) { }
+              } catch (error) {}
             }
           }}
         />

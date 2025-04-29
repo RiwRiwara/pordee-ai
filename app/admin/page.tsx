@@ -151,13 +151,13 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">ยอดหนี้รวมทั้งหมด</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-white">
                   {stats.totalDebtAmount.toLocaleString()} บาท
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">ยอดหนี้เฉลี่ย</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-white">
                   {stats.averageDebtAmount.toLocaleString()} บาท
                 </p>
               </div>

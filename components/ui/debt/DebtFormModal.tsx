@@ -10,6 +10,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
+import { FiSave } from "react-icons/fi";
 
 import { useCustomToast } from "../ToastNotification";
 
@@ -18,7 +19,7 @@ import { DebtFormData, FileData, DebtFormModalProps } from "./types";
 import { fileToBase64, parseOcrText } from "./utils";
 
 import { useGuest } from "@/context/GuestContext";
-import { saveLocalDebt, LocalDebtItem } from "@/lib/localStorage";
+import { saveLocalDebt } from "@/lib/localStorage";
 import AIService from "@/lib/aiService";
 
 const debtTypes = [
@@ -46,7 +47,6 @@ const CustomSelect: React.FC<{
 }> = ({ options, value, onChange, placeholder, id, ariaLabel }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectedOption = options.find((opt) => opt.value === value);
-  const [focusedOptionId, setFocusedOptionId] = useState<string | null>(null);
 
   return (
     <div className="relative">
@@ -62,35 +62,31 @@ const CustomSelect: React.FC<{
       {isOpen && (
         <div
           className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
-          role="listbox" // Indicates the dropdown is a listbox
+          role="listbox"
         >
-          {options.map((option, index) => {
-            const optionId = `option-${option.value}`; // Unique ID for ARIA
-
-            return (
-              <div
-                key={option.value}
-                aria-selected={option.value === value} // Update dynamically if needed
-                className="p-2 hover:bg-gray-100 cursor-pointer"
-                id={optionId} // Unique ID for ARIA
-                role="option" // Indicates this is a selectable option
-                tabIndex={0} // Makes the div focusable
-                onClick={() => {
+          {options.map((option) => (
+            <div
+              key={option.value}
+              aria-selected={option.value === value}
+              className="p-2 hover:bg-gray-100 cursor-pointer"
+              id={`option-${option.value}`}
+              role="option"
+              tabIndex={0}
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
                   onChange(option.value);
                   setIsOpen(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault(); // Prevent scrolling on Space
-                    onChange(option.value);
-                    setIsOpen(false);
-                  }
-                }}
-              >
-                {option.label}
-              </div>
-            );
-          })}
+                }
+              }}
+            >
+              {option.label}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -108,6 +104,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
   const [isProcessingOcr, setIsProcessingOcr] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const aiService = new AIService();
 
@@ -119,10 +116,10 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
     formState: { errors, isValid },
     reset,
   } = useForm<DebtFormData>({
-    defaultValues: initialData || {
+    defaultValues: {
+      debtName: "",
       debtType: "",
       paymentType: "revolving",
-      debtName: "",
       totalAmount: "",
       minimumPayment: "",
       interestRate: "",
@@ -221,7 +218,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         "solid",
         "success",
       );
-    } catch {
+    } catch (error) {
       showNotification(
         "เกิดข้อผิดพลาด",
         "ไม่สามารถอัพโหลดไฟล์ได้",
@@ -273,7 +270,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         "solid",
         "success",
       );
-    } catch {
+    } catch (error) {
       showNotification(
         "เกิดข้อผิดพลาด",
         "ไม่สามารถวิเคราะห์ข้อมูลจากเอกสารได้",
@@ -331,32 +328,43 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: DebtFormData) => {
+  const viewFilePreview = (fileUrl: string) => {
+    window.open(fileUrl, "_blank");
+  };
+
+  const onSubmit = async (data: DebtFormData) => {
+    setIsSubmitting(true);
     try {
-      const formattedData: Omit<
-        LocalDebtItem,
-        "id" | "createdAt" | "updatedAt" | "deletedAt"
-      > = {
-        name: data.debtName,
-        debtType: data.debtType,
-        paymentType: data.paymentType,
-        totalAmount: data.totalAmount,
-        minimumPayment: data.minimumPayment,
-        interestRate: data.interestRate,
-        dueDate: data.dueDate,
-        paymentStatus: data.paymentStatus,
-        attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
-      };
+      await onSave({
+        ...data,
+        attachments: uploadedFiles.map((file) => ({
+          url: file.url,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          isOcrProcessed: file.isOcrProcessed,
+          isOcrAccepted: file.isOcrAccepted,
+          ocrData: file.ocrData,
+        })),
+      });
 
       if (isGuestMode) {
-        saveLocalDebt(formattedData);
+        // For guest mode, save to localStorage
+        saveLocalDebt({
+          name: data.debtName,
+          debtType: data.debtType,
+          paymentType: data.paymentType,
+          totalAmount: data.totalAmount,
+          minimumPayment: data.minimumPayment,
+          interestRate: data.interestRate,
+          dueDate: data.dueDate,
+          paymentStatus: data.paymentStatus,
+        });
       }
 
-      onSave({ ...data, attachments: uploadedFiles });
-
       showNotification(
-        "บันทึกข้อมูลสำเร็จ",
-        `ข้อมูลหนี้${isGuestMode ? " (โหมดทดลอง)" : ""}ถูกบันทึกเรียบร้อยแล้ว`,
+        "บันทึกรายการหนี้สำเร็จ",
+        "รายการหนี้ถูกบันทึกเรียบร้อยแล้ว",
         "solid",
         "success",
       );
@@ -364,314 +372,319 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
       reset();
       setUploadedFiles([]);
       onClose();
-    } catch {
+    } catch (error) {
+      console.error("Error saving debt:", error);
       showNotification(
         "เกิดข้อผิดพลาด",
         "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่",
         "solid",
         "danger",
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal
+      backdrop="blur"
+      isOpen={isOpen}
+      placement="center"
+      scrollBehavior="inside"
+      size="lg"
+      onClose={onClose}
+    >
       <ModalContent>
-        <ModalHeader>
-          <h2 className="text-xl font-semibold">เพิ่มรายการหนี้</h2>
+        <ModalHeader className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">
+            เพิ่มรายการหนี้
+          </h2>
         </ModalHeader>
-        <ModalBody>
-          <div className="px-6 py-4 border-b border-gray-200">
-            <p className="text-sm text-gray-500 text-center">กรอกข้อมูลหนี้ของคุณ</p>
-          </div>
+        <ModalBody className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+          <form id="debt-form" onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-700">
+                  ข้อมูลหนี้
+                </h3>
 
-          <div className="px-6 py-4 max-h-[60vh] md:max-h-[500px] overflow-y-auto">
-            <form id="debt-form" onSubmit={handleSubmit(onSubmit)}>
-              <DebtFileUpload
-                acceptOcrRecommendation={acceptOcrRecommendation}
-                fileInputRef={fileInputRef}
-                handleFileChange={handleFileChange}
-                isProcessingOcr={isProcessingOcr}
-                isUploading={isUploading}
-                processFileWithOcr={processFileWithOcr}
-                rejectOcrRecommendation={rejectOcrRecommendation}
-                removeFile={removeFile}
-                setIsUploading={setIsUploading}
-                setUploadedFiles={setUploadedFiles}
-                triggerFileUpload={triggerFileUpload}
-                uploadedFiles={uploadedFiles}
-              />
-
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="debtType"
-                >
-                  ประเภทหนี้
-                </label>
-                <Controller
-                  control={control}
-                  name="debtType"
-                  render={({ field }) => (
-                    <CustomSelect
-                      ariaLabel="เลือกประเภทหนี้"
-                      id="debtType"
-                      options={debtTypes}
-                      placeholder="เลือกประเภทหนี้"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                  rules={{ required: "กรุณาเลือกประเภทหนี้" }}
-                />
-                {errors.debtType && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.debtType.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="paymentType"
-                >
-                  ลักษณะหนี้
-                </label>
-                <Controller
-                  control={control}
-                  name="paymentType"
-                  render={({ field }) => (
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="debtName"
+                    >
+                      ชื่อรายการหนี้ <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      control={control}
+                      name="debtName"
+                      render={({ field }) => (
                         <input
-                          checked={field.value === "revolving"}
-                          className="mr-2"
-                          name="paymentType"
-                          type="radio"
-                          value="revolving"
-                          onChange={() => field.onChange("revolving")}
+                          {...field}
+                          className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
+                          id="debtName"
+                          placeholder="เช่น บัตรเครดิต KBank"
+                          type="text"
                         />
-                        หนี้หมุนเวียน
-                      </label>
-                      <label className="flex items-center">
+                      )}
+                      rules={{ required: true }}
+                    />
+                    {errors.debtName && (
+                      <p className="text-red-500 text-xs mt-1">
+                        กรุณาระบุชื่อรายการหนี้
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="debtType"
+                    >
+                      ประเภทหนี้ <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      control={control}
+                      name="debtType"
+                      render={({ field }) => (
+                        <CustomSelect
+                          ariaLabel="เลือกประเภทหนี้"
+                          id="debtType"
+                          options={debtTypes}
+                          placeholder="เลือกประเภทหนี้"
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                      rules={{ required: true }}
+                    />
+                    {errors.debtType && (
+                      <p className="text-red-500 text-xs mt-1">
+                        กรุณาเลือกประเภทหนี้
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="paymentType"
+                  >
+                    รูปแบบการชำระ <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-col gap-2">
+                    <Controller
+                      control={control}
+                      name="paymentType"
+                      render={({ field }) => (
+                        <div className="flex gap-4">
+                          <label className="inline-flex items-center">
+                            <input
+                              checked={field.value === "revolving"}
+                              className="form-radio text-yellow-500 focus:ring-yellow-500"
+                              name="paymentType"
+                              type="radio"
+                              onChange={() => field.onChange("revolving")}
+                            />
+                            <span className="ml-2">หมุนเวียน</span>
+                          </label>
+                          <label className="inline-flex items-center">
+                            <input
+                              checked={field.value === "installment"}
+                              className="form-radio text-yellow-500 focus:ring-yellow-500"
+                              name="paymentType"
+                              type="radio"
+                              onChange={() => field.onChange("installment")}
+                            />
+                            <span className="ml-2">ผ่อนชำระ</span>
+                          </label>
+                        </div>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="totalAmount"
+                    >
+                      ยอดหนี้ทั้งหมด (บาท){" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      control={control}
+                      name="totalAmount"
+                      render={({ field }) => (
                         <input
-                          checked={field.value === "installment"}
-                          className="mr-2"
-                          name="paymentType"
-                          type="radio"
-                          value="installment"
-                          onChange={() => field.onChange("installment")}
+                          {...field}
+                          className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
+                          id="totalAmount"
+                          placeholder="0.00"
+                          step="0.01"
+                          type="number"
                         />
-                        หนี้ผ่อนชำระ
-                      </label>
-                    </div>
-                  )}
-                />
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="debtName"
-                >
-                  ชื่อหนี้
-                </label>
-                <Controller
-                  control={control}
-                  name="debtName"
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
-                      id="debtName"
-                      placeholder="เช่น บัตร KTC, สินเชื่อรถยนต์"
+                      )}
+                      rules={{ required: true }}
                     />
-                  )}
-                  rules={{ required: "กรุณาระบุชื่อหนี้" }}
-                />
-                {errors.debtName && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.debtName.message}
-                  </p>
-                )}
-              </div>
+                    {errors.totalAmount && (
+                      <p className="text-red-500 text-xs mt-1">
+                        กรุณาระบุยอดหนี้ทั้งหมด
+                      </p>
+                    )}
+                  </div>
 
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="totalAmount"
-                >
-                  {paymentType === "revolving"
-                    ? "วงเงิน / ยอดใช้จ่าย"
-                    : "ยอดสินเชื่อ / ยอดคงเหลือ"}
-                </label>
-                <div className="flex items-center gap-2">
+                  <div>
+                    <label
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="minimumPayment"
+                    >
+                      {paymentType === "revolving"
+                        ? "ยอดชำระขั้นต่ำ (บาท)"
+                        : "ยอดผ่อนต่องวด (บาท)"}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      control={control}
+                      name="minimumPayment"
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
+                          id="minimumPayment"
+                          placeholder="0.00"
+                          step="0.01"
+                          type="number"
+                        />
+                      )}
+                      rules={{ required: true }}
+                    />
+                    {errors.minimumPayment && (
+                      <p className="text-red-500 text-xs mt-1">
+                        กรุณาระบุยอดชำระขั้นต่ำ
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="interestRate"
+                    >
+                      อัตราดอกเบี้ย (% ต่อปี)
+                    </label>
+                    <Controller
+                      control={control}
+                      name="interestRate"
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
+                          id="interestRate"
+                          placeholder="0.00"
+                          step="0.01"
+                          type="number"
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="dueDate"
+                    >
+                      วันครบกำหนดชำระ <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      control={control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
+                          id="dueDate"
+                          placeholder="ทุกวันที่ 15"
+                          type="text"
+                        />
+                      )}
+                      rules={{ required: true }}
+                    />
+                    {errors.dueDate && (
+                      <p className="text-red-500 text-xs mt-1">
+                        กรุณาระบุวันครบกำหนดชำระ
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="paymentStatus"
+                  >
+                    สถานะการชำระ <span className="text-red-500">*</span>
+                  </label>
                   <Controller
                     control={control}
-                    name="totalAmount"
+                    name="paymentStatus"
                     render={({ field }) => (
-                      <input
-                        {...field}
-                        className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
-                        id="totalAmount"
-                        placeholder="0"
-                        type="number"
+                      <CustomSelect
+                        ariaLabel="เลือกสถานะการชำระ"
+                        id="paymentStatus"
+                        options={paymentStatusOptions}
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     )}
-                    rules={{ required: "กรุณาระบุยอดหนี้" }}
+                    rules={{ required: true }}
                   />
-                  <span className="text-sm text-gray-500">บาท</span>
                 </div>
-                {errors.totalAmount && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.totalAmount.message}
-                  </p>
-                )}
               </div>
 
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="minimumPayment"
-                >
-                  ยอดจ่ายขั้นต่ำ / ค่างวด
-                </label>
-                <div className="flex items-center gap-2">
-                  <Controller
-                    control={control}
-                    name="minimumPayment"
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
-                        id="minimumPayment"
-                        placeholder="0"
-                        type="number"
-                      />
-                    )}
-                    rules={{
-                      required:
-                        paymentType === "revolving"
-                          ? "กรุณาระบุยอดจ่ายขั้นต่ำ"
-                          : false,
-                    }}
-                  />
-                  <span className="text-sm text-gray-500">บาท</span>
-                </div>
-                {errors.minimumPayment && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.minimumPayment.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="interestRate"
-                >
-                  อัตราดอกเบี้ย
-                </label>
-                <div className="flex items-center gap-2">
-                  <Controller
-                    control={control}
-                    name="interestRate"
-                    render={({ field }) => (
-                      <input
-                        {...field}
-                        className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
-                        id="interestRate"
-                        placeholder="0.00"
-                        step="0.01"
-                        type="number"
-                      />
-                    )}
-                    rules={{ required: "กรุณาระบุอัตราดอกเบี้ย" }}
-                  />
-                  <span className="text-sm text-gray-500">%</span>
-                </div>
-                {errors.interestRate && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.interestRate.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="dueDate"
-                >
-                  วันครบกำหนดชำระ
-                </label>
-                <Controller
-                  control={control}
-                  name="dueDate"
-                  render={({ field }) => (
-                    <CustomSelect
-                      ariaLabel="เลือกวันครบกำหนดชำระ"
-                      id="dueDate"
-                      options={[...Array(31)].map((_, i) => ({
-                        label: `ทุกวันที่ ${i + 1}`,
-                        value: `${i + 1}`,
-                      }))}
-                      placeholder="เลือกวัน"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                  rules={{ required: "กรุณาเลือกวันครบกำหนดชำระ" }}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-700">
+                  เอกสารหนี้
+                </h3>
+                <DebtFileUpload
+                  acceptOcrRecommendation={acceptOcrRecommendation}
+                  fileInputRef={fileInputRef}
+                  handleFileChange={handleFileChange}
+                  isProcessingOcr={isProcessingOcr}
+                  isUploading={isUploading}
+                  processFileWithOcr={processFileWithOcr}
+                  rejectOcrRecommendation={rejectOcrRecommendation}
+                  removeFile={removeFile}
+                  setIsUploading={setIsUploading}
+                  setUploadedFiles={setUploadedFiles}
+                  triggerFileUpload={triggerFileUpload}
+                  uploadedFiles={uploadedFiles}
                 />
-                {errors.dueDate && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.dueDate.message}
-                  </p>
-                )}
               </div>
-
-              <div className="mb-4">
-                <label
-                  className="block mb-1 font-medium text-gray-700"
-                  htmlFor="paymentStatus"
-                >
-                  สถานะการชำระหนี้
-                </label>
-                <Controller
-                  control={control}
-                  name="paymentStatus"
-                  render={({ field }) => (
-                    <CustomSelect
-                      ariaLabel="เลือกสถานะการชำระหนี้"
-                      id="paymentStatus"
-                      options={paymentStatusOptions}
-                      placeholder="เลือกสถานะ"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                {errors.paymentStatus && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.paymentStatus.message}
-                  </p>
-                )}
-              </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </ModalBody>
-
         <ModalFooter className="px-6 py-4 border-t border-gray-200">
-          <Button
-            aria-label="บันทึกรายการหนี้"
-            className="w-full bg-yellow-400 text-black py-3 rounded-lg font-medium hover:bg-yellow-500 transition"
-            color="primary"
-            disabled={!isValid}
-            form="debt-form"
-            type="submit"
-          >
-            บันทึกรายการหนี้
-          </Button>
+          <div className="flex gap-3 ml-auto">
+            <Button type="button" variant="flat" onPress={onClose}>
+              ยกเลิก
+            </Button>
+            <Button
+              color="primary"
+              disabled={!isValid || isSubmitting}
+              form="debt-form"
+              isLoading={isSubmitting}
+              startContent={<FiSave />}
+              type="submit"
+            >
+              บันทึกรายการหนี้
+            </Button>
+          </div>
         </ModalFooter>
       </ModalContent>
     </Modal>

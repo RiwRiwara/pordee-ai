@@ -305,7 +305,7 @@ export default function ProfilePage() {
               {/* Show different contents based on upload/image state */}
               {imagePreview ? (
                 // Show preview while uploading
-                <img
+                <Image
                   alt="Profile Preview"
                   className="object-cover h-24 w-24 rounded-full"
                   src={imagePreview}
@@ -321,10 +321,6 @@ export default function ProfilePage() {
                     src={profileData.profileImage}
                     width={96}
                     onError={(e) => {
-                      console.error(
-                        "Error loading profile image:",
-                        profileData.profileImage,
-                      );
                       // If image fails to load, hide the image
                       e.currentTarget.style.display = "none";
                       // Show the fallback div

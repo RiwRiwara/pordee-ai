@@ -57,17 +57,25 @@ export async function POST(request: NextRequest) {
       attachments,
     } = body;
 
-    // Validate required fields
-    if (
-      !name ||
-      !debtType ||
-      !totalAmount ||
-      !remainingAmount ||
-      !interestRate ||
-      !paymentDueDay
-    ) {
+    // Validate required fields and log what's missing for debugging
+    const missingFields = [];
+
+    if (!name) missingFields.push("name");
+    if (!debtType) missingFields.push("debtType");
+    if (totalAmount === undefined || totalAmount === null)
+      missingFields.push("totalAmount");
+    if (remainingAmount === undefined || remainingAmount === null)
+      missingFields.push("remainingAmount");
+    if (interestRate === undefined || interestRate === null)
+      missingFields.push("interestRate");
+    if (paymentDueDay === undefined || paymentDueDay === null)
+      missingFields.push("paymentDueDay");
+
+    if (missingFields.length > 0) {
+      console.error("Missing required fields:", missingFields, body);
+
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: `Missing required fields: ${missingFields.join(", ")}` },
         { status: 400 },
       );
     }
@@ -80,22 +88,43 @@ export async function POST(request: NextRequest) {
         }))
       : undefined;
 
-    // Create new debt
-    const newDebt = await Debt.create({
+    // Format and validate data before creating
+    const debtData = {
       userId: session.user.id,
       name,
       debtType,
-      totalAmount: parseFloat(totalAmount),
-      remainingAmount: parseFloat(remainingAmount),
-      interestRate: parseFloat(interestRate),
-      paymentDueDay: parseInt(paymentDueDay),
-      minimumPayment: minimumPayment ? parseFloat(minimumPayment) : undefined,
+      totalAmount:
+        typeof totalAmount === "number"
+          ? totalAmount
+          : parseFloat(String(totalAmount)),
+      remainingAmount:
+        typeof remainingAmount === "number"
+          ? remainingAmount
+          : parseFloat(String(remainingAmount)),
+      interestRate:
+        typeof interestRate === "number"
+          ? interestRate
+          : parseFloat(String(interestRate)),
+      paymentDueDay:
+        typeof paymentDueDay === "number"
+          ? paymentDueDay
+          : parseInt(String(paymentDueDay)),
+      minimumPayment: minimumPayment
+        ? typeof minimumPayment === "number"
+          ? minimumPayment
+          : parseFloat(String(minimumPayment))
+        : 0,
       startDate,
       estimatedPayoffDate,
-      notes,
+      notes: notes || "",
       attachments: formattedAttachments,
       isActive: true,
-    });
+    };
+
+    console.log("Creating debt with data:", debtData);
+
+    // Create new debt
+    const newDebt = await Debt.create(debtData);
 
     return NextResponse.json(
       {

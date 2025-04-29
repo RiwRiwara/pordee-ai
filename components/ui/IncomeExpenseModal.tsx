@@ -63,12 +63,23 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
     mode: "onChange",
   });
 
+  // Reset preview state when modal is closed
   useEffect(() => {
     if (!isOpen) {
       setPreviewFile(null);
       setShowPreview(false);
     }
   }, [isOpen]);
+
+  // Reset form with initialData when modal is opened
+  useEffect(() => {
+    if (isOpen && initialData) {
+      reset({
+        monthlyIncome: initialData.monthlyIncome || "",
+        monthlyExpense: initialData.monthlyExpense || "",
+      });
+    }
+  }, [isOpen, initialData, reset]);
 
   const monthlyIncome = parseFloat(
     watch("monthlyIncome").replace(/,/g, "") || "0",
@@ -214,13 +225,13 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
         files.map((f) =>
           f.name === file.name
             ? {
-              ...f,
-              isProcessing: false,
-              isOcrProcessed: true,
-              ocrText,
-              ocrAmount: amount,
-              ocrCategory: category,
-            }
+                ...f,
+                isProcessing: false,
+                isOcrProcessed: true,
+                ocrText,
+                ocrAmount: amount,
+                ocrCategory: category,
+              }
             : f,
         );
 
@@ -439,12 +450,11 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
 
   return (
     <Modal
-      closeButton
-      aria-label="แก้ไขรายได้และรายจ่าย"
-      backdrop="blur"
+      isDismissable
+      aria-label="รายได้และรายจ่าย"
       classNames={{
         backdrop: "bg-gradient-to-t from-zinc-900/50 to-zinc-900/30",
-        base: "mt-4 md:mt-0 bg-white rounded-lg shadow-lg",
+        base: "mt-4 md:mt-0 bg-white rounded-xl shadow-xl max-w-3xl",
         closeButton: "top-3 right-3 text-gray-500 hover:bg-gray-100",
         wrapper: "max-h-[90vh] overflow-visible",
       }}
@@ -459,16 +469,16 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
           <>
             <ModalHeader className="px-6 py-4 border-b border-gray-200">
               <div>
-                <h3 className="text-xl font-semibold text-gray-800">
-                  กรอกข้อมูลรายได้ / รายจ่าย
+                <h3 className="text-2xl font-semibold text-gray-800">
+                  รายได้และรายจ่าย
                 </h3>
-                <p className="text-sm text-gray-500">
-                  ช่วยวางแผนการชำระหนี้ที่เหมาะสม
+                <p className="text-sm text-gray-500 text-center">
+                  กรอกข้อมูลเพื่อวางแผนการเงินและชำระหนี้
                 </p>
               </div>
             </ModalHeader>
 
-            <ModalBody className="px-6 py-4 overflow-y-auto max-h-[60vh] md:max-h-[500px]">
+            <ModalBody className="px-6 py-6 overflow-y-auto max-h-[60vh] md:max-h-[500px]">
               <form id="income-expense-form" onSubmit={handleSubmit(onSubmit)}>
                 <FileUploadSection
                   acceptOcrRecommendation={(file) =>
@@ -491,7 +501,13 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   viewFilePreview={viewFilePreview}
                 />
 
-                <div className="mb-4">
+                <div className="mb-6">
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="monthlyIncome"
+                  >
+                    รายได้ต่อเดือน
+                  </label>
                   <Controller
                     control={control}
                     name="monthlyIncome"
@@ -499,12 +515,13 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                       <Input
                         {...field}
                         aria-label="รายได้ต่อเดือน"
-                        className="border border-green-400 rounded-lg focus:ring-2 focus:ring-green-500"
+                        className="border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500"
                         endContent={<span className="text-gray-400">บาท</span>}
                         inputMode="numeric"
                         placeholder="0.00"
                         startContent={<span className="text-gray-400">฿</span>}
                         type="text"
+                        value={field.value || ""}
                       />
                     )}
                     rules={{ required: "กรุณาระบุรายได้ต่อเดือน" }}
@@ -537,7 +554,13 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   viewFilePreview={viewFilePreview}
                 />
 
-                <div className="mb-4">
+                <div className="mb-6">
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                    htmlFor="monthlyExpense"
+                  >
+                    รายจ่ายต่อเดือน
+                  </label>
                   <Controller
                     control={control}
                     name="monthlyExpense"
@@ -545,12 +568,13 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                       <Input
                         {...field}
                         aria-label="รายจ่ายต่อเดือน"
-                        className="border border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                        className="border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                         endContent={<span className="text-gray-400">บาท</span>}
                         inputMode="numeric"
                         placeholder="0.00"
                         startContent={<span className="text-gray-400">฿</span>}
                         type="text"
+                        value={field.value || ""}
                       />
                     )}
                     rules={{ required: "กรุณาระบุรายจ่ายต่อเดือน" }}
@@ -562,21 +586,34 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   )}
                 </div>
 
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-700">
-                    รายได้สุทธิ (รายได้ - รายจ่าย)
-                  </h4>
-                  <p className="text-lg font-semibold text-green-600">
-                    ฿{formatNumber(disposableIncome)}
-                  </p>
+                <div className="mt-6 p-4 bg-green-50 rounded-lg flex items-center">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">
+                      รายได้สุทธิ
+                    </h4>
+                    <p className="text-lg font-semibold text-green-600">
+                      ฿{formatNumber(disposableIncome)}
+                    </p>
+                  </div>
+                  <div className="ml-auto text-right text-xs text-gray-500">
+                    <p>รายได้ - รายจ่าย</p>
+                    <p>เงินที่เหลือสำหรับการใช้จ่ายอื่นๆ</p>
+                  </div>
                 </div>
               </form>
             </ModalBody>
 
             <ModalFooter className="px-6 py-4 border-t border-gray-200">
               <Button
+                aria-label="ยกเลิก"
+                className="mr-2 bg-gray-200 text-gray-700 hover:bg-gray-300"
+                onPress={onClose}
+              >
+                ยกเลิก
+              </Button>
+              <Button
                 aria-label="ยืนยันข้อมูล"
-                className="w-full bg-yellow-400 text-black py-3 rounded-lg font-medium hover:bg-yellow-500 transition"
+                className="bg-green-500 text-white hover:bg-green-600"
                 color="primary"
                 form="income-expense-form"
                 isLoading={isSaving}

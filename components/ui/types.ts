@@ -1,4 +1,22 @@
 // components/ui/types.ts
+export interface DebtItem {
+  _id: string;
+  name: string;
+  debtType: string; // Thai values: "บัตรเครดิต", "สินเชื่อ", "อื่นๆ"
+  originalPaymentType?: string; // Optional original payment type (for guest mode)
+  totalAmount: number;
+  remainingAmount: number;
+  interestRate: number;
+  minimumPayment?: number;
+  paymentDueDay?: number;
+  startDate?: string;
+  estimatedPayoffDate?: string;
+  notes?: string;
+  attachments?: any[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
 export interface IncomeExpenseData {
   monthlyIncome: string;
   monthlyExpense: string;
