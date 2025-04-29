@@ -71,6 +71,7 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.languagePreference = user.languagePreference;
+        token.profileImageUrl = user.image || undefined; // Pass image from user to token (with null check)
       }
 
       return token;
@@ -83,6 +84,9 @@ export const authOptions: NextAuthOptions = {
         session.user.languagePreference = token.languagePreference as
           | string
           | undefined;
+        session.user.profileImageUrl = token.profileImageUrl as
+          | string
+          | undefined; // Pass image from token to session
       }
 
       return session;

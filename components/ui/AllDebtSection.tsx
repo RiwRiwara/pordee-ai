@@ -4,7 +4,8 @@ import { Button } from "@heroui/button";
 interface DebtItem {
   _id: string;
   name: string;
-  debtType: "revolving" | "installment";
+  debtType: string; // Thai values: "บัตรเครดิต", "สินเชื่อ", "อื่นๆ"
+  originalPaymentType?: string; // Optional original payment type (for guest mode)
   totalAmount: number;
   remainingAmount: number;
   interestRate: number;
@@ -54,12 +55,39 @@ export default function AllDebtSection({
     );
   }
 
-  const revolving = debts.filter((debt) => debt.debtType === "revolving");
-  const installment = debts.filter((debt) => debt.debtType === "installment");
+  // Filter based on debtType Thai values
+  // Credit card types are treated as revolving debt
+  const revolving = debts.filter(
+    (debt) =>
+      debt.debtType === "บัตรเครดิต" ||
+      debt.originalPaymentType === "revolving" ||
+      debt.originalPaymentType === "credit_card" ||
+      debt.originalPaymentType === "cash_card",
+  );
+
+  // Loan types are treated as installment debt
+  const installment = debts.filter(
+    (debt) =>
+      debt.debtType === "สินเชื่อ" ||
+      debt.originalPaymentType === "installment" ||
+      debt.originalPaymentType === "loan" ||
+      debt.originalPaymentType === "mortgage",
+  );
+
+  // Other debts can be put in either category based on your preference
+  // Here we're adding "อื่นๆ" (others) to installment category
+  const otherDebts = debts.filter(
+    (debt) => debt.debtType === "อื่นๆ" && !debt.originalPaymentType,
+  );
+
+  // Add other debts to installment for display
+  if (otherDebts.length > 0) {
+    installment.push(...otherDebts);
+  }
 
   return (
-    <div>
-      <div className="mb-4 px-4">
+    <div className="flex flex-col gap-4">
+      <div className="">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">
             หนี้หมุนเวียน (Revolving Debt)
@@ -103,7 +131,7 @@ export default function AllDebtSection({
       </div>
 
       {/* Installment Debt Section */}
-      <div className="mb-6 px-4">
+      <div className="">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">
             หนี้ส่งผ่อน (Installment Debt)
@@ -146,7 +174,7 @@ export default function AllDebtSection({
         </div>
         {/* Add Debt Button */}
         <Button
-          className="mt-2 w-full border border-dashed border-gray-300 py-3 text-gray-500"
+          className="mt-1 w-full border border-dashed border-gray-300 py-6 text-gray-500"
           variant="flat"
           onPress={onAddDebt}
         >

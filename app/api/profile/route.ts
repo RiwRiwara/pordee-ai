@@ -42,7 +42,7 @@ export async function PUT(request: NextRequest) {
     await connectToDatabase();
 
     const body = await request.json();
-    const { firstName, lastName, languagePreference } = body;
+    const { firstName, lastName, languagePreference, profileImage } = body;
 
     // Find user and update profile
     const updatedUser = await User.findByIdAndUpdate(
@@ -51,6 +51,7 @@ export async function PUT(request: NextRequest) {
         firstName,
         lastName,
         languagePreference,
+        profileImageUrl: profileImage, // Map to the correct field name in the User model
       },
       { new: true },
     ).select("-passwordHash");

@@ -72,6 +72,20 @@ export default function Dashboard() {
     });
   };
 
+  // Map Thai debtType values back to original payment types for UI compatibility
+  const getOriginalPaymentType = (debtType: string): string => {
+    switch (debtType) {
+      case "บัตรเครดิต":
+        return "credit_card"; // Default to credit_card for บัตรเครดิต
+      case "สินเชื่อ":
+        return "installment"; // Default to installment for สินเชื่อ
+      case "อื่นๆ":
+        return "installment"; // Default others to installment as well
+      default:
+        return "installment"; // Fallback
+    }
+  };
+
   // Load data when component mounts or auth state changes
   useEffect(() => {
     loadUserData();
@@ -117,24 +131,35 @@ export default function Dashboard() {
       if (debtsResponse.ok) {
         const { debts } = await debtsResponse.json();
 
-        setDebts(debts || []);
+        // Process debts to ensure proper formatting for display
+        const processedDebts = (debts || []).map((debt: any) => {
+          // Ensure debt has all necessary properties
+          return {
+            ...debt,
+            // For UI compatibility, add originalPaymentType based on debtType if needed
+            originalPaymentType:
+              debt.originalPaymentType || getOriginalPaymentType(debt.debtType),
+          };
+        });
+
+        setDebts(processedDebts);
 
         // Calculate debt summary
-        if (debts && debts.length > 0) {
+        if (processedDebts && processedDebts.length > 0) {
           // Calculate total amount
-          const totalAmount = debts.reduce(
+          const totalAmount = processedDebts.reduce(
             (sum: number, debt: any) => sum + debt.remainingAmount,
             0,
           );
 
           // Calculate monthly payment
-          const monthlyPayment = debts.reduce(
+          const monthlyPayment = processedDebts.reduce(
             (sum: number, debt: any) => sum + (debt.minimumPayment || 0),
             0,
           );
 
           // Calculate weighted average interest rate
-          const totalInterest = debts.reduce(
+          const totalInterest = processedDebts.reduce(
             (sum: number, debt: any) =>
               sum + debt.interestRate * debt.remainingAmount,
             0,
@@ -142,7 +167,7 @@ export default function Dashboard() {
           const avgInterestRate = totalInterest / totalAmount;
 
           setDebtSummary({
-            totalDebts: debts.length,
+            totalDebts: processedDebts.length,
             totalAmount: formatCurrency(totalAmount),
             monthlyPayment: formatCurrency(monthlyPayment),
             interestRate: `${avgInterestRate.toFixed(1)}%`,
@@ -316,6 +341,33 @@ export default function Dashboard() {
           try {
             // If authenticated, save to database
             if (isAuthenticated) {
+              // Map paymentType to one of the allowed enum values
+              const mapPaymentTypeToDebtType = (paymentType: string) => {
+                // Map credit card types to บัตรเครดิต
+                if (
+                  paymentType === "credit_card" ||
+                  paymentType === "cash_card" ||
+                  paymentType === "revolving"
+                ) {
+                  return "บัตรเครดิต";
+                }
+                // Map loan types to สินเชื่อ
+                else if (
+                  paymentType === "installment" ||
+                  paymentType === "loan" ||
+                  paymentType === "mortgage"
+                ) {
+                  return "สินเชื่อ";
+                }
+
+                // Other types
+                return "อื่นๆ";
+              };
+
+              const mappedDebtType = mapPaymentTypeToDebtType(
+                debtData.paymentType,
+              );
+
               const response = await fetch("/api/debts", {
                 method: "POST",
                 headers: {
@@ -323,7 +375,7 @@ export default function Dashboard() {
                 },
                 body: JSON.stringify({
                   name: debtData.debtName,
-                  debtType: debtData.paymentType,
+                  debtType: mappedDebtType,
                   totalAmount: parseFloat(debtData.totalAmount),
                   remainingAmount: parseFloat(debtData.totalAmount),
                   interestRate: parseFloat(debtData.interestRate),
@@ -343,12 +395,36 @@ export default function Dashboard() {
               loadUserData();
             } else {
               // Add to local state for guest mode
+              // Use the same mapping function for guest mode
+              const mapPaymentTypeToDebtType = (paymentType: string) => {
+                if (
+                  paymentType === "credit_card" ||
+                  paymentType === "cash_card" ||
+                  paymentType === "revolving"
+                ) {
+                  return "บัตรเครดิต";
+                } else if (
+                  paymentType === "installment" ||
+                  paymentType === "loan" ||
+                  paymentType === "mortgage"
+                ) {
+                  return "สินเชื่อ";
+                }
+
+                return "อื่นๆ";
+              };
+
+              const mappedDebtType = mapPaymentTypeToDebtType(
+                debtData.paymentType,
+              );
+
               setDebts([
                 ...debts,
                 {
                   _id: Date.now().toString(),
                   name: debtData.debtName,
-                  debtType: debtData.paymentType,
+                  debtType: mappedDebtType,
+                  originalPaymentType: debtData.paymentType, // Store original for UI purposes
                   totalAmount: parseFloat(debtData.totalAmount),
                   remainingAmount: parseFloat(debtData.totalAmount),
                   interestRate: parseFloat(debtData.interestRate),
