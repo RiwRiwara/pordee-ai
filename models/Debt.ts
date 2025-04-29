@@ -1,5 +1,6 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { IUser } from './User';
+import mongoose, { Schema, Document } from "mongoose";
+
+import { IUser } from "./User";
 
 export interface IAttachment {
   url: string;
@@ -10,9 +11,9 @@ export interface IAttachment {
 }
 
 export interface IDebt extends Document {
-  userId: IUser['_id'];
+  userId: IUser["_id"];
   name: string;
-  debtType: 'บัตรเครดิต' | 'สินเชื่อ' | string;
+  debtType: "บัตรเครดิต" | "สินเชื่อ" | string;
   totalAmount: number;
   remainingAmount: number;
   interestRate: number;
@@ -29,65 +30,68 @@ export interface IDebt extends Document {
 
 const DebtSchema: Schema = new Schema(
   {
-    userId: { 
-      type: Schema.Types.ObjectId, 
-      ref: 'User', 
-      required: true 
-    },
-    name: { 
-      type: String, 
-      required: true 
-    },
-    debtType: { 
-      type: String, 
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
-      enum: ['บัตรเครดิต', 'สินเชื่อ', 'อื่นๆ']
     },
-    totalAmount: { 
-      type: Number, 
-      required: true 
+    name: {
+      type: String,
+      required: true,
     },
-    remainingAmount: { 
-      type: Number, 
-      required: true 
+    debtType: {
+      type: String,
+      required: true,
+      enum: ["บัตรเครดิต", "สินเชื่อ", "อื่นๆ"],
     },
-    interestRate: { 
-      type: Number, 
-      required: true 
+    totalAmount: {
+      type: Number,
+      required: true,
     },
-    paymentDueDay: { 
-      type: Number, 
+    remainingAmount: {
+      type: Number,
+      required: true,
+    },
+    interestRate: {
+      type: Number,
+      required: true,
+    },
+    paymentDueDay: {
+      type: Number,
       required: true,
       min: 1,
-      max: 31
+      max: 31,
     },
-    minimumPayment: { 
-      type: Number 
+    minimumPayment: {
+      type: Number,
     },
-    startDate: { 
-      type: Date 
+    startDate: {
+      type: Date,
     },
-    estimatedPayoffDate: { 
-      type: Date 
+    estimatedPayoffDate: {
+      type: Date,
     },
-    notes: { 
-      type: String 
+    notes: {
+      type: String,
     },
-    attachments: [{
-      url: { type: String, required: true },
-      name: { type: String, required: true },
-      size: { type: Number, required: true },
-      type: { type: String, required: true },
-      uploadedAt: { type: Date, default: Date.now }
-    }],
-    isActive: { 
-      type: Boolean, 
-      default: true 
-    }
+    attachments: [
+      {
+        url: { type: String, required: true },
+        name: { type: String, required: true },
+        size: { type: Number, required: true },
+        type: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  { 
-    timestamps: true 
-  }
+  {
+    timestamps: true,
+  },
 );
 
-export default mongoose.models.Debt || mongoose.model<IDebt>('Debt', DebtSchema);
+export default mongoose.models.Debt ||
+  mongoose.model<IDebt>("Debt", DebtSchema);

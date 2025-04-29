@@ -6,7 +6,7 @@ export interface LocalDebtItem {
   id: string;
   name: string;
   debtType: string;
-  paymentType: 'installment' | 'revolving';
+  paymentType: "installment" | "revolving";
   totalAmount: string;
   minimumPayment: string;
   interestRate: string;
@@ -23,19 +23,19 @@ export interface LocalDebtItem {
   deletedAt?: string;
 }
 
-const LOCAL_STORAGE_DEBTS_KEY = 'pordee-guest-debts';
+const LOCAL_STORAGE_DEBTS_KEY = "pordee-guest-debts";
 
 /**
  * Get all debts from localStorage
  */
 export function getLocalDebts(): LocalDebtItem[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
 
   try {
     const storedDebts = localStorage.getItem(LOCAL_STORAGE_DEBTS_KEY);
+
     return storedDebts ? JSON.parse(storedDebts) : [];
   } catch (error) {
-    console.error('Error retrieving debts from localStorage:', error);
     return [];
   }
 }
@@ -44,7 +44,7 @@ export function getLocalDebts(): LocalDebtItem[] {
  * Save a new debt to localStorage
  */
 export function saveLocalDebt(
-  debt: Omit<LocalDebtItem, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>
+  debt: Omit<LocalDebtItem, "id" | "createdAt" | "updatedAt" | "deletedAt">,
 ): LocalDebtItem {
   const debts = getLocalDebts();
 
@@ -54,19 +54,25 @@ export function saveLocalDebt(
     id: `local-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     createdAt: now,
     updatedAt: now,
-    deletedAt: ""
+    deletedAt: "",
   };
 
-  localStorage.setItem(LOCAL_STORAGE_DEBTS_KEY, JSON.stringify([newDebt, ...debts]));
+  localStorage.setItem(
+    LOCAL_STORAGE_DEBTS_KEY,
+    JSON.stringify([newDebt, ...debts]),
+  );
+
   return newDebt;
 }
 
 /**
  * Update an existing debt in localStorage
  */
-export function updateLocalDebt(updatedDebt: LocalDebtItem): LocalDebtItem | null {
+export function updateLocalDebt(
+  updatedDebt: LocalDebtItem,
+): LocalDebtItem | null {
   const debts = getLocalDebts();
-  const index = debts.findIndex(debt => debt.id === updatedDebt.id);
+  const index = debts.findIndex((debt) => debt.id === updatedDebt.id);
 
   if (index === -1) return null;
 
@@ -74,11 +80,12 @@ export function updateLocalDebt(updatedDebt: LocalDebtItem): LocalDebtItem | nul
   const newDebt = {
     ...updatedDebt,
     updatedAt: now,
-    deletedAt: ""
+    deletedAt: "",
   };
 
   debts[index] = newDebt;
   localStorage.setItem(LOCAL_STORAGE_DEBTS_KEY, JSON.stringify(debts));
+
   return newDebt;
 }
 
@@ -87,11 +94,12 @@ export function updateLocalDebt(updatedDebt: LocalDebtItem): LocalDebtItem | nul
  */
 export function deleteLocalDebt(id: string): boolean {
   const debts = getLocalDebts();
-  const filteredDebts = debts.filter(debt => debt.id !== id);
+  const filteredDebts = debts.filter((debt) => debt.id !== id);
 
   if (filteredDebts.length === debts.length) return false;
 
   localStorage.setItem(LOCAL_STORAGE_DEBTS_KEY, JSON.stringify(filteredDebts));
+
   return true;
 }
 

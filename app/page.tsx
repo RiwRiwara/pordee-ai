@@ -2,25 +2,24 @@
 
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import { useGuest } from "@/context/GuestContext";
 import { useAuth } from "@/context/AuthContext";
-import { useCustomToast } from '@/components/ui/ToastNotification';
-import { useEffect } from "react";
+import { useCustomToast } from "@/components/ui/ToastNotification";
 
 export default function Home() {
   const router = useRouter();
   const { enterGuestMode } = useGuest();
   const { showNotification } = useCustomToast();
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   // Redirect authenticated users to dashboard
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [isAuthenticated, isLoading, router]);
-
-
 
   return (
     <section className="flex min-h-[85vh] flex-col items-center justify-center gap-8 py-8 md:py-10">
@@ -47,16 +46,16 @@ export default function Home() {
 
       <div className="flex w-full max-w-xs flex-col gap-4">
         <Button
+          className="w-full"
           color="primary"
           size="lg"
-          className="w-full"
           onPress={() => {
             enterGuestMode();
             showNotification(
               "เข้าสู่โหมดผู้เยี่ยมชม",
               "คุณสามารถใช้งานแอปได้โดยไม่ต้องลงทะเบียน",
               "solid",
-              "success"
+              "success",
             );
 
             router.push("/dashboard");
@@ -66,16 +65,16 @@ export default function Home() {
         </Button>
 
         <div className="flex items-center justify-center gap-3">
-          <div className="h-px flex-1 bg-gray-300"></div>
+          <div className="h-px flex-1 bg-gray-300" />
           <span className="text-sm text-gray-500">มีบัญชีอยู่แล้ว ?</span>
-          <div className="h-px flex-1 bg-gray-300"></div>
+          <div className="h-px flex-1 bg-gray-300" />
         </div>
 
         <Button
-          color="warning"
-          variant="flat"
-          size="lg"
           className="w-full bg-[#FFBC34] text-white"
+          color="warning"
+          size="lg"
+          variant="flat"
           onPress={() => router.push("/auth/login")}
         >
           เข้าสู่ระบบ

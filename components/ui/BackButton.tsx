@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@heroui/button';
+import React from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@heroui/button";
 
 interface BackButtonProps {
   href?: string;
@@ -10,7 +10,7 @@ interface BackButtonProps {
   className?: string;
 }
 
-const BackButton = ({ href, label, className = '' }: BackButtonProps) => {
+const BackButton = ({ href, label, className = "" }: BackButtonProps) => {
   const router = useRouter();
 
   const handleBack = () => {
@@ -23,22 +23,22 @@ const BackButton = ({ href, label, className = '' }: BackButtonProps) => {
 
   return (
     <Button
+      aria-label="Go back"
+      className={`${className} flex items-center justify-center`}
       isIconOnly={!label}
       variant="light"
-      className={`${className} flex items-center justify-center`}
       onPress={handleBack}
-      aria-label="Go back"
     >
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        viewBox="0 0 24 24" 
-        fill="currentColor" 
+      <svg
         className="h-5 w-5"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <path 
-          fillRule="evenodd" 
-          d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" 
-          clipRule="evenodd" 
+        <path
+          clipRule="evenodd"
+          d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z"
+          fillRule="evenodd"
         />
       </svg>
       {label && <span className="ml-1">{label}</span>}

@@ -1,28 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
-import Debt from '@/models/Debt';
-import { authOptions } from '../auth/[...nextauth]/route';
-import { getServerSession } from 'next-auth';
-import { IAttachment } from '@/models/Debt';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "../auth/[...nextauth]/options";
+
+import connectToDatabase from "@/lib/mongodb";
+import Debt from "@/models/Debt";
+import { IAttachment } from "@/models/Debt";
 
 // Get all debts for the authenticated user
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session || !session.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectToDatabase();
 
-    const debts = await Debt.find({ userId: session.user.id }).sort({ createdAt: -1 });
+    const debts = await Debt.find({ userId: session.user.id }).sort({
+      createdAt: -1,
+    });
 
     return NextResponse.json({ debts });
   } catch (error) {
-    console.error('Error fetching debts:', error);
+    console.error("Error fetching debts:", error);
+
     return NextResponse.json(
-      { error: 'Failed to fetch debts' },
-      { status: 500 }
+      { error: "Failed to fetch debts" },
+      { status: 500 },
     );
   }
 }
@@ -31,8 +37,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session || !session.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectToDatabase();
@@ -49,22 +56,31 @@ export async function POST(request: NextRequest) {
       startDate,
       estimatedPayoffDate,
       notes,
-      attachments
+      attachments,
     } = body;
 
     // Validate required fields
-    if (!name || !debtType || !totalAmount || !remainingAmount || !interestRate || !paymentDueDay) {
+    if (
+      !name ||
+      !debtType ||
+      !totalAmount ||
+      !remainingAmount ||
+      !interestRate ||
+      !paymentDueDay
+    ) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
+        { error: "Missing required fields" },
+        { status: 400 },
       );
     }
 
     // Format attachments with uploadedAt date if present
-    const formattedAttachments = attachments ? attachments.map((attachment: IAttachment) => ({
-      ...attachment,
-      uploadedAt: new Date()
-    })) : undefined;
+    const formattedAttachments = attachments
+      ? attachments.map((attachment: IAttachment) => ({
+          ...attachment,
+          uploadedAt: new Date(),
+        }))
+      : undefined;
 
     // Create new debt
     const newDebt = await Debt.create({
@@ -80,19 +96,22 @@ export async function POST(request: NextRequest) {
       estimatedPayoffDate,
       notes,
       attachments: formattedAttachments,
-      isActive: true
+      isActive: true,
     });
 
-    return NextResponse.json({
-      message: 'Debt created successfully',
-      debt: newDebt
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Error creating debt:', error);
     return NextResponse.json(
-      { error: 'Failed to create debt' },
-      { status: 500 }
+      {
+        message: "Debt created successfully",
+        debt: newDebt,
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Error creating debt:", error);
+
+    return NextResponse.json(
+      { error: "Failed to create debt" },
+      { status: 500 },
     );
   }
 }

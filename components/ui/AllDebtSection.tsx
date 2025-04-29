@@ -1,10 +1,10 @@
-import React from 'react'
-import { Button } from '@heroui/button';
+import React from "react";
+import { Button } from "@heroui/button";
 
 interface DebtItem {
   _id: string;
   name: string;
-  debtType: 'revolving' | 'installment';
+  debtType: "revolving" | "installment";
   totalAmount: number;
   remainingAmount: number;
   interestRate: number;
@@ -24,12 +24,15 @@ interface AllDebtSectionProps {
   onAddDebt: () => void;
 }
 
-export default function AllDebtSection({ debts = [], onAddDebt }: AllDebtSectionProps) {
+export default function AllDebtSection({
+  debts = [],
+  onAddDebt,
+}: AllDebtSectionProps) {
   // Format with commas for display
   const formatNumber = (num: number) => {
-    return num.toLocaleString('th-TH', {
+    return num.toLocaleString("th-TH", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   };
 
@@ -44,38 +47,51 @@ export default function AllDebtSection({ debts = [], onAddDebt }: AllDebtSection
             เพิ่มหนี้
           </Button>
         </div>
-        <p className="text-gray-500 text-center py-6">ไม่พบรายการหนี้ กรุณาเพิ่มหนี้เพื่อวางแผน</p>
+        <p className="text-gray-500 text-center py-6">
+          ไม่พบรายการหนี้ กรุณาเพิ่มหนี้เพื่อวางแผน
+        </p>
       </div>
     );
   }
 
-  const revolving = debts.filter(debt => debt.debtType === 'revolving');
-  const installment = debts.filter(debt => debt.debtType === 'installment');
+  const revolving = debts.filter((debt) => debt.debtType === "revolving");
+  const installment = debts.filter((debt) => debt.debtType === "installment");
 
   return (
     <div>
       <div className="mb-4 px-4">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">หนี้หมุนเวียน (Revolving Debt)</h2>
-          {revolving.map(debt => (
-            <div key={debt._id} className="mb-3 rounded-lg bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-lg font-semibold">
+            หนี้หมุนเวียน (Revolving Debt)
+          </h2>
+          {revolving.map((debt) => (
+            <div
+              key={debt._id}
+              className="mb-3 rounded-lg bg-white p-4 shadow-sm"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-medium">{debt.name}</h3>
                   <div className="flex items-center">
                     <span className="text-sm text-gray-500">วันที่ชำระ:</span>
-                    <span className="ml-1 text-sm font-medium">{debt.paymentDueDay} ทุกเดือน</span>
+                    <span className="ml-1 text-sm font-medium">
+                      {debt.paymentDueDay} ทุกเดือน
+                    </span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold">{formatNumber(debt.remainingAmount)} THB</p>
+                  <p className="text-lg font-bold">
+                    {formatNumber(debt.remainingAmount)} THB
+                  </p>
                 </div>
               </div>
 
               <div className="mt-2 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">ขั้นต่ำต่อเดือน:</p>
-                  <p className="font-medium">{formatNumber(debt.minimumPayment || 0)} THB</p>
+                  <p className="font-medium">
+                    {formatNumber(debt.minimumPayment || 0)} THB
+                  </p>
                 </div>
                 <div className="flex h-8 items-center justify-center rounded-md bg-blue-500 px-3 text-white">
                   <p className="text-sm font-bold">{debt.interestRate}%</p>
@@ -89,26 +105,37 @@ export default function AllDebtSection({ debts = [], onAddDebt }: AllDebtSection
       {/* Installment Debt Section */}
       <div className="mb-6 px-4">
         <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">หนี้ส่งผ่อน (Installment Debt)</h2>
-          {installment.map(debt => (
-            <div key={debt._id} className="mb-3 rounded-lg bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-lg font-semibold">
+            หนี้ส่งผ่อน (Installment Debt)
+          </h2>
+          {installment.map((debt) => (
+            <div
+              key={debt._id}
+              className="mb-3 rounded-lg bg-white p-4 shadow-sm"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-medium">{debt.name}</h3>
                   <div className="flex items-center">
                     <span className="text-sm text-gray-500">วันที่ชำระ:</span>
-                    <span className="ml-1 text-sm font-medium">{debt.paymentDueDay} ทุกเดือน</span>
+                    <span className="ml-1 text-sm font-medium">
+                      {debt.paymentDueDay} ทุกเดือน
+                    </span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold">{formatNumber(debt.remainingAmount)} THB</p>
+                  <p className="text-lg font-bold">
+                    {formatNumber(debt.remainingAmount)} THB
+                  </p>
                 </div>
               </div>
 
               <div className="mt-2 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">ค่าผ่อนต่อเดือน:</p>
-                  <p className="font-medium">{formatNumber(debt.minimumPayment || 0)} THB</p>
+                  <p className="font-medium">
+                    {formatNumber(debt.minimumPayment || 0)} THB
+                  </p>
                 </div>
                 <div className="flex h-8 items-center justify-center rounded-md bg-green-500 px-3 text-white">
                   <p className="text-sm font-bold">{debt.interestRate}%</p>
@@ -119,13 +146,13 @@ export default function AllDebtSection({ debts = [], onAddDebt }: AllDebtSection
         </div>
         {/* Add Debt Button */}
         <Button
-          variant="flat"
           className="mt-2 w-full border border-dashed border-gray-300 py-3 text-gray-500"
+          variant="flat"
           onPress={onAddDebt}
         >
           + เพิ่มรายการหนี้
         </Button>
       </div>
     </div>
-  )
+  );
 }

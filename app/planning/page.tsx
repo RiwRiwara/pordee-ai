@@ -1,7 +1,5 @@
-import React from 'react'
+import React from "react";
 
 export default function Planning() {
-    return (
-        <div>Planning</div>
-    )
+  return <div>Planning</div>;
 }

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IUser extends Document {
   username: string;
@@ -7,8 +7,8 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   profileImageUrl?: string;
-  languagePreference: 'th' | 'en';
-  role: 'user' | 'admin';
+  languagePreference: "th" | "en";
+  role: "user" | "admin";
   isActive: boolean;
   lastLogin?: Date;
   context?: string; // AI context storage
@@ -24,31 +24,32 @@ const UserSchema: Schema = new Schema(
     firstName: { type: String },
     lastName: { type: String },
     profileImageUrl: { type: String },
-    languagePreference: { 
-      type: String, 
-      enum: ['th', 'en'], 
-      default: 'th' 
+    languagePreference: {
+      type: String,
+      enum: ["th", "en"],
+      default: "th",
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user'
+      enum: ["user", "admin"],
+      default: "user",
     },
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
     },
     context: {
       type: String,
-      default: ''
+      default: "",
     },
     lastLogin: {
-      type: Date
+      type: Date,
     },
   },
-  { 
-    timestamps: true 
-  }
+  {
+    timestamps: true,
+  },
 );
 
-export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+export default mongoose.models.User ||
+  mongoose.model<IUser>("User", UserSchema);

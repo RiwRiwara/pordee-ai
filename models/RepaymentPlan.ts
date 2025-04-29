@@ -1,8 +1,9 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { IUser } from './User';
+import mongoose, { Schema, Document } from "mongoose";
+
+import { IUser } from "./User";
 
 export interface IRepaymentPlan extends Document {
-  userId: IUser['_id'];
+  userId: IUser["_id"];
   name: string;
   description: string;
   details: string;
@@ -13,33 +14,33 @@ export interface IRepaymentPlan extends Document {
 
 const RepaymentPlanSchema: Schema = new Schema(
   {
-    userId: { 
-      type: Schema.Types.ObjectId, 
-      ref: 'User', 
-      required: true 
-    },
-    name: { 
-      type: String, 
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
-      enum: ['Snowball', 'Avalanche', 'MVRP']
     },
-    description: { 
+    name: {
       type: String,
-      required: true
+      required: true,
+      enum: ["Snowball", "Avalanche", "MVRP"],
     },
-    details: { 
+    description: {
       type: String,
-      required: true
+      required: true,
     },
-    isActive: { 
-      type: Boolean, 
-      default: false 
-    }
+    details: {
+      type: String,
+      required: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { 
-    timestamps: true 
-  }
+  {
+    timestamps: true,
+  },
 );
 
-export default mongoose.models.RepaymentPlan || 
-  mongoose.model<IRepaymentPlan>('RepaymentPlan', RepaymentPlanSchema);
+export default mongoose.models.RepaymentPlan ||
+  mongoose.model<IRepaymentPlan>("RepaymentPlan", RepaymentPlanSchema);

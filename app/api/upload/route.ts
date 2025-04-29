@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { uploadToBlob } from '@/lib/blob';
-import { withRoleAuth } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+
+import { uploadToBlob } from "@/lib/blob";
 
 export const maxDuration = 30; // Extend timeout for file uploads
 
@@ -12,13 +12,10 @@ export async function POST(req: NextRequest) {
   try {
     // Parse the multipart/form-data
     const formData = await req.formData();
-    const files = formData.getAll('files') as File[];
-    
+    const files = formData.getAll("files") as File[];
+
     if (!files || files.length === 0) {
-      return NextResponse.json(
-        { error: 'No files provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
     // Process each file
@@ -28,30 +25,31 @@ export async function POST(req: NextRequest) {
       }
 
       // Sanitize filename
-      const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      
+      const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
       // Upload to Vercel Blob
       const url = await uploadToBlob(originalName, file);
-      
+
       return {
         name: originalName,
         url,
         size: file.size,
-        type: file.type
+        type: file.type,
       };
     });
 
     // Wait for all uploads to complete
     const uploadedFiles = await Promise.all(uploadPromises);
-    const validFiles = uploadedFiles.filter(file => file !== null);
+    const validFiles = uploadedFiles.filter((file) => file !== null);
 
     // Return file URLs
     return NextResponse.json({ files: validFiles });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error("Upload error:", error);
+
     return NextResponse.json(
-      { error: 'Failed to upload files' },
-      { status: 500 }
+      { error: "Failed to upload files" },
+      { status: 500 },
     );
   }
 }
