@@ -12,6 +12,8 @@ export interface LocalDebtItem {
   interestRate: string;
   dueDate: string;
   paymentStatus: string;
+  currentInstallment?: string; // งวดที่จ่าย
+  totalInstallments?: string; // งวดทั้งหมด
   attachments?: Array<{
     url: string;
     name: string;

@@ -8,6 +8,8 @@ export interface DebtFormData {
   interestRate: string;
   dueDate: string;
   paymentStatus: string;
+  currentInstallment?: string; // งวดที่จ่าย
+  totalInstallments?: string; // งวดทั้งหมด
 }
 
 export interface FileData {

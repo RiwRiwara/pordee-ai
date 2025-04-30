@@ -1,7 +1,6 @@
 "use client";
 
 import type { DebtContext } from "@/lib/aiService";
-
 import React, { useState, useEffect } from "react";
 
 import { useAuth } from "@/context/AuthContext";

@@ -125,11 +125,40 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
       interestRate: "",
       dueDate: "",
       paymentStatus: "normal",
+      currentInstallment: "",
+      totalInstallments: "",
     },
     mode: "onChange",
   });
 
   const paymentType = watch("paymentType");
+  const formValues = watch();
+  const allFieldsValid = useRef(false);
+  
+  // Check if all required fields are filled
+  useEffect(() => {
+    const requiredFields = [
+      'debtName', 
+      'debtType', 
+      'totalAmount', 
+      'minimumPayment', 
+      'dueDate', 
+      'paymentStatus'
+    ];
+    
+    // Add installment-specific fields if installment type is selected
+    if (formValues.paymentType === 'installment') {
+      requiredFields.push('currentInstallment', 'totalInstallments');
+    }
+    
+    // Check if all required fields have values
+    const allFilled = requiredFields.every(field => 
+      formValues[field as keyof DebtFormData] && 
+      formValues[field as keyof DebtFormData] !== ''
+    );
+    
+    allFieldsValid.current = allFilled;
+  }, [formValues]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -264,9 +293,25 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
 
       setUploadedFiles((prev) => updateFilesWithResults(prev));
 
+      // Automatically apply OCR data once detected
+      if (ocrData && Object.keys(ocrData).length > 0) {
+        Object.entries(ocrData).forEach(([key, value]) => {
+          if (value) {
+            setValue(key as keyof DebtFormData, value);
+          }
+        });
+        
+        // Mark file as accepted
+        setUploadedFiles((prev) =>
+          prev.map((f) =>
+            f.name === file.name ? { ...f, isOcrAccepted: true } : f,
+          ),
+        );
+      }
+
       showNotification(
         "OCR สำเร็จ",
-        `วิเคราะห์ข้อมูลจาก ${file.name} สำเร็จ`,
+        `วิเคราะห์ข้อมูลจาก ${file.name} สำเร็จและกรอกข้อมูลอัตโนมัติแล้ว`,
         "solid",
         "success",
       );
@@ -359,6 +404,8 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
           interestRate: data.interestRate,
           dueDate: data.dueDate,
           paymentStatus: data.paymentStatus,
+          currentInstallment: data.currentInstallment,
+          totalInstallments: data.totalInstallments,
         });
       }
 
@@ -472,7 +519,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                     className="block text-sm font-medium text-gray-700 mb-1"
                     htmlFor="paymentType"
                   >
-                    รูปแบบการชำระ <span className="text-red-500">*</span>
+                    ประเภทการชำระ <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-col gap-2">
                     <Controller
@@ -498,13 +545,80 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                               type="radio"
                               onChange={() => field.onChange("installment")}
                             />
-                            <span className="ml-2">ผ่อนชำระ</span>
+                            <span className="ml-2">ผ่อนชำระรายงวด</span>
                           </label>
                         </div>
                       )}
                     />
                   </div>
                 </div>
+                
+                {/* Installment details section - only shown when installment is selected */}
+                {paymentType === "installment" && (
+                  <div className="border-2 border-green-500 rounded-lg p-4 bg-green-50">
+                    <div className="text-sm font-medium text-gray-700 mb-3">
+                      รายละเอียดการผ่อนชำระรายงวด
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                          htmlFor="currentInstallment"
+                        >
+                          งวดที่จ่าย <span className="text-red-500">*</span>
+                        </label>
+                        <Controller
+                          control={control}
+                          name="currentInstallment"
+                          render={({ field }) => (
+                            <input
+                              {...field}
+                              className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
+                              id="currentInstallment"
+                              placeholder="งวดปัจจุบัน เช่น 3"
+                              type="number"
+                              min="1"
+                            />
+                          )}
+                          rules={{ required: paymentType === "installment" }}
+                        />
+                        {errors.currentInstallment && (
+                          <p className="text-red-500 text-xs mt-1">
+                            กรุณาระบุงวดที่จ่าย
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                          htmlFor="totalInstallments"
+                        >
+                          งวดทั้งหมด <span className="text-red-500">*</span>
+                        </label>
+                        <Controller
+                          control={control}
+                          name="totalInstallments"
+                          render={({ field }) => (
+                            <input
+                              {...field}
+                              className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
+                              id="totalInstallments"
+                              placeholder="จำนวนงวดทั้งหมด เช่น 12"
+                              type="number"
+                              min="1"
+                            />
+                          )}
+                          rules={{ required: paymentType === "installment" }}
+                        />
+                        {errors.totalInstallments && (
+                          <p className="text-red-500 text-xs mt-1">
+                            กรุณาระบุจำนวนงวดทั้งหมด
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -676,10 +790,11 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
             </Button>
             <Button
               color="primary"
-              disabled={!isValid || isSubmitting}
+              disabled={!isValid || isSubmitting || !allFieldsValid.current}
               form="debt-form"
               isLoading={isSubmitting}
               startContent={<FiSave />}
+              className={!isValid || !allFieldsValid.current ? "opacity-50" : ""}
               type="submit"
             >
               บันทึกรายการหนี้
