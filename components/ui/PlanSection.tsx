@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@heroui/button";
 import { Radio, RadioGroup } from "@heroui/radio";
-import { Drawer, DrawerContent, DrawerHeader } from "@heroui/drawer";
+import { Modal, ModalContent, ModalHeader } from "@heroui/modal";
 
 import { useCustomToast } from "./ToastNotification";
 
@@ -46,12 +46,12 @@ export default function PlanSection({
   selectedPlan,
   onPlanChange,
 }: PlanSectionProps) {
-  const [isPlanDrawerOpen, setIsPlanDrawerOpen] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const { showNotification } = useCustomToast();
 
   const handleSelectPlan = (plan: "quick" | "save" | "balanced" | null) => {
     onPlanChange(plan);
-    setIsPlanDrawerOpen(false);
+    setIsPlanModalOpen(false);
   };
 
   const handleSave = () => {
@@ -62,11 +62,11 @@ export default function PlanSection({
       "success",
     );
 
-    setIsPlanDrawerOpen(false);
+    setIsPlanModalOpen(false);
   };
 
   const handleCancel = () => {
-    setIsPlanDrawerOpen(false);
+    setIsPlanModalOpen(false);
   };
 
   const getSelectedPlanDetails = () => {
@@ -87,7 +87,7 @@ export default function PlanSection({
             color="primary"
             size="sm"
             variant="light"
-            onPress={() => setIsPlanDrawerOpen(true)}
+            onPress={() => setIsPlanModalOpen(true)}
           >
             เปลี่ยน
           </Button>
@@ -140,43 +140,27 @@ export default function PlanSection({
         )}
       </div>
 
-      {/* Plan Selection Drawer */}
-      <Drawer
+      {/* Plan Selection Modal */}
+      <Modal
         aria-label="เลือกเป้าหมายของคุณ"
-        className="rounded-t-xl"
-        isOpen={isPlanDrawerOpen}
-        placement="bottom"
+        isOpen={isPlanModalOpen}
         onClose={handleCancel}
+        placement="center"
+        size="md"
+        classNames={{
+          backdrop: "bg-[rgba(0,0,0,0.5)]",
+          base: "mx-auto"
+        }}
       >
-        <DrawerContent className="rounded-t-xl max-h-[90vh]">
-          <DrawerHeader className="border-b border-gray-200 px-4 py-3">
+        <ModalContent className="max-h-[80vh] rounded-lg overflow-hidden">
+          <ModalHeader className="border-b border-gray-200 px-5 py-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">เลือกเป้าหมายของคุณ</h2>
-              <Button
-                isIconOnly
-                aria-label="ปิด"
-                variant="light"
-                onPress={handleCancel}
-              >
-                <svg
-                  fill="none"
-                  height="24"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  width="24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <line x1="18" x2="6" y1="6" y2="18" />
-                  <line x1="6" x2="18" y1="6" y2="18" />
-                </svg>
-              </Button>
+   
             </div>
-          </DrawerHeader>
+          </ModalHeader>
 
-          <div className="px-4 py-3">
+          <div className="px-5 py-4 overflow-y-auto">
             <RadioGroup
               className="space-y-4"
               value={selectedPlan !== null ? selectedPlan : ""}
@@ -192,7 +176,12 @@ export default function PlanSection({
               {plans.map((plan) => (
                 <Radio
                   key={plan.id}
-                  className="p-4 border rounded-xl"
+                  className="p-4 border rounded-xl hover:border-primary-200 transition-colors"
+                  classNames={{
+                    base: "max-w-full",
+                    label: "font-medium",
+                    description: "text-gray-600 text-sm mt-1"
+                  }}
                   description={plan.description}
                   value={(plan.id as PlanType) || "quick"}
                 >
@@ -202,16 +191,25 @@ export default function PlanSection({
             </RadioGroup>
           </div>
 
-          <div className="mt-6 flex justify-end space-x-2">
-            <Button color="default" onPress={handleCancel}>
+          <div className="px-5 py-4 border-t border-gray-200 flex justify-end space-x-3 mt-2">
+            <Button 
+              className="px-4" 
+              color="default" 
+              variant="light" 
+              onPress={handleCancel}
+            >
               ยกเลิก
             </Button>
-            <Button color="primary" onPress={handleSave}>
+            <Button 
+              className="px-5 font-medium shadow-sm" 
+              color="primary" 
+              onPress={handleSave}
+            >
               บันทึก
             </Button>
           </div>
-        </DrawerContent>
-      </Drawer>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

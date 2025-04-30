@@ -8,7 +8,6 @@ import {
 } from "@heroui/modal";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
-import { Select, SelectItem } from "@heroui/select";
 import { Textarea } from "@heroui/input";
 import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -56,7 +55,6 @@ export default function DebtModal({
     },
   });
 
-  // Reset form when modal opens with debt data
   useEffect(() => {
     if (isOpen && selectedDebt) {
       reset({
@@ -77,7 +75,6 @@ export default function DebtModal({
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      // Ensure all required fields are present and properly formatted
       const formattedData = {
         name: data.name,
         debtType: data.debtType,
@@ -134,15 +131,21 @@ export default function DebtModal({
       scrollBehavior="inside"
       size="lg"
       onClose={onClose}
+      isDismissable={false}
+      isKeyboardDismissDisabled={true}
+      // Add ARIA attributes for modal accessibility
+      aria-labelledby="debt-modal-title"
+      aria-describedby="debt-modal-body"
     >
       <ModalContent>
         <ModalHeader className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">
+          {/* Add id to link with aria-labelledby */}
+          <h2 id="debt-modal-title" className="text-xl font-semibold text-gray-800">
             {selectedDebt ? "แก้ไขรายการหนี้" : "เพิ่มรายการหนี้"}
           </h2>
         </ModalHeader>
 
-        <ModalBody className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+        <ModalBody id="debt-modal-body" className="px-6 py-4 max-h-[70vh] overflow-y-auto">
           <form className="space-y-6" id="debt-form">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Debt Name */}
@@ -163,6 +166,7 @@ export default function DebtModal({
                       id="name"
                       isInvalid={!!errors.name}
                       placeholder="เช่น บัตรเครดิต SCB, สินเชื่อบ้าน"
+                      aria-label="ชื่อหนี้"
                     />
                   )}
                   rules={{ required: "กรุณาระบุชื่อหนี้" }}
@@ -174,6 +178,8 @@ export default function DebtModal({
                 <label
                   className="block text-sm font-medium text-gray-700"
                   htmlFor="debtType"
+                  aria-label="ประเภทหนี้"
+                  id="debtType-label"
                 >
                   ประเภทหนี้ <span className="text-red-500">*</span>
                 </label>
@@ -181,17 +187,27 @@ export default function DebtModal({
                   control={control}
                   name="debtType"
                   render={({ field }) => (
-                    <Select
-                      {...field}
-                      errorMessage={errors.debtType?.message}
-                      id="debtType"
-                      isInvalid={!!errors.debtType}
-                      placeholder="เลือกประเภทหนี้"
-                    >
-                      <SelectItem key="บัตรเครดิต">บัตรเครดิต</SelectItem>
-                      <SelectItem key="สินเชื่อ">สินเชื่อ</SelectItem>
-                      <SelectItem key="อื่นๆ">อื่นๆ</SelectItem>
-                    </Select>
+                    <div className="relative">
+                      <select
+                        {...field}
+                        id="debtType"
+                        aria-labelledby="debtType-label"
+                        className={`block w-full px-3 py-2 border ${errors.debtType ? "border-red-500" : "border-gray-300"
+                          } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      >
+                        <option value="" disabled>
+                          เลือกประเภทหนี้
+                        </option>
+                        <option value="บัตรเครดิต">บัตรเครดิต</option>
+                        <option value="สินเชื่อ">สินเชื่อ</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                      </select>
+                      {errors.debtType && (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.debtType.message}
+                        </p>
+                      )}
+                    </div>
                   )}
                   rules={{ required: "กรุณาเลือกประเภทหนี้" }}
                 />
@@ -216,6 +232,7 @@ export default function DebtModal({
                       isInvalid={!!errors.totalAmount}
                       placeholder="0.00"
                       type="text"
+                      aria-label="วงเงินทั้งหมด"
                     />
                   )}
                   rules={{
@@ -247,6 +264,7 @@ export default function DebtModal({
                       isInvalid={!!errors.remainingAmount}
                       placeholder="0.00"
                       type="text"
+                      aria-label="ยอดคงเหลือ"
                     />
                   )}
                   rules={{
@@ -278,6 +296,7 @@ export default function DebtModal({
                       isInvalid={!!errors.interestRate}
                       placeholder="0.00"
                       type="text"
+                      aria-label="อัตราดอกเบี้ย"
                     />
                   )}
                   rules={{
@@ -309,6 +328,7 @@ export default function DebtModal({
                       isInvalid={!!errors.minimumPayment}
                       placeholder="0.00"
                       type="text"
+                      aria-label="ค่างวดต่อเดือน"
                     />
                   )}
                   rules={{
@@ -327,8 +347,7 @@ export default function DebtModal({
                   className="block text-sm font-medium text-gray-700"
                   htmlFor="paymentDueDay"
                 >
-                  วันที่ชำระ (ของทุกเดือน){" "}
-                  <span className="text-red-500">*</span>
+                  วันที่ชำระ (ของทุกเดือน) <span className="text-red-500">*</span>
                 </label>
                 <Controller
                   control={control}
@@ -343,6 +362,7 @@ export default function DebtModal({
                       min={1}
                       placeholder="15"
                       type="number"
+                      aria-label="วันที่ชำระของทุกเดือน"
                     />
                   )}
                   rules={{
@@ -381,6 +401,7 @@ export default function DebtModal({
                       id="startDate"
                       isInvalid={!!errors.startDate}
                       type="date"
+                      aria-label="วันที่เริ่มหนี้"
                     />
                   )}
                 />
@@ -404,6 +425,7 @@ export default function DebtModal({
                       id="estimatedPayoffDate"
                       isInvalid={!!errors.estimatedPayoffDate}
                       type="date"
+                      aria-label="วันที่คาดว่าจะชำระหนี้หมด"
                     />
                   )}
                 />
@@ -429,12 +451,11 @@ export default function DebtModal({
                     isInvalid={!!errors.notes}
                     placeholder="รายละเอียดเพิ่มเติมเกี่ยวกับหนี้รายการนี้"
                     rows={3}
+                    aria-label="หมายเหตุเกี่ยวกับหนี้"
                   />
                 )}
               />
             </div>
-
-            {/* End of form fields */}
           </form>
         </ModalBody>
 
@@ -443,10 +464,12 @@ export default function DebtModal({
             <Button
               color="danger"
               isDisabled={isDeleting || isSubmitting}
-              startContent={<FiTrash2 />}
+              startContent={<FiTrash2 aria-hidden="true" />}
               type="button"
               variant="flat"
               onPress={handleDelete}
+              // Add aria-label for accessibility
+              aria-label={isDeleting ? "กำลังลบรายการหนี้" : "ลบรายการหนี้"}
             >
               {isDeleting ? "กำลังลบ..." : "ลบรายการหนี้"}
             </Button>
@@ -457,6 +480,7 @@ export default function DebtModal({
               type="button"
               variant="flat"
               onPress={onClose}
+              aria-label="ยกเลิกการแก้ไขหนี้"
             >
               ยกเลิก
             </Button>
@@ -464,9 +488,10 @@ export default function DebtModal({
               color="primary"
               isDisabled={isSubmitting || isDeleting}
               isLoading={isSubmitting}
-              startContent={<FiSave />}
+              startContent={<FiSave aria-hidden="true" />}
               type="button"
               onPress={() => handleSubmit(onSubmit)()}
+              aria-label={isSubmitting ? "กำลังบันทึกหนี้" : "บันทึกหนี้"}
             >
               บันทึก
             </Button>

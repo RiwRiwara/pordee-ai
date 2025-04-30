@@ -176,12 +176,13 @@ export default function AllDebtSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-[#3776C1] rounded-full p-4 text-center items-center">
+      <hr className="border border-gray-200 my-2" />
+      <div className="bg-[#3776C1] rounded-full p-2 text-center items-center">
         <h2 className="text-lg font-semibold text-white">รายการหนี้ของฉัน</h2>
       </div>
 
       {/* Revolving Debt */}
-      <h2 className="mb-3 text-lg font-semibold">
+      <h2 className="mb-0 text-lg font-semibold text-[#3776C1]">
         หนี้หมุนเวียน (Revolving Debt)
       </h2>
       <div>
@@ -202,7 +203,7 @@ export default function AllDebtSection({
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold">
+                  <p className="text-lg font-bold text-[#3776C1]">
                     {formatNumber(debt.remainingAmount)} THB
                   </p>
                 </div>
@@ -211,7 +212,7 @@ export default function AllDebtSection({
               <div className="mt-2 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">ขั้นต่ำต่อเดือน:</p>
-                  <p className="font-medium">
+                  <p className="font-medium text-yellow-600">
                     {formatNumber(debt.minimumPayment || 0)} THB
                   </p>
                 </div>
@@ -236,7 +237,7 @@ export default function AllDebtSection({
       </div>
 
       {/* Installment Debt Section */}
-      <h2 className="mb-3 text-lg font-semibold">
+      <h2 className="mb-0 mt-2 text-lg font-semibold text-[#3776C1]">
         หนี้ส่งผ่อน (Installment Debt)
       </h2>
       <div>
@@ -257,7 +258,7 @@ export default function AllDebtSection({
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold">
+                  <p className="text-lg font-bold text-[#3776C1]">
                     {formatNumber(debt.remainingAmount)} THB
                   </p>
                 </div>
@@ -266,7 +267,7 @@ export default function AllDebtSection({
               <div className="mt-2 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">ค่าผ่อนต่อเดือน:</p>
-                  <p className="font-medium">
+                  <p className="font-medium text-yellow-600">
                     {formatNumber(debt.minimumPayment || 0)} THB
                   </p>
                 </div>
@@ -323,7 +324,7 @@ export default function AllDebtSection({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">วงเงินทั้งหมด</p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg font-semibold text-[#3776C1]">
                     {formatNumber(selectedDebt.totalAmount || 0)} THB
                   </p>
                 </div>

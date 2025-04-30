@@ -217,7 +217,7 @@ export default function Dashboard() {
   return (
     <div className="pb-20">
       {/* Header */}
-      <div className="mb-6 bg-blue-500 px-4 py-6 text-white">
+      <div className="mb-6 bg-[#3776C1] px-4 py-6 text-white">
         <div className="mb-2 flex items-center">
           <BackButton className="text-white" href="/" />
           <h1 className="ml-2 text-xl font-bold">Debt Overview</h1>
