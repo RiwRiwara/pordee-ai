@@ -247,28 +247,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">โปรไฟล์ของฉัน</h1>
-        {!isEditing ? (
-          <Button
-            color="primary"
-            type="button"
-            variant="light"
-            onClick={() => setIsEditing(true)}
-          >
-            แก้ไขโปรไฟล์
-          </Button>
-        ) : (
-          <Button
-            color="danger"
-            type="button"
-            variant="light"
-            onClick={() => setIsEditing(false)}
-          >
-            ยกเลิก
-          </Button>
-        )}
+    <div className="mx-auto max-w-4xl px-4 py-8 bg-gray-50">
+      <div className="mb-6 rounded-xl bg-[#3776C1] p-4 text-white">
+        <h1 className="text-xl font-bold">โปรไฟล์</h1>
+        <p className="text-sm text-white/80">ข้อมูลส่วนตัวและการตั้งค่า</p>
       </div>
 
       {message.text && (
@@ -279,8 +261,9 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div className="rounded-xl bg-content1 p-6 shadow-sm">
-        <form onSubmit={handleSubmit}>
+      {/* User Profile Card */}
+      <div className="mb-6 rounded-xl bg-white p-6 shadow-sm">
+        <div className="flex flex-col items-center sm:flex-row sm:items-start">
           <input
             ref={fileInputRef}
             accept="image/jpeg,image/png,image/jpg"
@@ -288,8 +271,8 @@ export default function ProfilePage() {
             type="file"
             onChange={handleImageUpload}
           />
-
-          <div className="mb-6 flex flex-col items-center justify-center">
+          
+          <div className="mb-4 flex flex-col items-center sm:mb-0 sm:mr-6">
             <div
               className="relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100"
               role="button"
@@ -374,104 +357,120 @@ export default function ProfilePage() {
               คลิกเพื่ออัปโหลดรูปภาพใหม่
             </span>
           </div>
-
-          <div className="mb-8 grid gap-6 md:grid-cols-2">
-            <div>
-              <label
-                className="mb-2 block text-sm font-medium"
-                htmlFor="firstName"
+          
+          <div className="flex-1">
+            <h2 className="mb-2 text-lg font-bold">{profileData.firstName} {profileData.lastName}</h2>
+            <p className="text-sm text-gray-500">{profileData.email}</p>
+            
+            {!isEditing ? (
+              <Button
+                className="mt-3"
+                color="primary"
+                size="sm"
+                variant="light"
+                onClick={() => setIsEditing(true)}
               >
-                ชื่อจริง
-              </label>
-              <Input
-                className="w-full"
-                disabled={!isEditing}
-                id="firstName"
-                name="firstName"
-                value={profileData.firstName}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label
-                className="mb-2 block text-sm font-medium"
-                htmlFor="lastName"
-              >
-                นามสกุล
-              </label>
-              <Input
-                className="w-full"
-                disabled={!isEditing}
-                id="lastName"
-                name="lastName"
-                value={profileData.lastName}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium" htmlFor="email">
-                อีเมล
-              </label>
-              <Input
-                className="w-full"
-                disabled={true} // Email cannot be changed
-                id="email"
-                name="email"
-                type="email"
-                value={profileData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label
-                className="mb-2 block text-sm font-medium"
-                htmlFor="username"
-              >
-                ชื่อผู้ใช้
-              </label>
-              <Input
-                className="w-full"
-                disabled={true} // Username cannot be changed
-                id="username"
-                name="username"
-                value={profileData.username}
-                onChange={handleChange}
-              />
-            </div>
+                แก้ไขโปรไฟล์
+              </Button>
+            ) : null}
           </div>
-
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium" htmlFor="language">
-                ภาษา:{" "}
-                {profileData.languagePreference === "th" ? "ไทย" : "English"}
-              </label>
-              <Switch
-                aria-label="Language toggle"
-                disabled={!isEditing}
-                id="language"
-                isSelected={profileData.languagePreference === "en"}
-                name="language"
-                onValueChange={handleLanguageToggle}
-              />
+        </div>
+        
+        {isEditing && (
+          <form onSubmit={handleSubmit} className="mt-6 border-t pt-6">
+            <div className="mb-6 grid gap-6 md:grid-cols-2">
+              <div>
+                <label
+                  className="mb-2 block text-sm font-medium"
+                  htmlFor="firstName"
+                >
+                  ชื่อจริง
+                </label>
+                <Input
+                  className="w-full"
+                  id="firstName"
+                  name="firstName"
+                  value={profileData.firstName}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label
+                  className="mb-2 block text-sm font-medium"
+                  htmlFor="lastName"
+                >
+                  นามสกุล
+                </label>
+                <Input
+                  className="w-full"
+                  id="lastName"
+                  name="lastName"
+                  value={profileData.lastName}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label
+                  className="mb-2 block text-sm font-medium"
+                  htmlFor="username"
+                >
+                  ชื่อผู้ใช้
+                </label>
+                <Input
+                  className="w-full"
+                  id="username"
+                  name="username"
+                  value={profileData.username}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label
+                  className="mb-2 block text-sm font-medium"
+                  htmlFor="email"
+                >
+                  อีเมล
+                </label>
+                <Input
+                  className="w-full"
+                  disabled={true} // Email is always disabled
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={profileData.email}
+                />
+              </div>
             </div>
-          </div>
-
-          {isEditing && (
+            
             <div className="flex justify-end space-x-4">
               <Button
+                color="danger"
+                type="button"
+                variant="light"
+                onClick={() => setIsEditing(false)}
+              >
+                ยกเลิก
+              </Button>
+              <Button
                 color="primary"
-                disabled={isSaving}
                 isLoading={isSaving}
                 type="submit"
+                variant="solid"
               >
-                บันทึกข้อมูล
+                บันทึก
               </Button>
             </div>
-          )}
-        </form>
-        <ProfileSetting />
+          </form>
+        )}
       </div>
+      
+      {/* Settings Section */}
+      <ProfileSetting 
+        languagePreference={profileData.languagePreference}
+        notificationsEnabled={true}
+        onLanguageToggle={handleLanguageToggle}
+        onNotificationToggle={(checked) => console.log('Notification toggled:', checked)}
+      />
     </div>
   );
 }

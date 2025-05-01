@@ -1,14 +1,24 @@
 "use client";
 import BackButton from "@/components/ui/BackButton";
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Tabs, Tab } from "@heroui/tabs";
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import PlannerSummary from "@/components/ui/planner/PlannerSummary";
+import MyDebt from "@/components/ui/planner/MyDebt";
+import TipSection from "@/components/ui/planner/TipSection";
+import Calendar from "@/components/ui/planner/Calendar";
+import NewEarly from "@/components/ui/planner/NewEarly";
+import FloatingMessageButton from "@/components/ui/FloatingMessageButton";
+import ChatDialog from "@/components/ui/ChatDialog";
+import RemaingMonth from "@/components/ui/planner/RemaingMonth";
+import TodoMonth from "@/components/ui/planner/TodoMonth";
+import CompleteMonth from "@/components/ui/planner/CompleteMonth";
 export default function Planning() {
   const { isAuthenticated } = useAuth();
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
-  return <div className="pb-20">
+  return <div className="pb-20 bg-white relative">
     {/* Header */}
     <div className="mb-6 bg-[#3776C1] px-4 py-6 text-white">
       <div className="mb-2 flex items-center">
@@ -26,22 +36,41 @@ export default function Planning() {
     {/* tab */}
     <div className="w-full">
       <Tabs aria-label="Options" fullWidth={true}>
-        <Tab key="summary" title="ภาพรวม">
+        <Tab key="summary" title="ภาพรวม" className="flex flex-col gap-4">
           <Card>
             <PlannerSummary />
+          </Card>
+          <Card>
+            <MyDebt />
+          </Card>
+          <Card>
+            <TipSection />
+          </Card>
+          <Card>
+            <Calendar />
+          </Card>
+          <Card>
+            <NewEarly />
           </Card>
         </Tab>
         <Tab key="this_month" title="เดือนนี้">
           <Card>
-            <CardBody>
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-              ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-              cillum dolore eu fugiat nulla pariatur.
-            </CardBody>
+            <RemaingMonth />
+          </Card>
+          <Card>
+            <TodoMonth />
+          </Card>
+          <Card>
+            <CompleteMonth />
           </Card>
         </Tab>
       </Tabs>
     </div>
 
+    {/* Floating Message Button */}
+    <FloatingMessageButton onClick={() => setIsChatOpen(true)} />
+
+    {/* Chat Dialog */}
+    <ChatDialog isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
   </div>;
 }

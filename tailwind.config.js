@@ -46,7 +46,7 @@ const config = {
         },
       },
     }
-  )],
+  ), require('@tailwindcss/typography')],
 }
 
 module.exports = config;

@@ -21,7 +21,7 @@ export default function LandingPage() {
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="min-h-screen">
             {/* Hero Section */}
-            <header className="relative bg-gradient-to-r from-blue-500 to-blue-700 text-white">
+            <header className="relative bg-[#3C7DD1] text-white">
               <div className="flex items-center justify-between mb-8 bg-white p-4">
                 <div className="flex items-center ml-10">
                   <Image
@@ -72,7 +72,7 @@ export default function LandingPage() {
             </header>
 
             {/* Why Pordee Section */}
-            <section className="py-16 bg-blue-900 text-white">
+            <section className="py-16 bg-[#3C7DD1] text-white">
               <div className="container mx-auto px-4">
                 <h2 className="text-3xl font-bold text-center mb-12">Why Pordee?</h2>
 
@@ -108,7 +108,7 @@ export default function LandingPage() {
             </section>
 
             {/* Key Features Section */}
-            <section className="py-16 bg-blue-900 text-white">
+            <section className="py-16 bg-[#3C7DD1] text-white">
               <div className="container mx-auto px-4">
                 <h2 className="text-3xl font-bold text-center mb-12">Key Feature</h2>
 
@@ -216,7 +216,7 @@ export default function LandingPage() {
             </section>
 
             {/* CTA Section */}
-            <section className="py-16 bg-blue-900 text-white">
+            <section className="py-16 bg-[#3C7DD1] text-white">
               <div className="container mx-auto px-4 text-center">
                 <h2 className="text-3xl font-bold mb-6">พร้อมเริ่มจัดการหนี้อย่างชาญฉลาด?</h2>
                 <p className="text-xl mb-8 max-w-2xl mx-auto">
@@ -232,7 +232,7 @@ export default function LandingPage() {
             </section>
 
             {/* Our Team Section */}
-            <section className="py-16 bg-blue-900 text-white">
+            <section className="py-16 bg-[#3C7DD1] text-white">
               <div className="container mx-auto px-4">
                 <h2 className="text-3xl font-bold text-center mb-12">Our Team</h2>
 

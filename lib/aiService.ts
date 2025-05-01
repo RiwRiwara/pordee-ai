@@ -5,6 +5,21 @@ interface Message {
     | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 }
 
+// Restricted topics that should not be answered in MVP
+const RESTRICTED_TOPICS = [
+  // Legal debt issues
+  /ยึดทรัพย์|ฟ้องร้อง|กฎหมายหนี้|ศาล|พ.ร.บ.|ทนายความ|ล้มละลาย|ฟ้องล้มละลาย|คดีความ|บังคับคดี/i,
+  // Investment advice
+  /ลงทุน|หุ้น|กองทุน|ทองคำ|คริปโต|บิทคอยน์|อสังหาริมทรัพย์|หุ้นกู้|พันธบัตร|ผลตอบแทน/i,
+  // Legal or tax personal advice
+  /ภาษี|ลดหย่อนภาษี|ประกันสังคม|กฎหมายภาษี|กรมสรรพากร|ภาษีเงินได้|ภาษีนิติบุคคล|ภาษีมูลค่าเพิ่ม|ภาษีหัก ณ ที่จ่าย/i,
+  // Detailed income-expense analysis requiring new data input
+  /กรอกข้อมูลใหม่|กรอกรายได้|กรอกรายจ่าย|บันทึกรายรับ|บันทึกรายจ่าย|ลงทะเบียนรายได้|ลงทะเบียนค่าใช้จ่าย/i
+];
+
+// Response for restricted topics
+const RESTRICTED_RESPONSE = "ขออภัยค่ะ ตอนนี้เรายังไม่สามารถให้คำแนะนำในเรื่องนี้ได้ เนื่องจากอยู่นอกขอบเขตบริการของเรา แนะนำให้ปรึกษาผู้เชี่ยวชาญโดยตรงค่ะ";
+
 // Debt context types for AI analysis
 export interface DebtContext {
   debtItems: Array<{
@@ -68,6 +83,15 @@ class AIService {
   }
 
   /**
+   * Check if a message contains restricted topics
+   * @param message - User's message to check
+   * @returns Boolean indicating if the message contains restricted topics
+   */
+  private containsRestrictedTopics(message: string): boolean {
+    return RESTRICTED_TOPICS.some(pattern => pattern.test(message));
+  }
+
+  /**
    * Chat with the AI, maintaining conversation history
    * @param message - User's message
    * @param options - Optional settings (max history, temperature)
@@ -77,6 +101,20 @@ class AIService {
     const { maxHistory = 10, temperature = 0.7 } = options;
 
     try {
+      // Check for restricted topics
+      if (this.containsRestrictedTopics(message)) {
+        // Add user message to history
+        this.conversationHistory.push({ role: "user", content: message });
+        
+        // Add restricted response to history
+        this.conversationHistory.push({
+          role: "assistant",
+          content: RESTRICTED_RESPONSE
+        });
+        
+        return RESTRICTED_RESPONSE;
+      }
+
       // Build the prompt with personal context
       const systemPrompt: Message = {
         role: "system",
