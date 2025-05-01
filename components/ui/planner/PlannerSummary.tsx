@@ -31,7 +31,7 @@ export default function PlannerSummary({
       {/* Debt Overview Card */}
       <div className="rounded-xl p-4 bg-[#3776C1] text-white shadow-sm">
         <h2 className="text-center text-lg font-medium mb-3">ยอดหนี้คงเหลือทั้งหมดของคุณ</h2>
-        <div className="bg-white text-blue-600 rounded-lg py-2 px-4 text-center mb-3">
+        <div className="bg-white text-[#3776C1] rounded-lg py-2 px-4 text-center mb-3">
           <span className="text-3xl font-bold">{remainingDebt.toLocaleString()} บาท</span>
         </div>
         <div className="relative h-6 bg-gray-200 rounded-full overflow-hidden mb-1">
