@@ -160,9 +160,8 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
       - เขียนให้กระชับ ชัดเจน และช่วยให้ผู้ใช้เข้าใจตัวเองมากขึ้น
       - อธิบายหลักการจัดการหนี้เบื้องต้นด้วยภาษาง่าย ๆ โดยไม่ใส่ตัวเลขหรือเปอร์เซ็นต์ตรง ๆ
       - แนะนำแผนการจัดการหนี้เบื้องต้น
-      `
+      `,
       );
-
 
       // Create a structured prompt from the debt context
       const prompt = createDebtPrompt(debtContext);
@@ -313,7 +312,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
         aria-label="เริ่มวางแผนจัดการหนี้"
         className="w-full py-3"
         color="primary"
-        onPress={() => { }}
+        onPress={() => {}}
       >
         เริ่มวางแผนจัดการหนี้
       </Button>

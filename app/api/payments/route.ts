@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "../auth/[...nextauth]/options";
+
 import connectToDatabase from "@/lib/mongodb";
 import DebtPayment from "@/models/DebtPayment";
 import Debt from "@/models/Debt";
@@ -11,16 +13,15 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectToDatabase();
 
     // Get all debt IDs for the current user
-    const userDebts = await Debt.find({ userId: session.user.id }).select("_id");
+    const userDebts = await Debt.find({ userId: session.user.id }).select(
+      "_id",
+    );
     const userDebtIds = userDebts.map((debt) => debt._id);
 
     // Get all payments for those debts
@@ -31,9 +32,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ payments });
   } catch (error) {
     console.error("Error fetching payments:", error);
+
     return NextResponse.json(
       { error: "Failed to fetch payments" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -44,18 +46,16 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { debtId, amount, paymentDate, paymentType, notes } = await req.json();
+    const { debtId, amount, paymentDate, paymentType, notes } =
+      await req.json();
 
     if (!debtId || !amount || !paymentDate) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     if (!debt) {
       return NextResponse.json(
         { error: "Debt not found or does not belong to user" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -87,15 +87,17 @@ export async function POST(req: NextRequest) {
 
     // Update the debt's remaining amount
     const newRemainingAmount = Math.max(0, debt.remainingAmount - amount);
+
     debt.remainingAmount = newRemainingAmount;
     await debt.save();
 
     return NextResponse.json({ payment, success: true });
   } catch (error) {
     console.error("Error creating payment:", error);
+
     return NextResponse.json(
       { error: "Failed to create payment" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

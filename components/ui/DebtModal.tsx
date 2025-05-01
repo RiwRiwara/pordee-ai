@@ -125,27 +125,33 @@ export default function DebtModal({
 
   return (
     <Modal
+      aria-describedby="debt-modal-body"
       backdrop="blur"
+      isDismissable={false}
       isOpen={isOpen}
       placement="center"
       scrollBehavior="inside"
       size="lg"
       onClose={onClose}
-      isDismissable={false}
       isKeyboardDismissDisabled={true}
       // Add ARIA attributes for modal accessibility
       aria-labelledby="debt-modal-title"
-      aria-describedby="debt-modal-body"
     >
       <ModalContent>
         <ModalHeader className="px-6 py-4 border-b border-gray-200">
           {/* Add id to link with aria-labelledby */}
-          <h2 id="debt-modal-title" className="text-xl font-semibold text-gray-800">
+          <h2
+            className="text-xl font-semibold text-gray-800"
+            id="debt-modal-title"
+          >
             {selectedDebt ? "แก้ไขรายการหนี้" : "เพิ่มรายการหนี้"}
           </h2>
         </ModalHeader>
 
-        <ModalBody id="debt-modal-body" className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+        <ModalBody
+          className="px-6 py-4 max-h-[70vh] overflow-y-auto"
+          id="debt-modal-body"
+        >
           <form className="space-y-6" id="debt-form">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Debt Name */}
@@ -162,11 +168,11 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="ชื่อหนี้"
                       errorMessage={errors.name?.message}
                       id="name"
                       isInvalid={!!errors.name}
                       placeholder="เช่น บัตรเครดิต SCB, สินเชื่อบ้าน"
-                      aria-label="ชื่อหนี้"
                     />
                   )}
                   rules={{ required: "กรุณาระบุชื่อหนี้" }}
@@ -176,9 +182,9 @@ export default function DebtModal({
               {/* Debt Type */}
               <div className="space-y-2">
                 <label
+                  aria-label="ประเภทหนี้"
                   className="block text-sm font-medium text-gray-700"
                   htmlFor="debtType"
-                  aria-label="ประเภทหนี้"
                   id="debtType-label"
                 >
                   ประเภทหนี้ <span className="text-red-500">*</span>
@@ -190,12 +196,13 @@ export default function DebtModal({
                     <div className="relative">
                       <select
                         {...field}
-                        id="debtType"
                         aria-labelledby="debtType-label"
-                        className={`block w-full px-3 py-2 border ${errors.debtType ? "border-red-500" : "border-gray-300"
-                          } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        className={`block w-full px-3 py-2 border ${
+                          errors.debtType ? "border-red-500" : "border-gray-300"
+                        } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        id="debtType"
                       >
-                        <option value="" disabled>
+                        <option disabled value="">
                           เลือกประเภทหนี้
                         </option>
                         <option value="บัตรเครดิต">บัตรเครดิต</option>
@@ -227,12 +234,12 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="วงเงินทั้งหมด"
                       errorMessage={errors.totalAmount?.message}
                       id="totalAmount"
                       isInvalid={!!errors.totalAmount}
                       placeholder="0.00"
                       type="text"
-                      aria-label="วงเงินทั้งหมด"
                     />
                   )}
                   rules={{
@@ -259,12 +266,12 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="ยอดคงเหลือ"
                       errorMessage={errors.remainingAmount?.message}
                       id="remainingAmount"
                       isInvalid={!!errors.remainingAmount}
                       placeholder="0.00"
                       type="text"
-                      aria-label="ยอดคงเหลือ"
                     />
                   )}
                   rules={{
@@ -291,12 +298,12 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="อัตราดอกเบี้ย"
                       errorMessage={errors.interestRate?.message}
                       id="interestRate"
                       isInvalid={!!errors.interestRate}
                       placeholder="0.00"
                       type="text"
-                      aria-label="อัตราดอกเบี้ย"
                     />
                   )}
                   rules={{
@@ -323,12 +330,12 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="ค่างวดต่อเดือน"
                       errorMessage={errors.minimumPayment?.message}
                       id="minimumPayment"
                       isInvalid={!!errors.minimumPayment}
                       placeholder="0.00"
                       type="text"
-                      aria-label="ค่างวดต่อเดือน"
                     />
                   )}
                   rules={{
@@ -347,7 +354,8 @@ export default function DebtModal({
                   className="block text-sm font-medium text-gray-700"
                   htmlFor="paymentDueDay"
                 >
-                  วันที่ชำระ (ของทุกเดือน) <span className="text-red-500">*</span>
+                  วันที่ชำระ (ของทุกเดือน){" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <Controller
                   control={control}
@@ -355,6 +363,7 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="วันที่ชำระของทุกเดือน"
                       errorMessage={errors.paymentDueDay?.message}
                       id="paymentDueDay"
                       isInvalid={!!errors.paymentDueDay}
@@ -362,7 +371,6 @@ export default function DebtModal({
                       min={1}
                       placeholder="15"
                       type="number"
-                      aria-label="วันที่ชำระของทุกเดือน"
                     />
                   )}
                   rules={{
@@ -397,11 +405,11 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="วันที่เริ่มหนี้"
                       errorMessage={errors.startDate?.message}
                       id="startDate"
                       isInvalid={!!errors.startDate}
                       type="date"
-                      aria-label="วันที่เริ่มหนี้"
                     />
                   )}
                 />
@@ -421,11 +429,11 @@ export default function DebtModal({
                   render={({ field }) => (
                     <Input
                       {...field}
+                      aria-label="วันที่คาดว่าจะชำระหนี้หมด"
                       errorMessage={errors.estimatedPayoffDate?.message}
                       id="estimatedPayoffDate"
                       isInvalid={!!errors.estimatedPayoffDate}
                       type="date"
-                      aria-label="วันที่คาดว่าจะชำระหนี้หมด"
                     />
                   )}
                 />
@@ -446,12 +454,12 @@ export default function DebtModal({
                 render={({ field }) => (
                   <Textarea
                     {...field}
+                    aria-label="หมายเหตุเกี่ยวกับหนี้"
                     errorMessage={errors.notes?.message}
                     id="notes"
                     isInvalid={!!errors.notes}
                     placeholder="รายละเอียดเพิ่มเติมเกี่ยวกับหนี้รายการนี้"
                     rows={3}
-                    aria-label="หมายเหตุเกี่ยวกับหนี้"
                   />
                 )}
               />
@@ -476,22 +484,22 @@ export default function DebtModal({
           )}
           <div className="flex gap-3 ml-auto">
             <Button
+              aria-label="ยกเลิกการแก้ไขหนี้"
               isDisabled={isSubmitting || isDeleting}
               type="button"
               variant="flat"
               onPress={onClose}
-              aria-label="ยกเลิกการแก้ไขหนี้"
             >
               ยกเลิก
             </Button>
             <Button
+              aria-label={isSubmitting ? "กำลังบันทึกหนี้" : "บันทึกหนี้"}
               color="primary"
               isDisabled={isSubmitting || isDeleting}
               isLoading={isSubmitting}
               startContent={<FiSave aria-hidden="true" />}
               type="button"
               onPress={() => handleSubmit(onSubmit)()}
-              aria-label={isSubmitting ? "กำลังบันทึกหนี้" : "บันทึกหนี้"}
             >
               บันทึก
             </Button>

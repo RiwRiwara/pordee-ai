@@ -134,29 +134,30 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
   const paymentType = watch("paymentType");
   const formValues = watch();
   const allFieldsValid = useRef(false);
-  
+
   // Check if all required fields are filled
   useEffect(() => {
     const requiredFields = [
-      'debtName', 
-      'debtType', 
-      'totalAmount', 
-      'minimumPayment', 
-      'dueDate', 
-      'paymentStatus'
+      "debtName",
+      "debtType",
+      "totalAmount",
+      "minimumPayment",
+      "dueDate",
+      "paymentStatus",
     ];
-    
+
     // Add installment-specific fields if installment type is selected
-    if (formValues.paymentType === 'installment') {
-      requiredFields.push('currentInstallment', 'totalInstallments');
+    if (formValues.paymentType === "installment") {
+      requiredFields.push("currentInstallment", "totalInstallments");
     }
-    
+
     // Check if all required fields have values
-    const allFilled = requiredFields.every(field => 
-      formValues[field as keyof DebtFormData] && 
-      formValues[field as keyof DebtFormData] !== ''
+    const allFilled = requiredFields.every(
+      (field) =>
+        formValues[field as keyof DebtFormData] &&
+        formValues[field as keyof DebtFormData] !== "",
     );
-    
+
     allFieldsValid.current = allFilled;
   }, [formValues]);
 
@@ -300,7 +301,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
             setValue(key as keyof DebtFormData, value);
           }
         });
-        
+
         // Mark file as accepted
         setUploadedFiles((prev) =>
           prev.map((f) =>
@@ -552,7 +553,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                     />
                   </div>
                 </div>
-                
+
                 {/* Installment details section - only shown when installment is selected */}
                 {paymentType === "installment" && (
                   <div className="border-2 border-green-500 rounded-lg p-4 bg-green-50">
@@ -575,9 +576,9 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                               {...field}
                               className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
                               id="currentInstallment"
+                              min="1"
                               placeholder="งวดปัจจุบัน เช่น 3"
                               type="number"
-                              min="1"
                             />
                           )}
                           rules={{ required: paymentType === "installment" }}
@@ -603,9 +604,9 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                               {...field}
                               className="w-full border border-yellow-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500"
                               id="totalInstallments"
+                              min="1"
                               placeholder="จำนวนงวดทั้งหมด เช่น 12"
                               type="number"
-                              min="1"
                             />
                           )}
                           rules={{ required: paymentType === "installment" }}
@@ -789,12 +790,14 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
               ยกเลิก
             </Button>
             <Button
+              className={
+                !isValid || !allFieldsValid.current ? "opacity-50" : ""
+              }
               color="primary"
               disabled={!isValid || isSubmitting || !allFieldsValid.current}
               form="debt-form"
               isLoading={isSubmitting}
               startContent={<FiSave />}
-              className={!isValid || !allFieldsValid.current ? "opacity-50" : ""}
               type="submit"
             >
               บันทึกรายการหนี้

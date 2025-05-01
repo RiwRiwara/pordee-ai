@@ -143,20 +143,19 @@ export default function PlanSection({
       {/* Plan Selection Modal */}
       <Modal
         aria-label="เลือกเป้าหมายของคุณ"
-        isOpen={isPlanModalOpen}
-        onClose={handleCancel}
-        placement="center"
-        size="md"
         classNames={{
           backdrop: "bg-[rgba(0,0,0,0.5)]",
-          base: "mx-auto"
+          base: "mx-auto",
         }}
+        isOpen={isPlanModalOpen}
+        placement="center"
+        size="md"
+        onClose={handleCancel}
       >
         <ModalContent className="max-h-[80vh] rounded-lg overflow-hidden">
           <ModalHeader className="border-b border-gray-200 px-5 py-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">เลือกเป้าหมายของคุณ</h2>
-   
             </div>
           </ModalHeader>
 
@@ -180,7 +179,7 @@ export default function PlanSection({
                   classNames={{
                     base: "max-w-full",
                     label: "font-medium",
-                    description: "text-gray-600 text-sm mt-1"
+                    description: "text-gray-600 text-sm mt-1",
                   }}
                   description={plan.description}
                   value={(plan.id as PlanType) || "quick"}
@@ -192,17 +191,17 @@ export default function PlanSection({
           </div>
 
           <div className="px-5 py-4 border-t border-gray-200 flex justify-end space-x-3 mt-2">
-            <Button 
-              className="px-4" 
-              color="default" 
-              variant="light" 
+            <Button
+              className="px-4"
+              color="default"
+              variant="light"
               onPress={handleCancel}
             >
               ยกเลิก
             </Button>
-            <Button 
-              className="px-5 font-medium shadow-sm" 
-              color="primary" 
+            <Button
+              className="px-5 font-medium shadow-sm"
+              color="primary"
               onPress={handleSave}
             >
               บันทึก

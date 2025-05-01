@@ -14,11 +14,12 @@ const RESTRICTED_TOPICS = [
   // Legal or tax personal advice
   /ภาษี|ลดหย่อนภาษี|ประกันสังคม|กฎหมายภาษี|กรมสรรพากร|ภาษีเงินได้|ภาษีนิติบุคคล|ภาษีมูลค่าเพิ่ม|ภาษีหัก ณ ที่จ่าย/i,
   // Detailed income-expense analysis requiring new data input
-  /กรอกข้อมูลใหม่|กรอกรายได้|กรอกรายจ่าย|บันทึกรายรับ|บันทึกรายจ่าย|ลงทะเบียนรายได้|ลงทะเบียนค่าใช้จ่าย/i
+  /กรอกข้อมูลใหม่|กรอกรายได้|กรอกรายจ่าย|บันทึกรายรับ|บันทึกรายจ่าย|ลงทะเบียนรายได้|ลงทะเบียนค่าใช้จ่าย/i,
 ];
 
 // Response for restricted topics
-const RESTRICTED_RESPONSE = "ขออภัยค่ะ ตอนนี้เรายังไม่สามารถให้คำแนะนำในเรื่องนี้ได้ เนื่องจากอยู่นอกขอบเขตบริการของเรา แนะนำให้ปรึกษาผู้เชี่ยวชาญโดยตรงค่ะ";
+const RESTRICTED_RESPONSE =
+  "ขออภัยค่ะ ตอนนี้เรายังไม่สามารถให้คำแนะนำในเรื่องนี้ได้ เนื่องจากอยู่นอกขอบเขตบริการของเรา แนะนำให้ปรึกษาผู้เชี่ยวชาญโดยตรงค่ะ";
 
 // Debt context types for AI analysis
 export interface DebtContext {
@@ -88,7 +89,7 @@ class AIService {
    * @returns Boolean indicating if the message contains restricted topics
    */
   private containsRestrictedTopics(message: string): boolean {
-    return RESTRICTED_TOPICS.some(pattern => pattern.test(message));
+    return RESTRICTED_TOPICS.some((pattern) => pattern.test(message));
   }
 
   /**
@@ -105,13 +106,13 @@ class AIService {
       if (this.containsRestrictedTopics(message)) {
         // Add user message to history
         this.conversationHistory.push({ role: "user", content: message });
-        
+
         // Add restricted response to history
         this.conversationHistory.push({
           role: "assistant",
-          content: RESTRICTED_RESPONSE
+          content: RESTRICTED_RESPONSE,
         });
-        
+
         return RESTRICTED_RESPONSE;
       }
 

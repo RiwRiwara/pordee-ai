@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
-import { Switch } from "@heroui/switch";
 import { useSession } from "next-auth/react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -42,7 +41,6 @@ export default function ProfilePage() {
     }
 
     if (user) {
-      console.log("User data from session:", user);
       setProfileData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -271,7 +269,7 @@ export default function ProfilePage() {
             type="file"
             onChange={handleImageUpload}
           />
-          
+
           <div className="mb-4 flex flex-col items-center sm:mb-0 sm:mr-6">
             <div
               className="relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100"
@@ -357,11 +355,13 @@ export default function ProfilePage() {
               คลิกเพื่ออัปโหลดรูปภาพใหม่
             </span>
           </div>
-          
+
           <div className="flex-1">
-            <h2 className="mb-2 text-lg font-bold">{profileData.firstName} {profileData.lastName}</h2>
+            <h2 className="mb-2 text-lg font-bold">
+              {profileData.firstName} {profileData.lastName}
+            </h2>
             <p className="text-sm text-gray-500">{profileData.email}</p>
-            
+
             {!isEditing ? (
               <Button
                 className="mt-3"
@@ -375,9 +375,9 @@ export default function ProfilePage() {
             ) : null}
           </div>
         </div>
-        
+
         {isEditing && (
-          <form onSubmit={handleSubmit} className="mt-6 border-t pt-6">
+          <form className="mt-6 border-t pt-6" onSubmit={handleSubmit}>
             <div className="mb-6 grid gap-6 md:grid-cols-2">
               <div>
                 <label
@@ -441,7 +441,7 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end space-x-4">
               <Button
                 color="danger"
@@ -463,13 +463,15 @@ export default function ProfilePage() {
           </form>
         )}
       </div>
-      
+
       {/* Settings Section */}
-      <ProfileSetting 
+      <ProfileSetting
         languagePreference={profileData.languagePreference}
         notificationsEnabled={true}
         onLanguageToggle={handleLanguageToggle}
-        onNotificationToggle={(checked) => console.log('Notification toggled:', checked)}
+        onNotificationToggle={(checked) =>
+          console.log("Notification toggled:", checked)
+        }
       />
     </div>
   );
