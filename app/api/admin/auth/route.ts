@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
       { status: 401 },
     );
   } catch (error) {
-    console.error("Error in admin login:", error);
 
     return NextResponse.json(
       { success: false, message: "Server error" },

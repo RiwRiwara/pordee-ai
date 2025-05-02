@@ -1,4 +1,3 @@
-// components/ui/IncomeExpenseModal.tsx
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -62,6 +61,24 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
     },
     mode: "onChange",
   });
+
+  // Handle mobile keyboard by adjusting modal height dynamically
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleResize = () => {
+      const vh = window.innerHeight * 0.01;
+
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isOpen]);
 
   // Reset preview state when modal is closed
   useEffect(() => {
@@ -341,6 +358,20 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
     try {
       setIsSaving(true);
 
+      // Parse values to ensure they're valid numbers with 2 decimal places
+      const incomeValue = parseFloat(
+        parseFloat(data.monthlyIncome.replace(/,/g, "") || "0").toFixed(2),
+      );
+      const expenseValue = parseFloat(
+        parseFloat(data.monthlyExpense.replace(/,/g, "") || "0").toFixed(2),
+      );
+
+      // Format the values for display
+      const formattedData = {
+        monthlyIncome: formatNumber(incomeValue),
+        monthlyExpense: formatNumber(expenseValue),
+      };
+
       let processedIncomeFiles = [...uploadedIncomeFiles];
       let processedExpenseFiles = [...uploadedExpenseFiles];
 
@@ -402,10 +433,9 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
         }));
       }
 
-      const formattedData = {
-        ...data,
-        monthlyIncome: data.monthlyIncome.replace(/,/g, ""),
-        monthlyExpense: data.monthlyExpense.replace(/,/g, ""),
+      const finalData = {
+        monthlyIncome: incomeValue.toString(),
+        monthlyExpense: expenseValue.toString(),
         incomeAttachments:
           processedIncomeFiles.length > 0 ? processedIncomeFiles : undefined,
         expenseAttachments:
@@ -416,7 +446,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
             : undefined,
       };
 
-      onSave(formattedData);
+      onSave(finalData);
 
       showNotification(
         "บันทึกข้อมูลสำเร็จ",
@@ -448,17 +478,55 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
     });
   };
 
+  // Format input value to show proper decimal places
+  const formatInputValue = (value: string) => {
+    // Remove all non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, "");
+
+    // Handle multiple decimal points (keep only the first one)
+    const parts = cleanValue.split(".");
+    let formattedValue = parts[0];
+
+    if (parts.length > 1) {
+      // Add decimal point and limit to 2 decimal places
+      formattedValue += "." + parts[1].substring(0, 2);
+    }
+
+    return formattedValue;
+  };
+
   return (
     <Modal
       isDismissable
       aria-label="รายได้และรายจ่าย"
       classNames={{
         backdrop: "bg-gradient-to-t from-zinc-900/50 to-zinc-900/30",
-        base: "mt-4 md:mt-0 bg-white rounded-xl shadow-xl max-w-3xl",
+        base: "mt-0 bg-white rounded-xl shadow-xl max-w-[95vw] sm:max-w-3xl w-full",
         closeButton: "top-3 right-3 text-gray-500 hover:bg-gray-100",
-        wrapper: "max-h-[90vh] overflow-visible",
+        wrapper:
+          "h-[calc(100*var(--vh))] overflow-hidden flex items-center justify-center",
       }}
       isOpen={isOpen}
+      motionProps={{
+        variants: {
+          enter: {
+            y: 0,
+            opacity: 1,
+            transition: {
+              duration: 0.3,
+              ease: "easeOut",
+            },
+          },
+          exit: {
+            y: 50,
+            opacity: 0,
+            transition: {
+              duration: 0.2,
+              ease: "easeIn",
+            },
+          },
+        },
+      }}
       placement="center"
       scrollBehavior="inside"
       size="2xl"
@@ -467,18 +535,18 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
       <ModalContent>
         {(onCloseAction) => (
           <>
-            <ModalHeader className="px-6 py-4 border-b border-gray-200">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-800">
+            <ModalHeader className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
+              <div className="text-center sm:text-left">
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-800">
                   รายได้และรายจ่าย
                 </h3>
-                <p className="text-sm text-gray-500 text-center">
+                <p className="text-xs sm:text-sm text-gray-500">
                   กรอกข้อมูลเพื่อวางแผนการเงินและชำระหนี้
                 </p>
               </div>
             </ModalHeader>
 
-            <ModalBody className="px-6 py-6 overflow-y-auto max-h-[60vh] md:max-h-[500px]">
+            <ModalBody className="px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto max-h-[60vh] sm:max-h-[65vh]">
               <form id="income-expense-form" onSubmit={handleSubmit(onSubmit)}>
                 <FileUploadSection
                   acceptOcrRecommendation={(file) =>
@@ -501,7 +569,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   viewFilePreview={viewFilePreview}
                 />
 
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <label
                     className="block text-sm font-medium text-gray-700 mb-1"
                     htmlFor="monthlyIncome"
@@ -515,13 +583,20 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                       <Input
                         {...field}
                         aria-label="รายได้ต่อเดือน"
-                        className="border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                        className="border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 w-full"
                         endContent={<span className="text-gray-400">บาท</span>}
-                        inputMode="numeric"
+                        inputMode="decimal"
                         placeholder="0.00"
                         startContent={<span className="text-gray-400">฿</span>}
                         type="text"
                         value={field.value || ""}
+                        onChange={(e) => {
+                          const formattedValue = formatInputValue(
+                            e.target.value,
+                          );
+
+                          field.onChange(formattedValue);
+                        }}
                       />
                     )}
                     rules={{ required: "กรุณาระบุรายได้ต่อเดือน" }}
@@ -554,7 +629,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   viewFilePreview={viewFilePreview}
                 />
 
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <label
                     className="block text-sm font-medium text-gray-700 mb-1"
                     htmlFor="monthlyExpense"
@@ -568,13 +643,20 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                       <Input
                         {...field}
                         aria-label="รายจ่ายต่อเดือน"
-                        className="border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                        className="border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 w-full"
                         endContent={<span className="text-gray-400">บาท</span>}
-                        inputMode="numeric"
+                        inputMode="decimal"
                         placeholder="0.00"
                         startContent={<span className="text-gray-400">฿</span>}
                         type="text"
                         value={field.value || ""}
+                        onChange={(e) => {
+                          const formattedValue = formatInputValue(
+                            e.target.value,
+                          );
+
+                          field.onChange(formattedValue);
+                        }}
                       />
                     )}
                     rules={{ required: "กรุณาระบุรายจ่ายต่อเดือน" }}
@@ -586,12 +668,12 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   )}
                 </div>
 
-                <div className="mt-6 p-4 bg-green-50 rounded-lg flex items-center">
+                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-green-50 rounded-lg flex items-center">
                   <div>
                     <h4 className="text-sm font-medium text-gray-700">
                       รายได้สุทธิ
                     </h4>
-                    <p className="text-lg font-semibold text-green-600">
+                    <p className="text-base sm:text-lg font-semibold text-green-600">
                       ฿{formatNumber(disposableIncome)}
                     </p>
                   </div>
@@ -603,10 +685,10 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
               </form>
             </ModalBody>
 
-            <ModalFooter className="px-6 py-4 border-t border-gray-200">
+            <ModalFooter className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200 flex justify-end gap-2">
               <Button
                 aria-label="ยกเลิก"
-                className="mr-2 bg-gray-200 text-gray-700 hover:bg-gray-300"
+                className="bg-gray-200 text-gray-700 hover:bg-gray-300"
                 onPress={onClose}
               >
                 ยกเลิก

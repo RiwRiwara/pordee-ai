@@ -11,9 +11,9 @@ import IncomeExpenseModal from "@/components/ui/IncomeExpenseModal";
 import RiskMeter from "@/components/ui/RiskMeter";
 import { useCustomToast } from "@/components/ui/ToastNotification";
 import IncomeExpenseSection from "@/components/ui/IncomeExpenseSection";
-import AllDebtSection from "@/components/ui/AllDebtSection";
 import SummarySection from "@/components/ui/SummarySection";
 import PlanSection from "@/components/ui/PlanSection";
+import AllDebtSectionRefactored from "@/components/ui/debt/AllDebtSectionRefactored";
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -220,7 +220,7 @@ export default function Dashboard() {
       <div className="mb-6 bg-[#3776C1] px-4 py-6 text-white">
         <div className="mb-2 flex items-center">
           <BackButton className="text-white" href="/" />
-          <h1 className="ml-2 text-xl font-bold">Debt Overview</h1>
+          <h1 className="ml-2 text-xl font-bold">Pordee Radar</h1>
           {!isAuthenticated && (
             <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
               โหมดผู้เยี่ยมชม
@@ -283,8 +283,9 @@ export default function Dashboard() {
 
       {/* All Debt Section */}
       <div className="mb-6 px-4">
-        <AllDebtSection
+        <AllDebtSectionRefactored
           debts={debts}
+          totalMonthlyIncome={parseFloat(monthlyIncome.replace(/,/g, ""))}
           onAddDebt={() => setIsDebtFormOpen(true)}
         />
       </div>

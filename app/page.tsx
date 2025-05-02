@@ -283,7 +283,7 @@ export default function LandingPage() {
                     </div>
                     <div className="col-span-1">
                       <Image
-                        alt="Pordee Debt Overview"
+                        alt="Pordee Radar"
                         className="mx-auto"
                         height={400}
                         src="/landing/appshow2.png"

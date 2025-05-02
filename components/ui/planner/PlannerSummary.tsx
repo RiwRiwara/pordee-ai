@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { CalendarIcon, LineChartIcon } from "lucide-react";
 import { HiAdjustmentsHorizontal } from "react-icons/hi2";
 
-import AdjustPlanModal from "./AdjustPlanModal";
+import DebtPlanModal from "../debt_plan/DebtPlanModal";
 
 interface DebtItem {
   _id: string;
@@ -245,14 +245,7 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
       </div>
 
       {/* Adjust Plan Modal */}
-      <AdjustPlanModal
-        currentPlan={{
-          goalType: planData.goalType,
-          paymentStrategy: planData.paymentStrategy,
-          monthlyPayment: monthlyPayment,
-          timeInMonths: planData.timeInMonths,
-        }}
-        debts={debts}
+      <DebtPlanModal
         isOpen={isAdjustPlanModalOpen}
         onOpenChange={setIsAdjustPlanModalOpen}
         onSavePlan={handlePlanUpdate}

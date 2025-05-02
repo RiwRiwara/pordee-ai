@@ -173,6 +173,7 @@ export default function AdjustPlanModal({
                     selectedKeys={[goalType]}
                     onSelectionChange={(keys) => {
                       const selectedKey = Array.from(keys)[0] as string;
+
                       setGoalType(selectedKey);
                     }}
                   >
@@ -203,6 +204,7 @@ export default function AdjustPlanModal({
                     selectedKeys={[paymentStrategy]}
                     onSelectionChange={(keys) => {
                       const selectedKey = Array.from(keys)[0] as string;
+
                       setPaymentStrategy(selectedKey);
                     }}
                   >

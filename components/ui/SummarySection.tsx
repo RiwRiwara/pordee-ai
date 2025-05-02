@@ -35,7 +35,7 @@ export default function SummarySection({
             strokeWidth="2"
           />
         </svg>
-        เริ่มวางแผน
+        สรุปภาพรวมหนี้ของฉัน
       </Button>
 
       {/* Summary Grid */}

@@ -9,9 +9,12 @@ import {
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Textarea } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
 import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import { FiSave, FiTrash2 } from "react-icons/fi";
+
+import { DebtCategory } from "./debt/DebtUtils";
 
 import { DebtItem } from "@/components/ui/types";
 
@@ -388,6 +391,62 @@ export default function DebtModal({
                       message: "กรุณาระบุตัวเลขเท่านั้น",
                     },
                   }}
+                />
+              </div>
+
+              {/* Debt Type */}
+              <div className="space-y-2">
+                <label
+                  className="block text-sm font-medium text-gray-700"
+                  htmlFor="debtType"
+                >
+                  ประเภทหนี้ *
+                </label>
+                <Controller
+                  control={control}
+                  name="debtType"
+                  render={({ field }) => (
+                    <Select
+                      required
+                      aria-label="ประเภทหนี้"
+                      className="w-full"
+                      errorMessage={errors.debtType?.message}
+                      id="debtType"
+                      isInvalid={!!errors.debtType}
+                      placeholder="เลือกประเภทหนี้"
+                      selectedKeys={field.value ? [field.value] : []}
+                      onSelectionChange={(keys) => {
+                        const selectedKey = Array.from(keys)[0];
+
+                        if (selectedKey) {
+                          field.onChange(selectedKey.toString());
+                        }
+                      }}
+                    >
+                      <SelectItem key={DebtCategory.RevolvingDebt}>
+                        {DebtCategory.RevolvingDebt} (Revolving Debt)
+                      </SelectItem>
+                      <SelectItem key={DebtCategory.ProductInstallment}>
+                        {DebtCategory.ProductInstallment} (Product Installment)
+                      </SelectItem>
+                      <SelectItem key={DebtCategory.PersonalLoan}>
+                        {DebtCategory.PersonalLoan} (Personal Loan)
+                      </SelectItem>
+                      <SelectItem key={DebtCategory.HousingLoan}>
+                        {DebtCategory.HousingLoan} (Housing Loan)
+                      </SelectItem>
+                      <SelectItem key={DebtCategory.VehicleLoan}>
+                        {DebtCategory.VehicleLoan} (Vehicle Loan)
+                      </SelectItem>
+                      <SelectItem key={DebtCategory.InformalLoan}>
+                        {DebtCategory.InformalLoan} (Informal Loan)
+                      </SelectItem>
+                      <SelectItem key={DebtCategory.Other}>
+                        {DebtCategory.Other} (Other Debts)
+                      </SelectItem>
+                    </Select>
+                  )}
+                  rules={{ required: "กรุณาระบุประเภทหนี้" }}
                 />
               </div>
 

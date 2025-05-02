@@ -12,6 +12,8 @@ import {
 } from "@heroui/modal";
 import ReactMarkdown from "react-markdown";
 
+import DebtPlanModal from "./debt_plan/DebtPlanModal";
+
 import AIService, { createDebtPrompt, type DebtContext } from "@/lib/aiService";
 
 interface RiskMeterProps {
@@ -106,6 +108,8 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
   const [isLoadingInsight, setIsLoadingInsight] = useState<boolean>(false);
   const [aiError, setAiError] = useState<boolean>(false);
   const [isFullInsightModalOpen, setIsFullInsightModalOpen] =
+    useState<boolean>(false);
+  const [isDebtPlanModalOpen, setIsDebtPlanModalOpen] =
     useState<boolean>(false);
 
   // Get fallback AI insight based on risk level
@@ -312,10 +316,63 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
         aria-label="เริ่มวางแผนจัดการหนี้"
         className="w-full py-3"
         color="primary"
-        onPress={() => {}}
+        onPress={() => setIsDebtPlanModalOpen(true)}
       >
         เริ่มวางแผนจัดการหนี้
       </Button>
+
+      {/* Debt Plan Modal */}
+      <DebtPlanModal
+        debtContext={{
+          debtItems:
+            debtContext?.debtItems.map((debt) => ({
+              _id: debt.id || "",
+              name: debt.name,
+              debtType: debt.debtType,
+              totalAmount:
+                typeof debt.totalAmount === "string"
+                  ? parseFloat(debt.totalAmount)
+                  : 0,
+              remainingAmount:
+                typeof debt.totalAmount === "string"
+                  ? parseFloat(debt.totalAmount)
+                  : 0,
+              interestRate:
+                typeof debt.interestRate === "string"
+                  ? parseFloat(debt.interestRate)
+                  : 0,
+              minimumPayment:
+                typeof debt.minimumPayment === "string"
+                  ? parseFloat(debt.minimumPayment)
+                  : 0,
+              paymentDueDay: debt.dueDate
+                ? parseInt(debt.dueDate.toString())
+                : undefined,
+            })) || [],
+          income: debtContext?.income || 0,
+        }}
+        goalType="เห็นผลเร็ว"
+        isOpen={isDebtPlanModalOpen}
+        monthlyPayment={
+          debtContext?.debtItems.reduce((sum, debt) => {
+            const minimumPayment =
+              typeof debt.minimumPayment === "string"
+                ? parseFloat(debt.minimumPayment)
+                : debt.minimumPayment || 0;
+
+            return sum + minimumPayment;
+          }, 0) || 0
+        }
+        paymentStrategy="Snowball"
+        riskPercentage={riskPercentage}
+        timeInMonths={30}
+        onOpenChange={setIsDebtPlanModalOpen}
+        onSavePlan={(plan) => {
+          // Handle the plan update here
+          console.log("Plan updated:", plan);
+          onPlanClick?.();
+        }}
+      />
     </div>
   );
 };
