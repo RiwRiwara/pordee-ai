@@ -1,6 +1,7 @@
 // components/ui/debt/DebtFileUpload.tsx
 import React from "react";
 import { Button } from "@heroui/button";
+import { FiUpload } from "react-icons/fi";
 
 import DebtFileItem from "./DebtFileItem";
 import { DebtFileUploadProps } from "./types";
@@ -52,6 +53,9 @@ const DebtFileUpload: React.FC<DebtFileUploadProps> = ({
       </Button>
       <p className="text-xs text-center text-gray-500 mt-1">
         อัพโหลดสลิป / ใบเสร็จ ระบบจะอ่านข้อมูลหนี้ให้อัตโนมัติ
+      </p>
+      <p className="text-xs text-center text-gray-500">
+        รองรับ PDF หลายหน้า และรูปภาพ (สูงสุด 5 หน้า)
       </p>
 
       {uploadedFiles.length > 0 && (

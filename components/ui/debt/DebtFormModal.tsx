@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "@heroui/button";
 import {
@@ -12,11 +12,12 @@ import {
 } from "@heroui/modal";
 import { FiSave } from "react-icons/fi";
 
+import { fileToBase64, parseOcrText } from "./utils";
+
 import { useCustomToast } from "../ToastNotification";
 
 import DebtFileUpload from "./DebtFileUpload";
 import { DebtFormData, FileData, DebtFormModalProps } from "./types";
-import { fileToBase64, parseOcrText } from "./utils";
 
 import { useGuest } from "@/context/GuestContext";
 import { saveLocalDebt } from "@/lib/localStorage";
@@ -174,6 +175,109 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
     }
   };
 
+  // Define types for TypeScript that will be used with dynamic imports
+  interface PDFDocumentProxy {
+    numPages: number;
+    getPage: (pageNumber: number) => Promise<any>;
+  }
+
+  interface PDFPageViewport {
+    height: number;
+    width: number;
+  }
+
+  interface PDFPageRenderParams {
+    canvasContext: CanvasRenderingContext2D;
+    viewport: PDFPageViewport;
+    promise?: Promise<void>;
+  }
+
+  // Helper function to convert a PDF page to an image
+  const pdfPageToImage = async (
+    pdfDoc: PDFDocumentProxy,
+    pageNumber: number
+  ): Promise<File> => {
+    // Load the PDF page
+    const page = await pdfDoc.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 1.5 }); // Scale to improve readability for OCR
+
+    // Create a canvas to render the PDF page
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    // Render PDF page to canvas
+    await page.render({
+      canvasContext: context!,
+      viewport: viewport,
+    }).promise;
+
+    // Convert canvas to blob then to File
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Failed to convert PDF page to image"));
+          return;
+        }
+        const file = new File([blob], `page-${pageNumber}.png`, {
+          type: "image/png",
+        });
+        resolve(file);
+      }, "image/png");
+    });
+  };
+
+  // Function to handle multi-page PDFs
+  const processPdfFile = async (file: File): Promise<File[]> => {
+    try {
+      // Safely load PDF.js in the browser environment only
+      let pdfjs: any;
+
+      // Only run this code in the browser
+      if (typeof window !== 'undefined') {
+        // Using a try-catch to handle potential import failures
+        try {
+          // Dynamic import with type assertion
+        } catch (importError) {
+          console.error("Error importing PDF.js:", importError);
+          throw new Error("Failed to load PDF processing library");
+        }
+      } else {
+        throw new Error("PDF processing is only available in browser environment");
+      }
+
+      // Load the PDF file
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+      // Determine number of pages (capped at MAX_PAGES)
+      const MAX_PAGES = 5;
+      const numPages = Math.min(pdfDoc.numPages, MAX_PAGES);
+
+      if (pdfDoc.numPages > MAX_PAGES) {
+        showNotification(
+          "เกินขีดจำกัดหน้า",
+          `ไฟล์ PDF มี ${pdfDoc.numPages} หน้า แต่ระบบจะประมวลผลเพียง ${MAX_PAGES} หน้าแรกเท่านั้น`,
+          "solid",
+          "warning"
+        );
+      }
+
+      // Convert each page to an image
+      const pageFiles: File[] = [];
+      for (let i = 1; i <= numPages; i++) {
+        const pageFile = await pdfPageToImage(pdfDoc, i);
+        pageFiles.push(pageFile);
+      }
+
+      return pageFiles;
+    } catch (error) {
+      console.error("Error processing PDF:", error);
+      throw error;
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
@@ -195,9 +299,8 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
             "ไฟล์ไม่ถูกต้อง",
             `ไฟล์ ${file.name} ไม่ใช่ไฟล์รูปภาพหรือ PDF`,
             "solid",
-            "warning",
+            "warning"
           );
-
           return false;
         }
 
@@ -206,9 +309,8 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
             "ไฟล์ขนาดใหญ่เกินไป",
             `ไฟล์ ${file.name} มีขนาดใหญ่เกิน 10MB`,
             "solid",
-            "warning",
+            "warning"
           );
-
           return false;
         }
 
@@ -217,43 +319,80 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
 
       if (validFiles.length === 0) {
         setIsUploading(false);
-
         return;
       }
 
-      const uploadedResults = validFiles.map((file) => {
-        const url = URL.createObjectURL(file);
+      // Process all files, handling multi-page PDFs
+      let processedFiles: FileData[] = [];
 
-        return {
-          url,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          file,
-          isProcessing: false,
-          isOcrProcessed: false,
-          isOcrAccepted: false,
-        };
-      });
+      for (const file of validFiles) {
+        if (file.type === "application/pdf") {
+          // Process multi-page PDF
+          try {
+            const pageFiles = await processPdfFile(file);
+            const pdfPages = pageFiles.map((pageFile, index) => {
+              const url = URL.createObjectURL(pageFile);
+              return {
+                url,
+                name: `${file.name.replace(".pdf", "")}_page${index + 1}.png`,
+                size: pageFile.size,
+                type: pageFile.type,
+                file: pageFile,
+                isProcessing: false,
+                isOcrProcessed: false,
+                isOcrAccepted: false,
+                originalFile: file.name, // Track the original PDF file name
+                pageNumber: index + 1,
+                totalPages: pageFiles.length,
+              };
+            });
+            processedFiles = [...processedFiles, ...pdfPages];
+          } catch (error) {
+            console.error("Error processing PDF file:", error);
+            showNotification(
+              "เกิดข้อผิดพลาด",
+              `ไม่สามารถประมวลผลไฟล์ PDF: ${file.name}`,
+              "solid",
+              "danger"
+            );
+          }
+        } else {
+          // Normal image file
+          const url = URL.createObjectURL(file);
+          processedFiles.push({
+            url,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            file,
+            isProcessing: false,
+            isOcrProcessed: false,
+            isOcrAccepted: false,
+          });
+        }
+      }
 
-      setUploadedFiles((prev) => [...prev, ...uploadedResults]);
+      // Add the processed files to the uploaded files state
+      setUploadedFiles((prev) => [...prev, ...processedFiles]);
 
-      for (const fileData of uploadedResults) {
+      // Process OCR for each file
+      for (const fileData of processedFiles) {
         await processFileWithOcr(fileData);
       }
 
       showNotification(
         "อัพโหลดสำเร็จ",
-        `อัพโหลดไฟล์สำเร็จ ${validFiles.length} ไฟล์`,
+        `อัพโหลดและประมวลผลไฟล์สำเร็จ ${processedFiles.length} หน้า`,
         "solid",
-        "success",
+        "success"
       );
     } catch (error) {
+      console.error("File upload error:", error);
       showNotification(
         "เกิดข้อผิดพลาด",
         "ไม่สามารถอัพโหลดไฟล์ได้",
         "solid",
-        "danger",
+        "danger"
       );
     } finally {
       setIsUploading(false);
@@ -284,11 +423,11 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         files.map((f) =>
           f.name === file.name
             ? {
-                ...f,
-                isProcessing: false,
-                isOcrProcessed: true,
-                ocrData,
-              }
+              ...f,
+              isProcessing: false,
+              isOcrProcessed: true,
+              ocrData,
+            }
             : f,
         );
 

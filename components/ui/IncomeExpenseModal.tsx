@@ -234,8 +234,21 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
         setUploadedExpenseFiles((prev) => updateFiles(prev));
       }
 
-      const base64Image = await fileToBase64(file.file);
-      const ocrText = await aiService.ocr(base64Image, { detail: "high" });
+      // Determine if the file is a PDF or an image based on file type
+      const isPdf = file.type === "application/pdf";
+      const documentType = isPdf ? "pdf" : "image";
+      
+      // Convert file to base64 - fileToBase64 now returns full data URL for PDFs 
+      // and base64 only for images
+      const fileData = await fileToBase64(file.file);
+      
+      // Call the OCR service with appropriate file type parameters
+      const ocrText = await aiService.ocr(fileData, { 
+        detail: "high",
+        fileType: documentType,
+        fileName: file.name
+      });
+      
       const { amount, category } = parseOcrText(ocrText, fileType);
 
       const updateFilesWithResults = (files: FileData[]) =>
@@ -260,14 +273,25 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
 
       showNotification(
         "OCR สำเร็จ",
-        `วิเคราะห์ข้อมูลจากเอกสารสำเร็จ`,
+        `วิเคราะห์ข้อมูลจาก${isPdf ? "ไฟล์ PDF" : "รูปภาพ"}สำเร็จ`,
         "solid",
         "success",
       );
-    } catch (error) {
+    } catch (error: any) {
+      console.error("OCR processing error:", error);
+      
+      // Provide more specific error messages
+      let errorMessage = "ไม่สามารถวิเคราะห์ข้อมูลจากเอกสารได้";
+      
+      if (error.message && error.message.includes("invalid_image_format")) {
+        errorMessage = "รูปแบบไฟล์ไม่ถูกต้อง โปรดใช้ไฟล์ PNG, JPEG, GIF, หรือ PDF เท่านั้น";
+      } else if (error.message && error.message.includes("PDF")) {
+        errorMessage = "ไม่สามารถประมวลผลไฟล์ PDF ได้ โปรดตรวจสอบว่าไฟล์มีรูปแบบที่ถูกต้อง";
+      }
+      
       showNotification(
         "เกิดข้อผิดพลาด",
-        "ไม่สามารถวิเคราะห์ข้อมูลจากเอกสารได้",
+        errorMessage,
         "solid",
         "danger",
       );
@@ -541,8 +565,17 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   รายได้และรายจ่าย
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-500">
-                  กรอกข้อมูลเพื่อวางแผนการเงินและชำระหนี้
+                  กรอกข้อมูลเพื่อวางแผนการเงินและชำระหนี้ หรืออัพโหลดเอกสารเพื่อให้ระบบวิเคราะห์ให้อัตโนมัติ
                 </p>
+                <div className="mt-2 text-xs bg-blue-50 p-2 rounded-md border border-blue-100 text-blue-700">
+                  <p className="font-medium">อัตราส่วนหนี้ต่อรายได้ (Debt-to-Income Ratio):</p>
+                  <ul className="mt-1 space-y-1">
+                    <li className="flex items-center"><span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span> ≤ 40%: ปลอดภัย - อยู่ในระดับดี จัดการหนี้ได้โดยไม่กระทบค่าใช้จ่ายจำเป็น</li>
+                    <li className="flex items-center"><span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2"></span> 41-60%: เริ่มเสี่ยง - เริ่มกระทบกับการออมและสภาพคล่อง</li>
+                    <li className="flex items-center"><span className="inline-block w-2 h-2 bg-orange-500 rounded-full mr-2"></span> 61-80%: เสี่ยงสูง - มีภาระหนี้มาก รายได้เริ่มไม่พอใช้</li>
+                    <li className="flex items-center"><span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span> {">"}80%: วิกฤติ - อาจหมุนเงินไม่ทัน และเข้าใกล้หนี้เสีย</li>
+                  </ul>
+                </div>
               </div>
             </ModalHeader>
 
@@ -569,38 +602,54 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   viewFilePreview={viewFilePreview}
                 />
 
-                <div className="mb-4 sm:mb-6">
-                  <label
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                    htmlFor="monthlyIncome"
-                  >
-                    รายได้ต่อเดือน
-                  </label>
-                  <Controller
-                    control={control}
-                    name="monthlyIncome"
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        aria-label="รายได้ต่อเดือน"
-                        className="border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 w-full"
-                        endContent={<span className="text-gray-400">บาท</span>}
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        startContent={<span className="text-gray-400">฿</span>}
-                        type="text"
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const formattedValue = formatInputValue(
-                            e.target.value,
-                          );
-
-                          field.onChange(formattedValue);
-                        }}
+                <div className="mb-6 sm:mb-8 bg-green-50 p-4 rounded-lg border border-green-100">
+                  <div className="flex items-center mb-2">
+                    <svg className="mr-2 w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h4 className="font-medium text-gray-800">รายได้ต่อเดือน</h4>
+                  </div>
+                  
+                  <p className="text-xs text-gray-600 mb-3">ระบุรายได้รวมทั้งหมดต่อเดือน หรืออัพโหลดสลิปเงินเดือนเพื่อวิเคราะห์อัตโนมัติ</p>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="monthlyIncome"
+                      >
+                        จำนวนเงิน
+                      </label>
+                      <Controller
+                        control={control}
+                        name="monthlyIncome"
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            aria-label="รายได้ต่อเดือน"
+                            className="border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 w-full"
+                            endContent={<span className="text-gray-400">บาท</span>}
+                            inputMode="decimal"
+                            placeholder="ระบุรายได้ต่อเดือน"
+                            size="lg"
+                            startContent={
+                              <div className="pointer-events-none flex items-center">
+                                <span className="text-green-400 font-medium">฿</span>
+                              </div>
+                            }
+                            type="text"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const formattedValue = formatInputValue(
+                                e.target.value,
+                              );
+                              field.onChange(formattedValue);
+                            }}
+                          />
+                        )}
                       />
-                    )}
-                    rules={{ required: "กรุณาระบุรายได้ต่อเดือน" }}
-                  />
+                    </div>
+                  </div>  
                   {errors.monthlyIncome && (
                     <p className="mt-1 text-xs text-red-500">
                       {errors.monthlyIncome.message}

@@ -323,34 +323,32 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
 
       {/* Debt Plan Modal */}
       <DebtPlanModal
-        debtContext={{
-          debtItems:
-            debtContext?.debtItems.map((debt) => ({
-              _id: debt.id || "",
-              name: debt.name,
-              debtType: debt.debtType,
-              totalAmount:
-                typeof debt.totalAmount === "string"
-                  ? parseFloat(debt.totalAmount)
-                  : 0,
-              remainingAmount:
-                typeof debt.totalAmount === "string"
-                  ? parseFloat(debt.totalAmount)
-                  : 0,
-              interestRate:
-                typeof debt.interestRate === "string"
-                  ? parseFloat(debt.interestRate)
-                  : 0,
-              minimumPayment:
-                typeof debt.minimumPayment === "string"
-                  ? parseFloat(debt.minimumPayment)
-                  : 0,
-              paymentDueDay: debt.dueDate
-                ? parseInt(debt.dueDate.toString())
-                : undefined,
-            })) || [],
-          income: debtContext?.income || 0,
-        }}
+        debtContext={
+          debtContext?.debtItems.map((debt) => ({
+            _id: debt.id || "",
+            name: debt.name,
+            debtType: debt.debtType,
+            totalAmount:
+              typeof debt.totalAmount === "string"
+                ? parseFloat(debt.totalAmount)
+                : 0,
+            remainingAmount:
+              typeof debt.totalAmount === "string"
+                ? parseFloat(debt.totalAmount)
+                : 0,
+            interestRate:
+              typeof debt.interestRate === "string"
+                ? parseFloat(debt.interestRate)
+                : 0,
+            minimumPayment:
+              typeof debt.minimumPayment === "string"
+                ? parseFloat(debt.minimumPayment)
+                : 0,
+            paymentDueDay: debt.dueDate
+              ? parseInt(debt.dueDate.toString())
+              : undefined,
+          })) || []  /* Pass as array, not object */
+        }
         goalType="เห็นผลเร็ว"
         isOpen={isDebtPlanModalOpen}
         monthlyPayment={

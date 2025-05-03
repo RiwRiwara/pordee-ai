@@ -5,9 +5,16 @@ export const fileToBase64 = (file: File): Promise<string> => {
     const reader = new FileReader();
 
     reader.onload = () => {
-      const base64String = (reader.result as string).split(",")[1];
-
-      resolve(base64String);
+      // For PDFs we need to return the full data URL including the MIME type prefix
+      // For images, we still return just the base64 data without the prefix
+      if (file.type === 'application/pdf') {
+        // Return the complete data URL for PDFs
+        resolve(reader.result as string);
+      } else {
+        // For images, just return the base64 part without the data URL prefix
+        const base64String = (reader.result as string).split(",")[1];
+        resolve(base64String);
+      }
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);

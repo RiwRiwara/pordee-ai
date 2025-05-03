@@ -7,6 +7,45 @@ import { Providers } from "./providers";
 
 import { fontSans } from "@/config/fonts";
 
+const teamMembers = [
+  {
+    name: "Akekarach Panumphan",
+    position: "Project & Market Strategy Lead",
+    description: "Oversees the product vision, aligns team operations, and crafts go-to-market strategies to ensure that Pordee is both technically sound and business-ready.",
+    image: "/teams/Akekarach.png",
+  },
+  {
+    name: "Thamonwan Kumam",
+    position: "Product Owner & Financial Logic Designer",
+    description: "Defines product priorities, works closely with developers, and designs financial algorithms that power personalized debt repayment plans.",
+    image: "/teams/Thamonwan.png",
+  },
+  {
+    name: "Kasira Phootijindanun",
+    position: "UX Research & Insight Strategist",
+    description: "Leads user interviews and behavioral research, synthesizing insights into actionable UX direction and supporting co-creation of user flows.",
+    image: "/teams/Kasira.png",
+  },
+  {
+    name: "Naramon Wanatanasuwan",
+    position: "UX Flow Architect & Wireframe Designer",
+    description: "Translates insights and product goals into structured user journeys and wireframes that bridge real user needs with functional design.",
+    image: "/teams/Naramon.png",
+  },
+  {
+    name: "Pimpida Ratanasuvan",
+    position: "UX/UI Reviewer & Usability Designer",
+    description: "Ensures visual and interaction consistency, refines user flows, and co-designs intuitive interfaces that enhance user experience.",
+    image: "/teams/Pimpida.png",
+  },
+  {
+    name: "Tinthiti Puttipeerawit",
+    position: "Product Strategist & Presentation Lead",
+    description: "Shapes product logic and communication, creates compelling presentations, and supports user testing to validate core ideas.",
+    image: "/teams/Tinthiti.png",
+  },
+];
+
 export default function LandingPage() {
   return (
     <html suppressHydrationWarning lang="en">
@@ -31,6 +70,7 @@ export default function LandingPage() {
                   />
                 </div>
               </div>
+              <img alt="Pordee Logo" src="/banner.png" />
               <div className="relative z-10">
                 <div className="flex flex-row items-center justify-between container mx-auto py-16">
                   <div>
@@ -71,12 +111,12 @@ export default function LandingPage() {
             {/* Why Pordee Section */}
             <section className="py-16 bg-[#3C7DD1] text-white">
               <div className="container mx-auto px-4">
-                <h2 className="text-3xl font-bold text-center mb-12">
+                <h2 className="text-2xl md:text-5xl font-bold text-center mb-12">
                   Why Pordee?
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto ">
-                  <div className="bg-white rounded-lg pt-8 pb-2 text-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-20 max-w-6xl mx-auto ">
+                  <div className="bg-white rounded-xl pt-8 pb-2 text-center">
                     <h3 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
                       เข้าใจ
                     </h3>
@@ -90,7 +130,7 @@ export default function LandingPage() {
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg pt-8 pb-2 text-center">
+                  <div className="bg-white rounded-xl pt-8 pb-2 text-center">
                     <h3 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
                       วางแผนหนี้ ง่าย
                     </h3>
@@ -104,7 +144,7 @@ export default function LandingPage() {
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg pt-8 pb-2 text-center">
+                  <div className="bg-white rounded-xl pt-8 pb-2 text-center">
                     <h3 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
                       ปลอดภัยใช้ จริง
                     </h3>
@@ -270,34 +310,111 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="mt-16 flex justify-center">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-1">
-                      <Image
-                        alt="Pordee Assistant"
-                        className="mx-auto"
-                        height={400}
-                        src="/landing/appshow1.png"
-                        width={200}
-                      />
+                {/* App Features Section - Updated with new UI from the image */}
+                <div className="mt-16 flex flex-col">
+                  {/* Pordee Radar Section */}
+                  <div className="bg-[#3C7DD1] p-8 rounded-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+                    <div className="md:w-1/2 text-white mb-6 md:mb-0 md:pr-8">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4">Pordee Radar</h3>
+                      <p className="text-lg">
+                        สรุปสถานะหนี้และวัดความเสี่ยงทางการเงิน<br />
+                        เพื่อให้มองเห็นภาพรวมและวางแผนได้แม่นยำ
+                      </p>
                     </div>
-                    <div className="col-span-1">
+                    <div className="md:w-1/2 flex justify-center">
                       <Image
                         alt="Pordee Radar"
-                        className="mx-auto"
-                        height={400}
+                        className="rounded-lg shadow-xl"
+                        height={500}
                         src="/landing/appshow2.png"
-                        width={200}
+                        width={250}
                       />
                     </div>
-                    <div className="col-span-1">
+                  </div>
+
+                  {/* Pordee Planner Section */}
+                  <div className="bg-[#3C7DD1] p-8 rounded-lg mb-8 flex flex-col-reverse md:flex-row items-center justify-between">
+                    <div className="md:w-1/2 flex justify-center">
                       <Image
-                        alt="Pordee AI Insight"
-                        className="mx-auto"
-                        height={400}
-                        src="/landing/appshow3.png"
-                        width={200}
+                        alt="Pordee Planner"
+                        className="rounded-lg shadow-xl"
+                        height={500}
+                        src="/landing/appshow1.png"
+                        width={250}
                       />
+                    </div>
+                    <div className="md:w-1/2 text-white mb-6 md:mb-0 md:pl-8">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4">Pordee Planner</h3>
+                      <p className="text-lg">
+                        กำหนดเป้าหมาย วางแผนชำระหนี้ที่เหมาะสมกับคุณ<br />
+                        พร้อมเช็คเรื่องอื่นได้ด้วย
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Pordee Assistant Section */}
+                  <div className="bg-[#3C7DD1] p-8 rounded-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+                    <div className="md:w-1/2 text-white mb-6 md:mb-0 md:pr-8">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4">Pordee Assistant</h3>
+                      <p className="text-lg">
+                        AI ที่ช่วยตอบคำถามเรื่องหนี้ จากการวิเคราะห์พฤติกรรม<br />
+                        และสถานการณ์ของคุณ เพื่อให้คำแนะนำอย่างตรงจุด
+                      </p>
+                    </div>
+                    <div className="md:w-1/2 flex justify-center">
+                      <Image
+                        alt="Pordee Assistant"
+                        className="rounded-lg shadow-xl"
+                        height={500}
+                        src="/landing/appshow3.png"
+                        width={250}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* How to Use Section - NEW */}
+            <section className="py-16 bg-white">
+              <div className="container mx-auto px-4">
+                <h2 className="text-2xl md:text-5xl font-bold text-center mb-16 text-[#3C7DD1]">
+                  How to Use
+                </h2>
+
+                {/* Step 1 */}
+                <div className="flex flex-col md:flex-row items-center justify-between max-w-5xl mx-auto mb-12">
+                  <div className="md:w-1/3 mb-8 md:mb-0">
+                    <div className="">
+                      <Image
+                        alt="Step 1: Add Debt and Income Information"
+                        src="/landing/appshow4.png"
+                        width={300}
+                        height={600}
+                        className="rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="md:w-2/3 md:pl-12">
+                    <div className="flex items-center mb-4">
+                      <div className="bg-[#3C7DD1] text-white rounded-full w-20 h-20 flex items-center justify-center text-4xl font-bold mr-6">
+                        1
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-[#3C7DD1]">
+                        เพิ่มรายการหนี้และรายได้
+                      </h3>
+                    </div>
+                    <p className="text-gray-700 text-lg mb-6">
+                      ใส่ข้อมูลหนี้หรือบิลใดๆได้ในเจ้งหนี้ พร้อมระบุรายได้<br />
+                      Pordee จะวิเคราะห์ภาพรวมการเงินแบบอัตโนมัติ<br />
+                      และสรุปผลด้วย Pordee Radar<br />
+                      เพื่อให้คุณเห็นภาพรวมสถานะการเงินของคุณอย่างชัดเจน
+                    </p>
+                    <div className="text-right">
+                      <div className="inline-block bg-yellow-400 rounded-lg p-2">
+                        <span className="text-xl font-bold text-white">ต่อไป</span>
+                        <span className="text-yellow-600 ml-2">▶</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -314,7 +431,7 @@ export default function LandingPage() {
                   เริ่มต้นใช้งาน Pordee วันนี้ ฟรี ไม่มีค่าใช้จ่าย
                 </p>
                 <a
-                  className="inline-block bg-yellow-400 text-gray-900 font-bold px-8 py-3 rounded-lg text-lg"
+                  className="inline-block bg-yellow-400 text-white font-bold px-8 py-3 rounded-lg text-lg"
                   href="/home"
                 >
                   Get Start
@@ -322,173 +439,37 @@ export default function LandingPage() {
               </div>
             </section>
 
+
             {/* Our Team Section */}
             <section className="py-16 bg-[#3C7DD1] text-white">
-              <div className="container mx-auto px-4">
-                <h2 className="text-3xl font-bold text-center mb-12">
+              <div className="container mx-auto px-4 md:px-8 max-w-7xl">
+                <h2 className="text-4xl font-bold text-center mb-16">
                   Our Team
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-blue-800 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full mr-4 overflow-hidden">
-                        <Image
-                          alt="Akekarach Panumphan"
-                          className="object-cover w-full h-full"
-                          height={64}
-                          src="/teams/team1.png"
-                          width={64}
-                        />
+                  {teamMembers.map((member, index) => (
+                    <div key={index} className="bg-blue-700 rounded-lg p-6">
+                      <div className="mb-4">
+                        <div className="flex items-start">
+                          <div className=" bg-white rounded-md overflow-hidden mr-4 flex-shrink-0">
+                            <Image
+                              alt={member.name}
+                              className="object-cover w-full h-full"
+                              height={64}
+                              src={member.image}
+                              width={64}
+                            />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-white">{member.name}</h3>
+                            <p className="text-blue-200 text-xs leading-tight mt-1">{member.position}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-lg font-bold">
-                          Akekarach Panumphan
-                        </h3>
-                        <p className="text-blue-200">
-                          Project & Market Strategy Lead
-                        </p>
-                      </div>
+                      <p className="text-gray-300 text-sm leading-relaxed">{member.description}</p>
                     </div>
-                    <p className="text-gray-300">
-                      Oversees the product vision, aligns team objectives, and
-                      crafts go-to-market strategies to ensure that Pordee is
-                      both technically sound and business-ready.
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-800 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full mr-4 overflow-hidden">
-                        <Image
-                          alt="Thamonwan Kumam"
-                          className="object-cover w-full h-full"
-                          height={64}
-                          src="/teams/team1.png"
-                          width={64}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold">Thamonwan Kumam</h3>
-                        <p className="text-blue-200">
-                          Product Owner & Financial Logic Designer
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-300">
-                      Defines product priorities, works closely with developers,
-                      and designs financial algorithms that power personalized
-                      debt repayment plans.
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-800 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full mr-4 overflow-hidden">
-                        <Image
-                          alt="Kasira Phootijindanun"
-                          className="object-cover w-full h-full"
-                          height={64}
-                          src="/teams/team1.png"
-                          width={64}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold">
-                          Kasira Phootijindanun
-                        </h3>
-                        <p className="text-blue-200">
-                          UX Research & Insight Strategist
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-300">
-                      Leads user research and testing processes, synthesizing
-                      insights into actionable UX direction and supporting
-                      co-creation of user flows.
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-800 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full mr-4 overflow-hidden">
-                        <Image
-                          alt="Naramon Wanatanasuwan"
-                          className="object-cover w-full h-full"
-                          height={64}
-                          src="/teams/team1.png"
-                          width={64}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold">
-                          Naramon Wanatanasuwan
-                        </h3>
-                        <p className="text-blue-200">
-                          UX Flow Architect & Wireframe Designer
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-300">
-                      Translates user research insights into structured user
-                      journey and wireframes that bridge real user needs with
-                      functional design.
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-800 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full mr-4 overflow-hidden">
-                        <Image
-                          alt="Pimpida Ratanasuvan"
-                          className="object-cover w-full h-full"
-                          height={64}
-                          src="/teams/team1.png"
-                          width={64}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold">
-                          Pimpida Ratanasuvan
-                        </h3>
-                        <p className="text-blue-200">
-                          UX/UI Reviewer & Usability Designer
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-300">
-                      Ensures visual and interaction consistency, refines user
-                      flows, and co-designs intuitive interfaces that enhance
-                      user experience.
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-800 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full mr-4 overflow-hidden">
-                        <Image
-                          alt="Tinthiti Puttipeerawit"
-                          className="object-cover w-full h-full"
-                          height={64}
-                          src="/teams/team1.png"
-                          width={64}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold">
-                          Tinthiti Puttipeerawit
-                        </h3>
-                        <p className="text-blue-200">
-                          Product Strategist & Presentation Lead
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-300">
-                      Shapes product logic and communication, creates compelling
-                      presentations, and supports user testing to validate core
-                      ideas.
-                    </p>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="mt-16 text-center">

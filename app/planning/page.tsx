@@ -24,7 +24,7 @@ export default function Planning() {
       {/* Header */}
       <div className="mb-6 bg-[#3776C1] px-4 py-6 text-white">
         <div className="mb-2 flex items-center">
-          <BackButton className="text-white" href="/" />
+          <BackButton className="text-white" href="/home" />
           <h1 className="ml-2 text-xl font-bold">Pordee Planner</h1>
           {!isAuthenticated && (
             <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">

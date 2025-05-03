@@ -1,7 +1,8 @@
 // components/ui/FileUploadSection.tsx
 import React from "react";
 import { Button } from "@heroui/button";
-import { FaUpload, FaWallet, FaFileAlt } from "react-icons/fa";
+import { FaWallet, FaFileAlt, FaFilePdf, FaCheck, FaTimesCircle } from "react-icons/fa";
+import { FiUpload } from "react-icons/fi";
 
 import FileItem from "./FileItem";
 import { FileUploadSectionProps } from "./types";
@@ -24,6 +25,10 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
 }) => {
   const isIncome = fileType === "income";
   const themeColor = isIncome ? "green" : "yellow";
+  const bgColor = isIncome ? "bg-green-500" : "bg-yellow-500";
+  const hoverColor = isIncome ? "hover:bg-green-600" : "hover:bg-yellow-600";
+  const borderColor = isIncome ? "border-green-200" : "border-yellow-200";
+  const lightBgColor = isIncome ? "bg-green-50" : "bg-yellow-50";
 
   return (
     <div className="mb-6">
@@ -35,55 +40,71 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         {isIncome ? "เอกสารรายได้" : "เอกสารรายจ่าย"}
       </h3>
 
-      <div className="flex justify-end mb-3">
-        <input
-          ref={fileInputRef}
-          multiple
-          accept="image/png,image/jpeg,image/jpg,application/pdf"
-          aria-label={`อัพโหลดไฟล์${isIncome ? "สลิปหรือเอกสารรายได้" : "บิลหรือเอกสารรายจ่าย"}`}
-          className="hidden"
-          type="file"
-          onChange={(e) => handleFileChange(e, fileType)}
-        />
+      <input
+        ref={fileInputRef}
+        multiple
+        accept="image/png,image/jpeg,image/jpg,application/pdf"
+        aria-label={`อัพโหลดไฟล์${isIncome ? "สลิปหรือเอกสารรายได้" : "บิลหรือเอกสารรายจ่าย"}`}
+        className="hidden"
+        type="file"
+        onChange={(e) => handleFileChange(e, fileType)}
+      />
+      
+      <div className={`border ${borderColor} rounded-lg p-4 ${lightBgColor} mb-4`}>
         <Button
-          className={`bg-${themeColor}-500 text-white hover:bg-${themeColor}-600`}
-          color={isIncome ? "success" : "warning"}
+          className={`${bgColor} text-white w-full flex items-center justify-center py-3 ${hoverColor}`}
+          color={themeColor === "green" ? "success" : "warning"}
           isLoading={isUploading}
-          startContent={<FaUpload className="mr-1" size={14} />}
+          startContent={
+            <svg
+              fill="none"
+              height="20"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              width="20"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+          }
           onPress={triggerFileUpload}
         >
-          {isIncome ? "อัพโหลดสลิปเงินเดือน" : "อัพโหลดบิล/ใบเสร็จ"}
+          {isIncome ? "อัพโหลดสลิปเงินเดือนหรือเอกสารรายได้" : "อัพโหลดบิลหรือเอกสารรายจ่าย"}
         </Button>
+        <p className="text-xs text-center text-gray-600 mt-2">
+          อัพโหลด{isIncome ? "สลิปเงินเดือนหรือเอกสารรายได้" : "บิลหรือเอกสารรายจ่าย"} ระบบจะอ่านข้อมูลให้อัตโนมัติ
+        </p>
+        <p className="text-xs text-center text-gray-600">
+          รองรับไฟล์ PDF และรูปภาพ (PNG, JPEG) ขนาดไม่เกิน 10MB
+        </p>
       </div>
 
       {uploadedFiles.length > 0 && (
-        <div className="border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="flex justify-between items-center px-4 py-2 bg-gray-50 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <FaFileAlt
-                className={isIncome ? "text-green-500" : "text-yellow-500"}
+        <div className="border border-gray-200 rounded-lg p-3">
+          <h4 className="font-medium text-sm mb-2">
+            ไฟล์ที่อัพโหลด ({uploadedFiles.length})
+          </h4>
+          <div className="max-h-40 overflow-y-auto space-y-2">
+            {uploadedFiles.map((file, index) => (
+              <FileItem
+                key={index}
+                acceptOcrRecommendation={() =>
+                  acceptOcrRecommendation(file)
+                }
+                file={file}
+                fileType={fileType}
+                index={index}
+                isProcessingOcr={isProcessingOcr}
+                rejectOcrRecommendation={() =>
+                  rejectOcrRecommendation(file)
+                }
+                removeFile={() => removeFile(index)}
+                viewFilePreview={() => viewFilePreview(file)}
               />
-              <h4 className="font-medium text-sm">
-                ไฟล์{isIncome ? "รายได้" : "รายจ่าย"} ({uploadedFiles.length})
-              </h4>
-            </div>
-          </div>
-          <div className="px-4 py-3">
-            <div className="max-h-48 overflow-y-auto space-y-2">
-              {uploadedFiles.map((file, index) => (
-                <FileItem
-                  key={index}
-                  acceptOcrRecommendation={acceptOcrRecommendation}
-                  file={file}
-                  fileType={fileType}
-                  index={index}
-                  isProcessingOcr={isProcessingOcr}
-                  rejectOcrRecommendation={rejectOcrRecommendation}
-                  removeFile={removeFile}
-                  viewFilePreview={viewFilePreview}
-                />
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       )}

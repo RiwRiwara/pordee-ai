@@ -1,8 +1,12 @@
 interface Message {
   role: "system" | "user" | "assistant";
   content:
-    | string
-    | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+  | string
+  | Array<{ type: string; text?: string; image_url?: { url: string; detail?: string }; file_path?: string }>;
+  type?: string;
+  text?: string;
+  image_url?: { url: string; detail?: string };
+  file_path?: string;
 }
 
 // Restricted topics that should not be answered in MVP
@@ -45,6 +49,8 @@ interface ChatOptions {
 
 interface OCROptions {
   detail?: "low" | "high" | "auto"; // Image detail level for OCR
+  fileType?: "image" | "pdf"; // Type of file being processed
+  fileName?: string; // Original filename (needed for PDF upload)
 }
 
 class AIService {
@@ -99,41 +105,38 @@ class AIService {
    * @returns AI response
    */
   async chat(message: string, options: ChatOptions = {}): Promise<string> {
-    const { maxHistory = 10, temperature = 0.7 } = options;
-
     try {
+      const { maxHistory = 10, temperature = 0.7 } = options;
+
       // Check for restricted topics
       if (this.containsRestrictedTopics(message)) {
-        // Add user message to history
-        this.conversationHistory.push({ role: "user", content: message });
-
-        // Add restricted response to history
-        this.conversationHistory.push({
-          role: "assistant",
-          content: RESTRICTED_RESPONSE,
-        });
-
         return RESTRICTED_RESPONSE;
       }
 
-      // Build the prompt with personal context
-      const systemPrompt: Message = {
-        role: "system",
-        content: this.personalContext
-          ? `You are an AI assistant with the following context: ${this.personalContext}`
-          : "You are a helpful AI assistant.",
-      };
-
       // Add user message to history
-      this.conversationHistory.push({ role: "user", content: message });
+      this.conversationHistory.push({
+        role: "user",
+        content: message,
+      });
 
-      // Trim history to respect maxHistory limit (keep system prompt + recent messages)
-      if (this.conversationHistory.length > maxHistory) {
-        this.conversationHistory = this.conversationHistory.slice(-maxHistory);
+      // Trim history if exceeding max
+      if (this.conversationHistory.length > maxHistory * 2) {
+        // Keep the last N pairs of exchanges (user + assistant messages)
+        this.conversationHistory = this.conversationHistory.slice(
+          -maxHistory * 2,
+        );
       }
 
-      // Prepare messages for the API
-      const messages: Message[] = [systemPrompt, ...this.conversationHistory];
+      // Construct system message with context
+      const systemMessage: Message = {
+        role: "system",
+        content: this.personalContext
+          ? `You are an AI assistant with the following context: ${this.personalContext}. You specialize in Thai personal finance and debt management advice.`
+          : "You are an AI assistant specializing in Thai personal finance and debt management advice. Provide clear, actionable guidance for users managing their finances.",
+      };
+
+      // Prepare messages for OpenAI API
+      const messages = [systemMessage, ...this.conversationHistory];
 
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
@@ -171,30 +174,92 @@ class AIService {
   }
 
   /**
-   * Extract text from an image using OCR
-   * @param image - Base64-encoded image or image URL
-   * @param options - Optional settings (detail level)
+   * Extract text from an image or PDF using OCR
+   * @param fileData - Base64-encoded image, PDF, or URL
+   * @param options - OCR processing options
    * @returns Extracted text
    */
-  async ocr(image: string, options: OCROptions = {}): Promise<string> {
-    const { detail = "auto" } = options;
-
+  async ocr(fileData: string, options: OCROptions = {}): Promise<string> {
     try {
-      // Determine if the image is a URL or base64
-      const isUrl = image.startsWith("http://") || image.startsWith("https://");
-      const imageContent = isUrl
-        ? { type: "image_url", image_url: { url: image, detail } }
-        : {
-            type: "image_url",
-            image_url: { url: `data:image/jpeg;base64,${image}`, detail },
-          };
+      const { detail = "high", fileType = "image", fileName = "document" } = options;
 
-      // Build the prompt with personal context
+      // Validate input
+      if (!fileData) {
+        throw new Error("No file data provided");
+      }
+
+      console.log(`Processing file of type: ${fileType}`);
+
+      // Process based on file type
+      if (fileType === "pdf") {
+        // If it's a data URL, it needs special handling
+        if (fileData.startsWith('data:application/pdf;base64,')) {
+          console.log('Processing data URL PDF...');
+          // Extract the base64 part without the prefix
+          const base64Data = fileData.split(',')[1];
+          // PDF processing with specialized PDF method
+          return this.processPdfOcr(base64Data, fileName);
+        } else {
+          // Otherwise just use the data as-is (might be already base64)
+          return this.processPdfOcr(fileData, fileName);
+        }
+      } else if (fileType === "image") {
+        // Image processing with vision API
+        return this.processImageOcr(fileData, detail);
+      } else {
+        throw new Error(`Unsupported file type: ${fileType}. Supported types are 'image' and 'pdf'.`);
+      }
+    } catch (error: any) {
+      console.error("OCR processing error:", error);
+      // Check for specific error messages
+      if (error.message && error.message.includes("invalid_image_format")) {
+        throw new Error("Invalid image format. Please upload PNG, JPEG, GIF, or WEBP files only.");
+      }
+      throw new Error(`Failed to process OCR request: ${error.message || error}`);
+    }
+  }
+
+  /**
+   * Process image data for OCR
+   * @param imageData - Base64-encoded image or image URL
+   * @param detail - Image detail level
+   * @returns Extracted text
+   */
+  private async processImageOcr(imageData: string | Buffer, detail: string): Promise<string> {
+    try {
+      // Determine if the image is a URL, Buffer, or base64
+      let imageContent: any;
+
+      if (Buffer.isBuffer(imageData)) {
+        // Convert Buffer to base64
+        const base64Image = imageData.toString('base64');
+        imageContent = {
+          type: "image_url",
+          image_url: {
+            url: `data:image/jpeg;base64,${base64Image}`,
+            detail,
+          },
+        };
+      } else if (typeof imageData === 'string') {
+        // Check if it's a URL or base64
+        const isUrl = imageData.startsWith("http://") || imageData.startsWith("https://");
+        imageContent = {
+          type: "image_url",
+          image_url: {
+            url: isUrl ? imageData : `data:image/jpeg;base64,${imageData}`,
+            detail,
+          },
+        };
+      } else {
+        throw new Error("Unsupported image data format");
+      }
+
+      // Build the prompt with personal context and enhanced Thai financial document recognition instructions
       const systemPrompt: Message = {
         role: "system",
         content: this.personalContext
-          ? `You are an AI assistant with the following context: ${this.personalContext}. Extract text from the provided image accurately.`
-          : "You are an AI assistant. Extract text from the provided image accurately.",
+          ? `You are an AI assistant with the following context: ${this.personalContext}. You are an expert at extracting financial information from Thai financial documents, receipts, bills, and credit statements. Extract text from the provided image with high accuracy, paying special attention to amounts, dates, and financial terms.`
+          : "You are an AI assistant specializing in Thai financial document analysis. Extract text from the provided image with high accuracy, paying special attention to amounts, dates, and financial terms.",
       };
 
       const messages: Message[] = [
@@ -204,7 +269,7 @@ class AIService {
           content: [
             {
               type: "text",
-              text: "Please extract all text from the provided image.",
+              text: "Please extract all text from this financial document, focusing on debt details, minimum payments, interest rates, due dates, and total amounts. If the document contains multiple pages, analyze all visible content carefully.",
             },
             imageContent,
           ],
@@ -220,24 +285,234 @@ class AIService {
             Authorization: `Bearer ${this.apiKey}`,
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: "gpt-4.1", // Using the requested GPT-4.1 model
             messages,
+            temperature: 0.1, // Low temperature for more deterministic extraction
+            max_tokens: 1500, // Increased token limit for more detailed extraction
           }),
         },
       );
 
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error("OCR API error:", errorData);
         throw new Error(`API request failed: ${response.statusText}`);
       }
 
       const data = await response.json();
-
       return data.choices[0].message.content;
     } catch (error) {
-      throw new Error(`Failed to process OCR request: ${error}`);
+      console.error("Image OCR processing error:", error);
+      throw new Error(`Failed to process image OCR: ${error}`);
     }
   }
 
+  /**
+   * Process PDF data for OCR using OpenAI's Files API
+   * @param pdfData - PDF data as Buffer or base64 string
+   * @param fileName - Original filename
+   * @returns Extracted text
+   */
+  private async processPdfOcr(pdfData: string | Buffer, fileName: string): Promise<string> {
+    try {
+      // First, prepare the PDF file for upload
+      let fileObject: File;
+
+      if (Buffer.isBuffer(pdfData)) {
+        // Convert Buffer to Blob
+        const blob = new Blob([pdfData], { type: 'application/pdf' });
+        fileObject = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
+      } else if (typeof pdfData === 'string') {
+        // Handle different string formats (URL, data URL, base64)
+        if (pdfData.startsWith('http')) {
+          // Fetch from URL
+          const response = await fetch(pdfData);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch PDF from URL: ${response.statusText}`);
+          }
+          const blob = await response.blob();
+          if (blob.type !== 'application/pdf') {
+            throw new Error('URL does not point to a valid PDF file');
+          }
+          fileObject = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
+        } else if (pdfData.startsWith('data:application/pdf;base64,')) {
+          // Handle full data URL format (starting with data:application/pdf;base64,)
+          try {
+            // Extract the base64 part from the data URL
+            const base64Data = pdfData.split(',')[1];
+            // Convert base64 to binary
+            const binaryString = atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            fileObject = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
+          } catch (e) {
+            console.error('Error processing PDF data URL:', e);
+            throw new Error('Invalid PDF data URL');
+          }
+        } else {
+          // Assume base64 string
+          try {
+            // Convert base64 to binary
+            const binaryString = atob(pdfData);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            fileObject = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
+          } catch (e) {
+            console.error('Error processing PDF base64:', e);
+            throw new Error('Invalid base64 PDF data');
+          }
+        }
+      } else {
+        throw new Error('Invalid PDF data format');
+      }
+
+      // Check file size - OpenAI has a 25MB limit for vision API
+      if (fileObject.size > 25 * 1024 * 1024) { // 25MB in bytes
+        throw new Error('PDF file exceeds the maximum size limit of 25MB');
+      }
+
+      // For PDFs, we'll use the same approach as images with base64 encoding
+      // Convert PDF to base64
+      const reader = new FileReader();
+      
+      // Create a promise to handle the FileReader async operation
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const base64String = reader.result as string;
+          // Remove the data URL prefix if present
+          const base64Data = base64String.split(',')[1] || base64String;
+          resolve(base64Data);
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read PDF file'));
+        };
+      });
+      
+      // Start reading the file
+      reader.readAsDataURL(fileObject);
+      
+      // Wait for the reading to complete
+      const base64Data = await base64Promise;
+      
+      // Build system prompt for Thai financial document analysis
+      const systemPrompt: Message = {
+        role: "system",
+        content: this.personalContext
+          ? `You are an AI assistant with the following context: ${this.personalContext}. You are an expert at extracting financial information from Thai financial documents, receipts, bills, and credit statements. Extract text from the provided PDF with high accuracy, paying special attention to amounts, dates, and financial terms.`
+          : "You are an AI assistant specializing in Thai financial document analysis. Extract text from the provided PDF with high accuracy, paying special attention to amounts, dates, and financial terms.",
+      };
+
+      console.log('Processing PDF with OpenAI Vision API...');
+      
+      // Create form data for API upload
+      const formData = new FormData();
+      // Convert the base64 string back to a binary blob
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const file = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
+      
+      formData.append('file', file);
+      formData.append('purpose', 'assistants');
+      
+      console.log('Uploading PDF to OpenAI Files API...');
+      const uploadResponse = await fetch('https://api.openai.com/v1/files', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: formData,
+      });
+      
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('Failed to upload PDF:', errorText);
+        throw new Error(`Failed to upload PDF: ${uploadResponse.statusText}`);
+      }
+      
+      const uploadResult = await uploadResponse.json();
+      const fileId = uploadResult.id;
+      console.log(`PDF uploaded with ID: ${fileId}`);
+      
+      // Now create a messages array for GPT-4 with a system message and user prompt
+      const messages = [
+        {
+          role: "system",
+          content: systemPrompt.content,
+        },
+        {
+          role: "user",
+          content: `I've uploaded a PDF document with ID ${fileId}. Please extract all financial information from it, including debt details, payment amounts, interest rates, due dates, and total amounts. Focus particularly on information that would be relevant for financial planning in Thailand.`
+        },
+      ];
+      
+      // Submit the file ID for processing
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4.1",
+            messages,
+            temperature: 0.1,
+            max_tokens: 1500,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("PDF OCR API error:", errorData);
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('PDF processing completed successfully');
+
+      // Clean up by deleting the file
+      try {
+        console.log(`Deleting file ${fileId}...`);
+        const deleteResponse = await fetch(`https://api.openai.com/v1/files/${fileId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+        });
+
+        if (!deleteResponse.ok) {
+          console.warn(`Failed to delete file ${fileId}, but processing was successful`);
+        } else {
+          console.log(`File ${fileId} deleted successfully`);
+        }
+      } catch (deleteError) {
+        console.warn('Error during file cleanup:', deleteError);
+      }
+      
+      return data.choices[0].message.content;
+    } catch (error: any) {
+      console.error("PDF OCR processing error:", error);
+      // Provide more specific error messages
+      if (error.message && error.message.includes('application/pdf')) {
+        throw new Error('Invalid PDF format. Please ensure you are uploading a valid PDF file.');
+      } else if (error.message && error.message.includes('file size')) {
+        throw new Error('PDF file is too large. Maximum size is 25MB.');
+      }
+      throw new Error(`Failed to process PDF OCR: ${error.message || error}`);
+    }
+  }
   /**
    * Generate a response for a single prompt (original method)
    * @param prompt - User's prompt

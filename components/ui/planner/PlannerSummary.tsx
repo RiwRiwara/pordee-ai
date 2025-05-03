@@ -3,6 +3,7 @@ import { CalendarIcon, LineChartIcon } from "lucide-react";
 import { HiAdjustmentsHorizontal } from "react-icons/hi2";
 
 import DebtPlanModal from "../debt_plan/DebtPlanModal";
+import { DebtPlan } from "../debt_plan/types";
 
 interface DebtItem {
   _id: string;
@@ -66,27 +67,28 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
   };
 
   // Handle plan updates from the modal
-  const handlePlanUpdate = (newPlan: {
-    goalType: string;
-    paymentStrategy: string;
-    monthlyPayment: number;
-    timeInMonths: number;
-  }) => {
+  const handlePlanUpdate = (plan: DebtPlan) => {
+    // Make sure to handle potentially undefined values safely
+    const goalType = plan.goalType || "เห็นผลเร็ว";
+    const paymentStrategy = plan.paymentStrategy || "Snowball";
+    const timeInMonths = plan.timeInMonths || 30;
+    const monthlyPayment = plan.monthlyPayment || 0;
+    
     setPlanData({
       ...planData,
-      goalType: newPlan.goalType,
-      paymentStrategy: newPlan.paymentStrategy,
-      timeInMonths: newPlan.timeInMonths,
+      goalType: goalType,
+      paymentStrategy: paymentStrategy,
+      timeInMonths: timeInMonths,
       // Calculate new interest based on the plan (simplified)
       totalInterest: Math.round(
-        remainingDebt * 0.05 * (newPlan.timeInMonths / 12),
+        remainingDebt * 0.05 * (timeInMonths / 12),
       ),
     });
 
-    setMonthlyPayment(newPlan.monthlyPayment);
+    setMonthlyPayment(monthlyPayment);
 
     // Here you would typically save the plan to the backend
-    // fetch('/api/plan', { method: 'POST', body: JSON.stringify(newPlan) });
+    // fetch('/api/plan', { method: 'POST', body: JSON.stringify(plan) });
   };
 
   // Load debt data
@@ -249,6 +251,7 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
         isOpen={isAdjustPlanModalOpen}
         onOpenChange={setIsAdjustPlanModalOpen}
         onSavePlan={handlePlanUpdate}
+        debtContext={debts}
       />
     </div>
   );

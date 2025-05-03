@@ -3,14 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@heroui/button";
 import { Modal, ModalContent, ModalHeader, ModalBody } from "@heroui/modal";
-import {
-  FiX,
-  FiChevronDown,
-  FiChevronUp,
-  FiArrowLeft,
-  FiArrowRight,
-  FiInfo,
-} from "react-icons/fi";
+import { FiX, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,7 +15,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Line, Bar } from "react-chartjs-2";
 
 // Register ChartJS components
 ChartJS.register(
@@ -36,50 +28,20 @@ ChartJS.register(
   Legend,
 );
 
-interface DebtItem {
-  _id: string;
-  name: string;
-  debtType: string;
-  totalAmount: number;
-  remainingAmount: number;
-  interestRate: number;
-  minimumPayment?: number;
-  paymentDueDay?: number;
-}
+// Import components
+import { DebtItem } from "../types";
+import type { DebtPlan, DebtPlanModalProps } from "./types";
+import { DEBT_TYPES, formatNumber } from "./utils/debtPlanUtils";
 
-// Define debt types
-const DEBT_TYPES = [
-  { id: "all", label: "ทั้งหมด" },
-  { id: "personal", label: "สินเชื่อส่วนบุคคล" },
-  { id: "credit_card", label: "บัตรเครดิต" },
-  { id: "car", label: "สินเชื่อรถยนต์" },
-  { id: "home", label: "สินเชื่อบ้าน" },
-  { id: "business", label: "สินเชื่อธุรกิจ" },
-  { id: "other", label: "อื่นๆ" },
-];
+// Import new partials
+import PlanTopSummarySection from "./partials/PlanTopSummarySection";
+import AiAdvisorSection from "./partials/AiAdvisorSection";
+import MainTabs from "./partials/MainTabs";
+import CalulatePlanSection from "./partials/CalulatePlanSection";
+import AdjustPlanScrollRange from "./partials/AdjustPlanScrollRange";
+import OverallDebtSection from "./partials/OverallDebtSection";
 
-interface DebtPlanModalProps {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  debtContext?: {
-    debtItems: DebtItem[];
-    income: string | number;
-  };
-  riskPercentage?: number;
-  goalType?: string;
-  paymentStrategy?: string;
-  monthlyPayment?: number;
-  timeInMonths?: number;
-  existingPlanId?: string;
-  onSavePlan?: (plan: {
-    goalType: string;
-    paymentStrategy: string;
-    monthlyPayment: number;
-    timeInMonths: number;
-  }) => void;
-}
-
-export default function DebtPlanModal({
+export default function DebtPlanModalRefactored({
   isOpen,
   onOpenChange,
   debtContext,
@@ -91,6 +53,9 @@ export default function DebtPlanModal({
   existingPlanId,
   onSavePlan,
 }: DebtPlanModalProps) {
+  // Ref for modal content
+  const modalContentRef = useRef<HTMLDivElement>(null);
+
   // Plan data state
   const [goalType, setGoalType] = useState<string>(initialGoalType);
   const [paymentStrategy, setPaymentStrategy] = useState<string>(
@@ -100,11 +65,15 @@ export default function DebtPlanModal({
     initialMonthlyPayment,
   );
   const [timeInMonths, setTimeInMonths] = useState<number>(initialTimeInMonths);
+  const [goalSliderValue, setGoalSliderValue] = useState<number>(50); // 0-100 scale
+  const [sliderValue, setSliderValue] = useState<number>(
+    initialMonthlyPayment || 1000,
+  );
 
-  // Comparison data
-  const [originalTimeInMonths, setOriginalTimeInMonths] = useState<number>(24);
+  // Comparison plan data
   const [originalMonthlyPayment, setOriginalMonthlyPayment] =
     useState<number>(0);
+  const [originalTimeInMonths, setOriginalTimeInMonths] = useState<number>(24);
   const [reducedTimeInMonths, setReducedTimeInMonths] = useState<number>(20);
   const [reducedMonthlyPayment, setReducedMonthlyPayment] = useState<number>(0);
   const [acceleratedTimeInMonths, setAcceleratedTimeInMonths] =
@@ -114,8 +83,6 @@ export default function DebtPlanModal({
 
   // UI state
   const [activeTab, setActiveTab] = useState<string>("ยอดหนี้รวม");
-  const [sliderValue, setSliderValue] = useState<number>(1000);
-  const [goalSliderValue, setGoalSliderValue] = useState<number>(50); // 0-100 scale
   const [showComparisonDetails, setShowComparisonDetails] =
     useState<boolean>(false);
   const [currentDebtTypeIndex, setCurrentDebtTypeIndex] = useState<number>(0);
@@ -125,7 +92,7 @@ export default function DebtPlanModal({
   const [saveError, setSaveError] = useState<string>("");
 
   // Format numbers with commas
-  const formatNumber = (num: number) => {
+  const formatNumberLocal = (num: number) => {
     return num.toLocaleString("th-TH", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
@@ -134,14 +101,14 @@ export default function DebtPlanModal({
 
   // Calculate total debt and minimum payments
   useEffect(() => {
-    if (debtContext?.debtItems && debtContext.debtItems.length > 0) {
-      const totalDebt = debtContext.debtItems.reduce(
-        (sum, debt) => sum + debt.remainingAmount,
+    if (debtContext?.length > 0) {
+      const totalDebt = debtContext.reduce(
+        (sum: number, debt: DebtItem) => sum + debt.remainingAmount,
         0,
       );
 
-      const minPayment = debtContext.debtItems.reduce(
-        (sum, debt) => sum + (debt.minimumPayment || 0),
+      const minPayment = debtContext.reduce(
+        (sum: number, debt: DebtItem) => sum + (debt.minimumPayment || 0),
         0,
       );
 
@@ -158,6 +125,12 @@ export default function DebtPlanModal({
 
       // Calculate time to pay off debt with current payment
       if (minPayment > 0) {
+        const avgInterestRate =
+          debtContext.reduce(
+            (sum: number, debt: DebtItem) => sum + debt.interestRate,
+            0,
+          ) / debtContext.length;
+
         // Simple calculation (in real app would be more complex)
         const months = Math.ceil(totalDebt / minPayment);
 
@@ -181,9 +154,9 @@ export default function DebtPlanModal({
     setMonthlyPayment(value);
 
     // Recalculate months based on new payment
-    if (debtContext?.debtItems) {
-      const totalDebt = debtContext.debtItems.reduce(
-        (sum, debt) => sum + debt.remainingAmount,
+    if (debtContext) {
+      const totalDebt = debtContext.reduce(
+        (sum: number, debt: DebtItem) => sum + debt.remainingAmount,
         0,
       );
 
@@ -212,138 +185,23 @@ export default function DebtPlanModal({
     }
   };
 
-  // Fetch existing plan if editing
+  // Update payment strategy based on goal slider
   useEffect(() => {
-    const fetchExistingPlan = async () => {
-      if (existingPlanId && isOpen) {
-        try {
-          const response = await fetch(`/api/debt-plans/${existingPlanId}`);
-
-          if (response.ok) {
-            const plan = await response.json();
-
-            // Update state with existing plan data
-            setGoalType(plan.goalType);
-            setPaymentStrategy(plan.paymentStrategy);
-            setMonthlyPayment(plan.monthlyPayment);
-            setTimeInMonths(plan.timeInMonths);
-            setSliderValue(plan.monthlyPayment);
-
-            // Set goal slider value based on goal type
-            if (plan.goalType === "เห็นผลเร็ว") {
-              setGoalSliderValue(25);
-            } else if (plan.goalType === "สมดุล") {
-              setGoalSliderValue(50);
-            } else {
-              setGoalSliderValue(75);
-            }
-
-            // Find debt type index
-            const typeIndex = DEBT_TYPES.findIndex(
-              (type) => type.id === plan.debtTypeId,
-            );
-
-            if (typeIndex >= 0) {
-              setCurrentDebtTypeIndex(typeIndex);
-            }
-          }
-        } catch (error) {
-          setSaveError("เกิดข้อผิดพลาดในการดึงข้อมูลแผนการชำระหนี้");
-        }
-      }
-    };
-
-    fetchExistingPlan();
-  }, [existingPlanId, isOpen]);
-
-  // Handle save plan
-  const handleSavePlan = async () => {
-    try {
-      setIsSaving(true);
-      setSaveError("");
-
-      // Prepare the plan data
-      const planData = {
-        goalType,
-        paymentStrategy,
-        monthlyPayment,
-        timeInMonths,
-        debtTypeId: DEBT_TYPES[currentDebtTypeIndex].id,
-        isActive: true,
-        debtItems:
-          debtContext?.debtItems.map((debt) => ({
-            debtId: debt._id,
-            name: debt.name,
-            debtType: debt.debtType,
-            originalAmount: debt.totalAmount,
-            remainingAmount: debt.remainingAmount,
-            interestRate: debt.interestRate,
-            minimumPayment: debt.minimumPayment || 0,
-            paymentOrder:
-              paymentStrategy === "Snowball"
-                ? 1
-                : paymentStrategy === "Avalanche"
-                  ? 2
-                  : 3,
-          })) || [],
-      };
-
-      // Determine if creating new or updating existing plan
-      const url = existingPlanId
-        ? `/api/debt-plans/${existingPlanId}`
-        : "/api/debt-plans";
-
-      const method = existingPlanId ? "PUT" : "POST";
-
-      // Save to database
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(planData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        throw new Error(errorData.error || "Failed to save debt plan");
-      }
-
-      const savedPlan = await response.json();
-
-      // Plan saved successfully
-
-      // Call the onSavePlan callback if provided
-      if (onSavePlan) {
-        onSavePlan({
-          goalType,
-          paymentStrategy,
-          monthlyPayment,
-          timeInMonths,
-        });
-      }
-
-      // Show success message
-      const message = existingPlanId
-        ? "อัพเดตแผนการชำระหนี้เรียบร้อยแล้ว"
-        : "บันทึกแผนการชำระหนี้เรียบร้อยแล้ว";
-
-      alert(message);
-
-      // Close the modal
-      onOpenChange(false);
-    } catch (error) {
-      setSaveError(
-        error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการบันทึกแผน",
-      );
-    } finally {
-      setIsSaving(false);
+    if (goalSliderValue < 40) {
+      setPaymentStrategy("Snowball");
+      setGoalType("เห็นผลเร็ว");
+    } else if (goalSliderValue > 60) {
+      setPaymentStrategy("Avalanche");
+      setGoalType("ประหยัดดอกเบี้ย");
+    } else {
+      // Balanced approach
+      setPaymentStrategy("Snowball");
+      setGoalType("สมดุล");
     }
-  };
+  }, [goalSliderValue]);
 
   // Generate chart data
-  const generateChartData = (_debtTypeId: string) => {
+  const generateChartData = (debtTypeId: string) => {
     const months = Array.from({ length: 24 }, (_, i) => i + 1);
 
     // Original plan data - higher values that decrease more slowly
@@ -492,6 +350,108 @@ export default function DebtPlanModal({
     );
   };
 
+  // Reset plan to default values
+  const handleResetPlan = () => {
+    // Reset payment strategy and goal type to defaults
+    setPaymentStrategy(initialPaymentStrategy);
+    setGoalType(initialGoalType);
+    
+    // Reset payment values
+    setMonthlyPayment(originalMonthlyPayment);
+    setSliderValue(originalMonthlyPayment);
+    
+    // Reset goal slider to middle (balanced)
+    setGoalSliderValue(50);
+    
+    // Reset time values
+    setTimeInMonths(originalTimeInMonths);
+    
+    // Reset reduced and accelerated time calculations
+    setReducedTimeInMonths(Math.round(originalTimeInMonths * 0.8)); // 20% reduction as default
+    setAcceleratedTimeInMonths(Math.round(originalTimeInMonths * 0.2)); // 20% acceleration as default
+    
+    // Show a notification or feedback
+    alert('แผนการชำระหนี้ถูกรีเซ็ตเป็นค่าเริ่มต้น');
+  };
+
+  // Handle save plan
+  const handleSavePlan = async () => {
+    if (!onSavePlan) return;
+
+    try {
+      setIsSaving(true);
+      setSaveError("");
+
+      // Create plan object with all necessary data
+      const plan = {
+        id: existingPlanId,
+        goalType,
+        paymentStrategy,
+        monthlyPayment,
+        timeInMonths,
+        customSettings: {
+          goalBalance: goalSliderValue,
+        },
+      };
+
+      // Call the parent component's save function
+      await onSavePlan(plan as unknown as DebtPlan);
+
+      // Close the modal after saving
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error saving plan:", error);
+      setSaveError("เกิดข้อผิดพลาดในการบันทึกแผน กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Update payment strategy and recalculate when tab changes
+  const handleTabChange = (tabKey: React.Key) => {
+    setActiveTab(tabKey as string);
+    const newIndex = DEBT_TYPES.findIndex((type) => type.label === tabKey);
+
+    if (newIndex !== -1) {
+      setCurrentDebtTypeIndex(newIndex);
+    }
+  };
+
+  // Fetch existing plan data if available
+  useEffect(() => {
+    if (existingPlanId) {
+      const fetchExistingPlan = async () => {
+        try {
+          const response = await fetch(`/api/debtPlans/${existingPlanId}`);
+
+          if (response.ok) {
+            const plan: DebtPlan = await response.json();
+
+            // Update state with existing plan data
+            setGoalType(plan.goalType || initialGoalType);
+            setPaymentStrategy(plan.paymentStrategy || initialPaymentStrategy);
+            setMonthlyPayment(plan.monthlyPayment || initialMonthlyPayment);
+            setTimeInMonths(plan.timeInMonths || initialTimeInMonths);
+
+            // Set slider values
+            setSliderValue(plan.monthlyPayment || initialMonthlyPayment);
+            setGoalSliderValue(plan.customSettings?.goalBalance || 50);
+          }
+        } catch (error) {
+          console.error("Error fetching debt plan:", error);
+        }
+      };
+
+      fetchExistingPlan();
+    }
+  }, [
+    existingPlanId,
+    initialGoalType,
+    initialMonthlyPayment,
+    initialPaymentStrategy,
+    initialTimeInMonths,
+  ]);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -514,329 +474,77 @@ export default function DebtPlanModal({
         <ModalBody className="p-0">
           <div className="p-4 bg-white">
             {/* DTI Risk Indicator */}
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <p className="text-sm text-gray-600">เป้าหมายที่เลือก:</p>
-                <p className="font-medium">{goalType}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">รูปแบบแผนการชำระหนี้:</p>
-                <p className="font-medium">{paymentStrategy}</p>
-              </div>
-              {getRiskStatusDisplay()}
-            </div>
+            <PlanTopSummarySection
+              goalType={goalType}
+              paymentStrategy={paymentStrategy}
+              riskPercentage={riskPercentage}
+              getRiskStatusDisplay={getRiskStatusDisplay}
+            />
+
+
+
+            {/* Main Tabs and Charts */}
+            <MainTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              currentDebtTypeIndex={currentDebtTypeIndex}
+              setCurrentDebtTypeIndex={setCurrentDebtTypeIndex}
+              generateChartData={generateChartData}
+              chartOptions={chartOptions}
+              goToNextDebtType={goToNextDebtType}
+              goToPrevDebtType={goToPrevDebtType}
+              showAIRecommendation={showAIRecommendation}
+              setShowAIRecommendation={setShowAIRecommendation}
+              debtData={debtContext}
+              onDebtTypeChange={(debtTypeId, newTimeInMonths, newInterestAmount) => {
+                // Update the time and interest values based on debt type selection
+                setTimeInMonths(newTimeInMonths);
+                // Could also update interest amount if needed in the UI
+                // This will sync with the calculation plan section
+              }}
+            />
+
+            {/* Calculation Plan Section */}
+            <CalulatePlanSection
+              originalTimeInMonths={originalTimeInMonths}
+              originalMonthlyPayment={originalMonthlyPayment}
+              newPlanTimeInMonths={reducedTimeInMonths}
+              newPlanMonthlyPayment={reducedMonthlyPayment}
+              savedTimeInMonths={acceleratedTimeInMonths}
+              savedAmount={acceleratedMonthlyPayment}
+              currentDebtTypeId={currentDebtType.id}
+            />
 
             {/* AI Recommendation Section */}
-            <div className="mb-4">
-              <div
-                className="flex items-center justify-between bg-blue-50 p-3 rounded-t-lg cursor-pointer"
-                onClick={() => setShowAIRecommendation(!showAIRecommendation)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    setShowAIRecommendation(!showAIRecommendation);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-              >
-                <div className="flex items-center">
-                  <FiInfo className="text-blue-500 mr-2" />
-                  <span className="font-medium">ดูคำแนะนำจาก AI Advisor</span>
-                </div>
-                {showAIRecommendation ? <FiChevronUp /> : <FiChevronDown />}
-              </div>
+            <AiAdvisorSection
+              showAIRecommendation={showAIRecommendation}
+              setShowAIRecommendation={setShowAIRecommendation}
+              monthlyPayment={monthlyPayment}
+              timeInMonths={timeInMonths}
+            />
 
-              {showAIRecommendation && (
-                <div className="bg-blue-50 p-3 rounded-b-lg">
-                  <p className="text-sm">
-                    จากการวิเคราะห์ข้อมูลหนี้ของคุณ
-                    เราแนะนำให้เพิ่มยอดชำระต่อเดือนเป็น{" "}
-                    {formatNumber(monthlyPayment * 1.2)} บาท
-                    เพื่อลดระยะเวลาการชำระหนี้ลงเหลือ{" "}
-                    {Math.round(timeInMonths * 0.8)} เดือน
-                    และประหยัดดอกเบี้ยได้ถึง{" "}
-                    {formatNumber(monthlyPayment * timeInMonths * 0.05 * 0.2)}{" "}
-                    บาท
-                  </p>
-                  <p className="text-sm mt-2">
-                    หากคุณใช้กลยุทธ์ Snowball คุณควรชำระหนี้ตามลำดับต่อไปนี้:
-                  </p>
-                  <ol className="list-decimal list-inside text-sm mt-1 ml-2">
-                    <li>บัตรเครดิต A (ดอกเบี้ย 18%)</li>
-                    <li>สินเชื่อส่วนบุคคล B (ดอกเบี้ย 12%)</li>
-                    <li>สินเชื่อรถยนต์ C (ดอกเบี้ย 5%)</li>
-                  </ol>
-                </div>
-              )}
-            </div>
-
-            {/* Tabs */}
-            <div className="flex border-b mb-4">
-              {["ยอดหนี้รวม", "ยอดหนี้รายก้อน"].map((tab) => (
-                <button
-                  key={tab}
-                  className={`px-4 py-2 ${activeTab === tab ? "border-b-2 border-blue-500 text-blue-600 font-medium" : "text-gray-600"}`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            {/* Debt Type Selection */}
-            <div className="flex justify-between items-center mb-4">
-              <button
-                aria-label="ประเภทหนี้ก่อนหน้า"
-                className="p-2 rounded-full hover:bg-gray-100"
-                onClick={goToPrevDebtType}
-              >
-                <FiArrowLeft />
-              </button>
-
-              <h3 className="text-center font-medium">
-                {currentDebtType.label}
-              </h3>
-
-              <button
-                aria-label="ประเภทหนี้ถัดไป"
-                className="p-2 rounded-full hover:bg-gray-100"
-                onClick={goToNextDebtType}
-              >
-                <FiArrowRight />
-              </button>
-            </div>
-
-            {/* Debt Payoff Chart */}
-            <div className="mb-6">
-              <div className="h-64 border border-gray-200 rounded-lg p-2">
-                {activeTab === "ยอดหนี้รวม" ? (
-                  <Line
-                    data={generateChartData(currentDebtType.id)}
-                    options={chartOptions}
-                  />
-                ) : (
-                  <Bar
-                    data={{
-                      labels: ["Debt A", "Debt B", "Debt C"],
-                      datasets: [
-                        {
-                          label: "แผนเดิม",
-                          data: [80000, 60000, 40000],
-                          backgroundColor: "#F59E0B",
-                        },
-                        {
-                          label: "แผนใหม่",
-                          data: [70000, 50000, 30000],
-                          backgroundColor: "#3B82F6",
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: {
-                            display: true,
-                            text: "ยอดหนี้ (บาท)",
-                          },
-                          ticks: {
-                            callback: function (
-                              this: any,
-                              value: string | number,
-                            ) {
-                              return typeof value === "number"
-                                ? value.toLocaleString("th-TH")
-                                : value;
-                            },
-                          },
-                        },
-                        x: {
-                          title: {
-                            display: true,
-                            text: "ชื่อหนี้",
-                          },
-                        },
-                      },
-                      plugins: chartOptions.plugins,
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex justify-center gap-1 mb-4">
-              {DEBT_TYPES.map((type, index) => (
-                <div
-                  key={type.id}
-                  className={`w-2 h-2 rounded-full ${index === currentDebtTypeIndex ? "bg-blue-500" : "bg-gray-300"}`}
-                />
-              ))}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <Button
-                className="flex items-center justify-center gap-2"
-                color="primary"
-                variant="light"
-              >
-                <span>เวลาที่ใช้</span>
-              </Button>
-              <Button
-                className="flex items-center justify-center gap-2"
-                color="primary"
-                variant="light"
-              >
-                <span>เงินที่ใช้ไป</span>
-              </Button>
-            </div>
-
-            {/* Payment Comparison */}
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-gray-100 p-2 rounded-lg">
-                <p className="text-xs text-gray-600 text-center">แผนเดิม</p>
-                <p className="text-center font-medium">
-                  {originalTimeInMonths} เดือน
-                </p>
-                <p className="text-center text-sm text-blue-600">
-                  {formatNumber(originalMonthlyPayment)} บาท
-                </p>
-                <div className="flex justify-center">
-                  <FiChevronDown className="text-gray-500" />
-                </div>
-              </div>
-              <div className="bg-gray-100 p-2 rounded-lg">
-                <p className="text-xs text-gray-600 text-center">แผนใหม่</p>
-                <p className="text-center font-medium">
-                  {reducedTimeInMonths} เดือน
-                </p>
-                <p className="text-center text-sm text-blue-600">
-                  {formatNumber(reducedMonthlyPayment)} บาท
-                </p>
-                <div className="flex justify-center">
-                  <FiChevronDown className="text-gray-500" />
-                </div>
-              </div>
-              <div className="bg-yellow-100 p-2 rounded-lg">
-                <p className="text-xs text-gray-600 text-center">เร่งด่วน</p>
-                <p className="text-center font-medium">
-                  {acceleratedTimeInMonths} เดือน
-                </p>
-                <p className="text-center text-sm text-blue-600">
-                  {formatNumber(acceleratedMonthlyPayment)} บาท
-                </p>
-                <div className="flex justify-center">
-                  <FiChevronDown className="text-gray-500" />
-                </div>
-              </div>
-            </div>
-
-            {/* Comparison Details Toggle */}
-            <button
-              className="w-full flex items-center justify-center gap-1 text-blue-600 mb-4"
-              onClick={() => setShowComparisonDetails(!showComparisonDetails)}
-            >
-              {showComparisonDetails ? (
-                <>
-                  <span>ซ่อนรายละเอียด</span>
-                  <FiChevronUp />
-                </>
-              ) : (
-                <>
-                  <span>ดูรายละเอียดเพิ่มเติม</span>
-                  <FiChevronDown />
-                </>
-              )}
-            </button>
-
-            {/* Comparison Details */}
-            {showComparisonDetails && (
-              <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm">ยอดชำระต่อเดือน/เดือน</span>
-                  <span className="text-sm font-medium">
-                    {formatNumber(monthlyPayment)} บาท
-                  </span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm">ยอดที่ชำระทั้งหมด</span>
-                  <span className="text-sm font-medium">
-                    {formatNumber(monthlyPayment * timeInMonths)} บาท
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">ดอกเบี้ยที่ต้องจ่าย</span>
-                  <span className="text-sm font-medium">
-                    {formatNumber(monthlyPayment * timeInMonths * 0.05)} บาท
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Adjust Plan Section */}
-            <div className="bg-gray-100 p-4 rounded-lg mb-4">
-              <h3 className="text-center font-medium mb-4">
-                ปรับแต่งแผนด้วยตัวคุณเอง
-              </h3>
-
-              {/* Payment Amount Slider */}
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <label
-                    className="text-sm font-medium text-gray-700"
-                    htmlFor="payment-slider"
-                  >
-                    จำนวนเงินโปะ / เดือน
-                  </label>
-                  <span className="text-sm font-medium">
-                    {formatNumber(sliderValue)} บาท
-                  </span>
-                </div>
-                <input
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                  id="payment-slider"
-                  max={originalMonthlyPayment * 3}
-                  min={originalMonthlyPayment * 0.5}
-                  step={100}
-                  type="range"
-                  value={sliderValue}
-                  onChange={handleSliderChange}
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>0</span>
-                  <span>2,000</span>
-                </div>
-              </div>
-
-              {/* Goal Balance Slider */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label
-                    className="text-sm font-medium text-gray-700"
-                    htmlFor="goal-slider"
-                  >
-                    น้ำหนักเป้าหมาย
-                  </label>
-                </div>
-                <input
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                  id="goal-slider"
-                  max={100}
-                  min={0}
-                  step={1}
-                  type="range"
-                  value={goalSliderValue}
-                  onChange={handleGoalSliderChange}
-                />
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
-                  <span>เห็นผลเร็ว</span>
-                  <span>ประหยัดดอกเบี้ย</span>
-                </div>
-              </div>
-            </div>
+            {/* Adjustable Plan Sliders */}
+            <AdjustPlanScrollRange
+              sliderValue={sliderValue}
+              setSliderValue={setSliderValue}
+              goalSliderValue={goalSliderValue}
+              setGoalSliderValue={setGoalSliderValue}
+              originalMonthlyPayment={originalMonthlyPayment}
+              onValueChange={(paymentValue, goalValue) => {
+                // Update monthly payment based on slider value
+                setMonthlyPayment(paymentValue);
+                
+                // Adjust time in months based on payment changes
+                const ratio = originalMonthlyPayment / paymentValue;
+                const newTimeInMonths = Math.round(originalTimeInMonths * ratio);
+                setTimeInMonths(newTimeInMonths);
+                
+                // Update reduced and accelerated values based on goal slider
+                setReducedTimeInMonths(Math.round(newTimeInMonths * (1 - goalValue/100)));
+                setAcceleratedTimeInMonths(Math.round(originalTimeInMonths - newTimeInMonths));
+              }}
+              onResetPlan={handleResetPlan}
+            />
 
             {/* Error Message */}
             {saveError && (
@@ -845,9 +553,17 @@ export default function DebtPlanModal({
               </div>
             )}
 
+            {/* Summary Stats */}
+
+            <OverallDebtSection
+              monthlyPayment={monthlyPayment}
+              totalRepaymentAmount={monthlyPayment * timeInMonths}
+              totalInterestSaved={(originalMonthlyPayment * originalTimeInMonths) - (monthlyPayment * timeInMonths)}
+            />
+
             {/* Save Plan Button */}
             <Button
-              className="w-full py-3 mb-4"
+              className="w-full py-3 my-4"
               color="primary"
               isDisabled={isSaving}
               isLoading={isSaving}
@@ -856,23 +572,7 @@ export default function DebtPlanModal({
               {existingPlanId ? "อัพเดตแผนการชำระหนี้" : "ยืนยันแผนการชำระหนี้"}
             </Button>
 
-            {/* Summary Stats */}
-            <div className="bg-blue-500 text-white p-4 rounded-lg">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm">ยอดชำระต่อเดือน/เดือน</p>
-                  <p className="text-xl font-bold">
-                    {formatNumber(monthlyPayment)} บาท
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm">ยอดที่ชำระทั้งหมด</p>
-                  <p className="text-xl font-bold">
-                    {formatNumber(monthlyPayment * timeInMonths)} บาท
-                  </p>
-                </div>
-              </div>
-            </div>
+
           </div>
         </ModalBody>
       </ModalContent>
