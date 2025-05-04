@@ -2,22 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import UserTracking from "@/models/UserTracking";
 import connectToDatabase from "@/lib/mongodb";
+import mongoose from "mongoose";
 
 // Initialize or update user tracking data
 export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const session = await getServerSession();
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const userId = session.user.id;
     const data = await req.json();
+    
+    // Generate a userId even for anonymous users
+    let userId = "anonymous";
+    let isAnonymous = true;
+    
+    // Try multiple ways to get a valid userId
+    if (session?.user?.id) {
+      // Use authenticated user ID if available
+      userId = session.user.id;
+      isAnonymous = false;
+    } else if (data.anonymousId && typeof data.anonymousId === 'string' && data.anonymousId.length > 0) {
+      // Use provided anonymousId for guest users
+      userId = data.anonymousId;
+    } else if (data.sessionId && typeof data.sessionId === 'string' && data.sessionId.length > 0) {
+      // If no anonymousId, use sessionId as userId (still anonymous)
+      userId = `anon-${data.sessionId}`;
+    } else {
+      // Final fallback - use a timestamp-based ID
+      userId = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    }
 
     // Generate session ID if not provided
     const sessionId = data.sessionId || `${userId}-${Date.now()}`;
@@ -26,6 +38,7 @@ export async function POST(req: NextRequest) {
     let tracking = await UserTracking.findOne({
       userId,
       sessionId,
+      ...(isAnonymous ? { isAnonymous: true } : {}),
     });
 
     if (!tracking) {
@@ -33,6 +46,7 @@ export async function POST(req: NextRequest) {
         userId,
         sessionId,
         deviceType: data.deviceType || detectDeviceType(req),
+        isAnonymous: isAnonymous,
       });
     }
 

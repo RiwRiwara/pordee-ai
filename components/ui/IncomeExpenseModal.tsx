@@ -98,12 +98,19 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
         monthlyExpense: initialData.monthlyExpense || "",
       });
     }
-    
-    // Track when user starts inputting finance data
+  }, [isOpen, initialData, reset]);
+  
+  // Separate effect for tracking to prevent infinite loops
+  useEffect(() => {
+    // Only track when modal is first opened
     if (isOpen) {
-      trackDebtInputStart();
+      // Using a timeout to break potential render cycles
+      const timer = setTimeout(() => {
+        trackDebtInputStart();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, initialData, reset, trackDebtInputStart]);
+  }, [isOpen]);
 
   const monthlyIncome = parseFloat(
     watch("monthlyIncome").replace(/,/g, "") || "0",

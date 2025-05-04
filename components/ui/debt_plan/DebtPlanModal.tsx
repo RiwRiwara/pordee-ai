@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@heroui/button";
 import { Modal, ModalContent, ModalHeader, ModalBody } from "@heroui/modal";
-import { FiX, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useSession } from "next-auth/react";
 
 // Register ChartJS components
 ChartJS.register(
@@ -29,9 +29,7 @@ ChartJS.register(
 );
 
 // Import components
-import { DebtItem } from "../types";
-import type { DebtPlan, DebtPlanModalProps } from "./types";
-import { DEBT_TYPES, formatNumber } from "./utils/debtPlanUtils";
+import { DEBT_TYPES } from "./utils/debtPlanUtils";
 import { useTracking } from "@/lib/tracking";
 
 // Import new partials
@@ -41,6 +39,9 @@ import MainTabs from "./partials/MainTabs";
 import CalulatePlanSection from "./partials/CalulatePlanSection";
 import AdjustPlanScrollRange from "./partials/AdjustPlanScrollRange";
 import OverallDebtSection from "./partials/OverallDebtSection";
+import { DebtPlan, DebtPlanModalProps } from "./types";
+import { DebtItem } from "../types";
+import { FiX } from "react-icons/fi";
 
 export default function DebtPlanModalRefactored({
   isOpen,
@@ -390,14 +391,115 @@ export default function DebtPlanModalRefactored({
     alert('แผนการชำระหนี้ถูกรีเซ็ตเป็นค่าเริ่มต้น');
   };
 
+  // Get the user session if available
+  const { data: session } = useSession();
+  
+  // Anonymous user ID management
+  const [anonymousId, setAnonymousId] = useState<string>("");
+  
+  // Initialize anonymous ID on component mount if user is not logged in
+  useEffect(() => {
+    // Only create anonymous ID if user is not logged in
+    if (!session?.user) {
+      // Try to get existing anonymous ID from localStorage
+      const storedAnonymousId = localStorage.getItem('anonymousId');
+      if (storedAnonymousId) {
+        setAnonymousId(storedAnonymousId);
+      } else {
+        // Generate a new anonymous ID
+        const newAnonymousId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem('anonymousId', newAnonymousId);
+        setAnonymousId(newAnonymousId);
+      }
+    }
+  }, [session]);
+  
+  // Direct API call to save debt plan
+  const saveDebtPlanToDatabase = async (planData: any) => {
+    try {
+      // Remove the id field if it's null or undefined (for new plans)
+      const dataToSend = { ...planData };
+      if (!dataToSend.id) {
+        delete dataToSend.id;
+      }
+      
+      // Add anonymous ID if user is not logged in
+      if (!session?.user && anonymousId) {
+        dataToSend.anonymousId = anonymousId;
+      }
+      
+      // Determine if this is an update or create operation
+      const url = planData.id 
+        ? `/api/debt-plans/${planData.id}` 
+        : '/api/debt-plans';
+      
+      const method = planData.id ? 'PUT' : 'POST';
+      
+      console.log('Saving debt plan to database:', JSON.stringify(dataToSend, null, 2));
+      
+      // Make API request
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error response:', errorData);
+        throw new Error(errorData.error || 'Failed to save debt plan');
+      }
+      
+      const result = await response.json();
+      console.log('Debt plan saved successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('API error saving debt plan:', error);
+      throw error;
+    }
+  };
+
   // Handle save plan
   const handleSavePlan = async () => {
-    if (!onSavePlan) return;
-
     try {
       setIsSaving(true);
       setSaveError("");
 
+      // Validate required data
+      if (!debtContext || debtContext.length === 0) {
+        setSaveError("ไม่พบข้อมูลหนี้ กรุณาเพิ่มข้อมูลหนี้ก่อนสร้างแผน");
+        return;
+      }
+
+      if (monthlyPayment <= 0) {
+        setSaveError("กรุณาระบุยอดชำระรายเดือนที่มากกว่า 0");
+        return;
+      }
+
+      // Get current selected debt type
+      const currentDebtType = DEBT_TYPES[currentDebtTypeIndex];
+      
+      // Create debt items from debtContext with proper validation
+      const debtItems = debtContext.map((debt, index) => {
+        // Ensure all required fields have valid values
+        if (!debt._id) {
+          console.warn("Debt missing _id, using fallback");
+        }
+        
+        return {
+          debtId: debt._id || new Date().getTime().toString(),
+          name: debt.name || `หนี้ ${index + 1}`,
+          debtType: debt.debtType || "other",
+          originalAmount: debt.totalAmount || debt.remainingAmount || 0,
+          remainingAmount: debt.remainingAmount || 0,
+          interestRate: debt.interestRate || 0,
+          minimumPayment: debt.minimumPayment || 0,
+          paymentOrder: getPaymentOrder(debt, index, paymentStrategy)
+        };
+      });
+      
       // Create plan object with all necessary data
       const plan = {
         id: existingPlanId,
@@ -405,13 +507,38 @@ export default function DebtPlanModalRefactored({
         paymentStrategy,
         monthlyPayment,
         timeInMonths,
+        debtTypeId: currentDebtType.id,
+        debtItems,
+        isActive: true,
         customSettings: {
           goalBalance: goalSliderValue,
         },
       };
 
-      // Call the parent component's save function
-      await onSavePlan(plan as unknown as DebtPlan);
+      // Always try the direct API call first to ensure data is saved to the database
+      try {
+        // Save directly to database first
+        const savedPlan = await saveDebtPlanToDatabase(plan);
+        console.log('Plan saved directly to database:', savedPlan);
+        
+        // Then notify parent component if callback exists
+        if (onSavePlan) {
+          try {
+            // Include the saved plan ID from the database response if it's a new plan
+            const planWithId = savedPlan && savedPlan._id && !plan.id
+              ? { ...plan, id: savedPlan._id }
+              : plan;
+            
+            await onSavePlan(planWithId as unknown as DebtPlan);
+          } catch (parentError) {
+            console.warn("Parent onSavePlan callback failed, but plan was saved to database", parentError);
+            // Plan is already saved to database, so we can continue
+          }
+        }
+      } catch (error) {
+        console.error("Failed to save plan to database:", error);
+        throw error; // Re-throw to be caught by the outer try-catch
+      }
 
       // Track completion when plan is saved
       trackCompletion(true);
@@ -424,6 +551,31 @@ export default function DebtPlanModalRefactored({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Helper function to determine payment order based on strategy
+  const getPaymentOrder = (debt: DebtItem, index: number, strategy: string): number => {
+    // Default order (by index)
+    if (!debtContext || debtContext.length === 0) return index + 1;
+    
+    // For Snowball strategy: order by remaining amount (smallest first)
+    if (strategy === "Snowball") {
+      return debtContext
+        .slice()
+        .sort((a, b) => a.remainingAmount - b.remainingAmount)
+        .findIndex(d => d._id === debt._id) + 1;
+    }
+    
+    // For Avalanche strategy: order by interest rate (highest first)
+    if (strategy === "Avalanche") {
+      return debtContext
+        .slice()
+        .sort((a, b) => b.interestRate - a.interestRate)
+        .findIndex(d => d._id === debt._id) + 1;
+    }
+    
+    // For Proportional/Balanced strategy: use default order
+    return index + 1;
   };
 
   // Update payment strategy and recalculate when tab changes

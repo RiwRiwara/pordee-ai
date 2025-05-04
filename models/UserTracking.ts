@@ -2,8 +2,9 @@ import mongoose, { Schema, Document } from "mongoose";
 import { IUser } from "./User";
 
 export interface IUserTracking extends Document {
-  userId: mongoose.Types.ObjectId | IUser;
+  userId: mongoose.Types.ObjectId | string | IUser;
   sessionId: string;
+  isAnonymous: boolean;
   startTimeInputDebt: Date;
   finishTimeInputDebt: Date;
   startTimeRadar: Date;
@@ -19,9 +20,12 @@ export interface IUserTracking extends Document {
 const UserTrackingSchema: Schema = new Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: String,
       required: true,
+    },
+    isAnonymous: {
+      type: Boolean,
+      default: false,
     },
     sessionId: {
       type: String,

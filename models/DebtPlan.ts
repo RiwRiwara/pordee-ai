@@ -32,7 +32,7 @@ export interface IDebtPlan extends Document {
 // Schema for debt items in the plan
 const DebtPlanItemSchema: Schema = new Schema({
   debtId: {
-    type: Schema.Types.ObjectId,
+    type: Schema.Types.Mixed, // Allow both ObjectId and string IDs
     ref: "Debt",
     required: true,
   },
@@ -72,14 +72,14 @@ const DebtPlanItemSchema: Schema = new Schema({
 const DebtPlanSchema: Schema = new Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.Mixed, // Allow both ObjectId and string IDs for anonymous users
       ref: "User",
       required: true,
     },
     goalType: {
       type: String,
       required: true,
-      enum: ["เห็นผลเร็ว", "สมดุล", "ประหยัดดอกเบี้ย"],
+      enum: ["เห็นผลเร็ว", "สมดุล", "ประหยัดดอกเบี้ย", "คุ้มดอกเบี้ย", "คุ้มที่สุด"],
     },
     paymentStrategy: {
       type: String,
@@ -112,5 +112,21 @@ const DebtPlanSchema: Schema = new Schema(
   },
 );
 
+// Add a pre-save hook to ensure debtItems are properly formatted
+DebtPlanSchema.pre('save', function(next) {
+  // Make sure debtItems is at least an empty array if undefined
+  if (!this.debtItems) {
+    this.debtItems = [];
+  }
+  
+  // Ensure debtTypeId is set
+  if (!this.debtTypeId) {
+    this.debtTypeId = 'all';
+  }
+  
+  next();
+});
+
+// Create or retrieve the model
 export default mongoose.models.DebtPlan ||
   mongoose.model<IDebtPlan>("DebtPlan", DebtPlanSchema);

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiX, FiSend } from "react-icons/fi";
 import ReactMarkdown from "react-markdown";
+import { useSession } from "next-auth/react";
 
-import AIService from "@/lib/aiService";
+import AIService, { getUserContext } from "@/lib/aiService";
 
 interface ChatDialogProps {
   isOpen: boolean;
@@ -35,23 +36,59 @@ export default function ChatDialog({ isOpen, onClose }: ChatDialogProps) {
   const aiService = useRef<AIService>(new AIService());
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { data: session } = useSession();
+  const [debtContext, setDebtContext] = useState<string>("");
+
+  // Fetch user's debt context from API only if user is logged in
+  useEffect(() => {
+    const fetchUserContext = async () => {
+      // Only fetch context if user is logged in (not a guest)
+      if (session?.user?.id) {
+        try {
+          const context = await getUserContext(session.user.id);
+          if (context) {
+            // Convert the context object to a string if it's not already
+            const contextString = typeof context === 'string' 
+              ? context 
+              : JSON.stringify(context, null, 2);
+            setDebtContext(contextString);
+          }
+        } catch (error) {
+          console.error("Error fetching user context:", error);
+        }
+      } else {
+        // Clear debt context if user is not logged in
+        setDebtContext("");
+      }
+    };
+
+    fetchUserContext();
+  }, [session]);
+
   // Set personal context for AI responses
   useEffect(() => {
-    aiService.current.setPersonalContext(
-      `คุณคือผู้ช่วยการเงินส่วนบุคคลที่เชี่ยวชาญด้านการจัดการหนี้
+    // Base context with Thai financial assistant persona
+    let personalContext = `คุณคือผู้ช่วยการเงินส่วนบุคคลที่เชี่ยวชาญด้านการจัดการหนี้
       - ตอบด้วยภาษาไทยเท่านั้น ใช้ภาษาที่เป็นกันเอง
       - ให้คำแนะนำเกี่ยวกับการจัดการหนี้ การวางแผนชำระหนี้ และเทคนิคการออม
       - ไม่ให้คำแนะนำเกี่ยวกับกฎหมายหนี้ การลงทุน ภาษี หรือการวิเคราะห์รายได้-รายจ่ายเชิงลึก
       - ใช้ Markdown ในการจัดรูปแบบคำตอบ โดยเฉพาะการใช้ **ตัวหนา** สำหรับคำสำคัญ และใช้ - สำหรับข้อความแบบ bullet points
       - เมื่อให้คำแนะนำหลายข้อ ให้ขึ้นต้นด้วยหัวข้อสั้นๆ แล้วตามด้วย bullet points
-      - ตอบสั้นกระชับ ไม่เกิน 3-4 ประโยค และเพิ่มข้อความให้กำลังใจที่ท้ายคำตอบ`,
-    );
+      - ตอบสั้นกระชับ ไม่เกิน 3-4 ประโยค และเพิ่มข้อความให้กำลังใจที่ท้ายคำตอบ`;
+    
+    // Add user's debt context if available and user is logged in
+    if (debtContext && session?.user?.id) {
+      personalContext += `\n\nข้อมูลหนี้ของผู้ใช้:\n${debtContext}`;
+    }
+    
+    // Set the context in the AI service
+    aiService.current.setPersonalContext(personalContext);
 
     return () => {
       aiService.current.clearConversationHistory();
       aiService.current.clearPersonalContext();
     };
-  }, []);
+  }, [debtContext]);
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -144,7 +181,7 @@ export default function ChatDialog({ isOpen, onClose }: ChatDialogProps) {
 
   // Suggested questions
   const suggestedQuestions = [
-    "ควรฟรีแผนหรือปรับโครงสร้างหนี้ดีไหม?",
+    "ควรปรับโครงสร้างหนี้ดีไหม?",
     "ถ้าได้โบนัส/เงินพิเศษ ควรเอาไปโปะหนี้ไหน?",
     "อยากลดดอกเบี้ย ต้องทำอย่างไร?",
     "จ่ายย่อยอย่างไรให้ได้ผลเยอะ?",

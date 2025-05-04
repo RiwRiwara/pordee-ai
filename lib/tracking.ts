@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 
-// Session ID management
+// Session and anonymous ID management
 const getSessionId = () => {
   if (typeof window === 'undefined') return null;
   
@@ -14,6 +14,17 @@ const getSessionId = () => {
     localStorage.setItem('pordee_session_id', sessionId);
   }
   return sessionId;
+};
+
+const getAnonymousId = () => {
+  if (typeof window === 'undefined') return null;
+  
+  let anonymousId = localStorage.getItem('pordee_anonymous_id');
+  if (!anonymousId) {
+    anonymousId = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    localStorage.setItem('pordee_anonymous_id', anonymousId);
+  }
+  return anonymousId;
 };
 
 interface TrackingData {
@@ -26,6 +37,7 @@ interface TrackingData {
   completedAll?: boolean;
   deviceType?: string;
   sessionId?: string;
+  anonymousId?: string;
 }
 
 /**
@@ -34,6 +46,7 @@ interface TrackingData {
 export const trackActivity = async (data: TrackingData) => {
   try {
     const sessionId = getSessionId();
+    const anonymousId = getAnonymousId();
     if (!sessionId) return;
 
     const response = await fetch('/api/tracking', {
@@ -44,6 +57,7 @@ export const trackActivity = async (data: TrackingData) => {
       body: JSON.stringify({
         ...data,
         sessionId,
+        anonymousId,
       }),
     });
 

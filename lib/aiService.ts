@@ -380,7 +380,7 @@ class AIService {
       // For PDFs, we'll use the same approach as images with base64 encoding
       // Convert PDF to base64
       const reader = new FileReader();
-      
+
       // Create a promise to handle the FileReader async operation
       const base64Promise = new Promise<string>((resolve, reject) => {
         reader.onload = () => {
@@ -393,13 +393,13 @@ class AIService {
           reject(new Error('Failed to read PDF file'));
         };
       });
-      
+
       // Start reading the file
       reader.readAsDataURL(fileObject);
-      
+
       // Wait for the reading to complete
       const base64Data = await base64Promise;
-      
+
       // Build system prompt for Thai financial document analysis
       const systemPrompt: Message = {
         role: "system",
@@ -409,7 +409,7 @@ class AIService {
       };
 
       console.log('Processing PDF with OpenAI Vision API...');
-      
+
       // Create form data for API upload
       const formData = new FormData();
       // Convert the base64 string back to a binary blob
@@ -420,10 +420,10 @@ class AIService {
       }
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const file = new File([blob], fileName || 'document.pdf', { type: 'application/pdf' });
-      
+
       formData.append('file', file);
       formData.append('purpose', 'assistants');
-      
+
       console.log('Uploading PDF to OpenAI Files API...');
       const uploadResponse = await fetch('https://api.openai.com/v1/files', {
         method: 'POST',
@@ -432,17 +432,17 @@ class AIService {
         },
         body: formData,
       });
-      
+
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
         console.error('Failed to upload PDF:', errorText);
         throw new Error(`Failed to upload PDF: ${uploadResponse.statusText}`);
       }
-      
+
       const uploadResult = await uploadResponse.json();
       const fileId = uploadResult.id;
       console.log(`PDF uploaded with ID: ${fileId}`);
-      
+
       // Now create a messages array for GPT-4 with a system message and user prompt
       const messages = [
         {
@@ -454,7 +454,7 @@ class AIService {
           content: `I've uploaded a PDF document with ID ${fileId}. Please extract all financial information from it, including debt details, payment amounts, interest rates, due dates, and total amounts. Focus particularly on information that would be relevant for financial planning in Thailand.`
         },
       ];
-      
+
       // Submit the file ID for processing
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
@@ -500,7 +500,7 @@ class AIService {
       } catch (deleteError) {
         console.warn('Error during file cleanup:', deleteError);
       }
-      
+
       return data.choices[0].message.content;
     } catch (error: any) {
       console.error("PDF OCR processing error:", error);
@@ -611,6 +611,18 @@ export function createDebtPrompt(context: DebtContext): string {
         
         ช่วยให้คำแนะนำในการจัดการหนี้ การวางแผนชำระ และวิธีลดความเสี่ยงทางการเงิน
     `;
+}
+
+
+export async function getUserContext(userId: string): Promise<DebtContext | null> {
+  try {
+    const response = await fetch(`/api/users/${userId}/context`);
+    const data = await response.json();
+    return data.context;
+  } catch (error) {
+    console.error("Error fetching user context:", error);
+    return null;
+  }
 }
 
 export default AIService;
