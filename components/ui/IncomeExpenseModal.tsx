@@ -20,6 +20,7 @@ import { fileToBase64, parseOcrText } from "./utils";
 import AIService from "@/lib/aiService";
 import { useGuest } from "@/context/GuestContext";
 import { uploadToBlob } from "@/lib/blob";
+import { useTracking } from "@/lib/tracking";
 
 const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
   isOpen,
@@ -33,6 +34,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
   const { isGuestMode } = useGuest();
   const [isUploadingIncome, setIsUploadingIncome] = useState(false);
   const [isUploadingExpense, setIsUploadingExpense] = useState(false);
+  const { trackDebtInputStart, trackDebtInputFinish, trackEdit, trackOCRUsage } = useTracking();
   const [uploadedIncomeFiles, setUploadedIncomeFiles] = useState<FileData[]>(
     initialIncomeAttachments || [],
   );
@@ -96,7 +98,12 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
         monthlyExpense: initialData.monthlyExpense || "",
       });
     }
-  }, [isOpen, initialData, reset]);
+    
+    // Track when user starts inputting finance data
+    if (isOpen) {
+      trackDebtInputStart();
+    }
+  }, [isOpen, initialData, reset, trackDebtInputStart]);
 
   const monthlyIncome = parseFloat(
     watch("monthlyIncome").replace(/,/g, "") || "0",
@@ -216,6 +223,8 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
     file: FileData,
     fileType: "income" | "expense",
   ) => {
+    // Track OCR usage
+    trackOCRUsage(true);
     if (!file.file || file.isOcrProcessed) return;
 
     const isIncome = fileType === "income";
@@ -381,6 +390,10 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
   const onSubmit = async (data: IncomeExpenseData) => {
     try {
       setIsSaving(true);
+      // Track when user finishes inputting finance data
+      trackDebtInputFinish();
+      // Track as an edit
+      trackEdit();
 
       // Parse values to ensure they're valid numbers with 2 decimal places
       const incomeValue = parseFloat(

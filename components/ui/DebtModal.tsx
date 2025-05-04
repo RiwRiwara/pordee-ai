@@ -17,6 +17,7 @@ import { FiSave, FiTrash2 } from "react-icons/fi";
 import { DebtCategory } from "./debt/DebtUtils";
 
 import { DebtItem } from "@/components/ui/types";
+import { useTracking } from "@/lib/tracking";
 
 interface DebtModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export default function DebtModal({
 }: DebtModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { trackDebtInputStart, trackDebtInputFinish, trackEdit } = useTracking();
 
   const {
     control,
@@ -73,11 +75,20 @@ export default function DebtModal({
         notes: selectedDebt.notes || "",
       });
     }
-  }, [isOpen, selectedDebt, reset]);
+    
+    // Track when user starts inputting debt data
+    if (isOpen) {
+      trackDebtInputStart();
+    }
+  }, [isOpen, selectedDebt, reset, trackDebtInputStart]);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      // Track when user finishes inputting debt data
+      trackDebtInputFinish();
+      // Track as an edit
+      trackEdit();
       const formattedData = {
         name: data.name,
         debtType: data.debtType,
@@ -114,6 +125,8 @@ export default function DebtModal({
     }
 
     setIsDeleting(true);
+    // Track edit when deleting
+    trackEdit();
     try {
       await onDeleteDebt(selectedDebt._id);
       toast.success("ลบรายการหนี้เรียบร้อย");

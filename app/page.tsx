@@ -111,52 +111,47 @@ export default function LandingPage() {
             {/* Why Pordee Section */}
             <section className="py-16 bg-[#3C7DD1] text-white">
               <div className="container mx-auto px-4">
-                <h2 className="text-2xl md:text-5xl font-bold text-center mb-12">
+                <h2 className="text-2xl md:text-5xl font-bold text-start mb-12">
                   Why Pordee?
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-20 max-w-6xl mx-auto ">
                   <div className="bg-white rounded-xl pt-8 pb-2 text-center">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
+                    <h3 className="text-2xl md:text-4xl font-bold mb-2 text-gray-900">
                       เข้าใจ
                     </h3>
-                    <h4 className="text-sky-600 mb-4 text-xl font-bold">
-                      สถานะหนี้ของคุณเอง
+                    <h4 className="text-gray-700 mb-4 text-xl font-bold">
+                      <span className="text-[#3C7DD1]">สถานะหนี้</span> ของตนเอง
                     </h4>
                     <div className="w-full h-px bg-gray-200 my-4" />
                     <p className="text-gray-700 text-lg mx-16">
-                      เห็นภาพรวมหนี้ ชำระขั้นต่ำ ดอกเบี้ย และความเสี่ยง
-                      ได้ภายในหน้าแรก
+                      เห็นภาพรวมหนี้ ชำระขั้นต่ำ ดอกเบี้ย และความเสี่ยง ได้ภายในหน้าแรก
                     </p>
                   </div>
 
                   <div className="bg-white rounded-xl pt-8 pb-2 text-center">
                     <h3 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
-                      วางแผนหนี้ ง่าย
+                      วางแผนหนี้ <span className="text-4xl">ง่าย</span>
                     </h3>
-                    <h4 className="text-sky-600 mb-4 text-xl font-bold">
-                      เหมือนมีที่ปรึกษาส่วนตัว
+                    <h4 className="text-gray-700 mb-4 text-xl font-bold">
+                      เหมือนมี<span className="text-[#3C7DD1]">ที่ปรึกษาส่วนตัว</span>
                     </h4>
                     <div className="w-full h-px bg-gray-200 my-4" />
                     <p className="text-gray-700 text-lg mx-16">
-                      เราใช้ AI ช่วยออกแบบแผนการชำระหนี้ที่เหมาะกับรายได้
-                      จำนวนหนี้ และเป้าหมายของคุณ
+                      เราใช้ AI ช่วยออกแบบแผนการชำระหนี้ที่เหมาะกับรายได้ รายจ่าย และและปรับตามพฤติกรรมการใช้จ่ายและเป้าหมายของคุณ
                     </p>
                   </div>
 
                   <div className="bg-white rounded-xl pt-8 pb-2 text-center">
                     <h3 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
-                      ปลอดภัยใช้ จริง
+                      ปลอดภัยใช้ <span className="text-4xl">จริง</span>
                     </h3>
-                    <h4 className="text-sky-600 mb-4 text-xl font-bold">
+                    <h4 className="text-[#3C7DD1]mb-4 text-xl font-bold">
                       ไม่ใช่แค่คิดฝัน
                     </h4>
                     <div className="w-full h-px bg-gray-200 my-4" />
                     <p className="text-gray-700 text-lg mx-16">
-                      Pordee ไม่ได้เก็บรวบรวมสูตรสำเร็จ
-                      แต่เราเข้าใจชีวิตของคนมีหนี้
-                      เราจึงวางแผนหนี้ให้เหมาะกับคุณ เพื่อให้คุณสามารถ
-                      เริ่มใช้ได้ทันที
+                      Pordee ไม่ได้แค่คำนวณสูตรสำเร็จ แต่เราเข้าใจชีวิตจริงของคุณ เราจึงวางแผนหนี้ให้เหมาะกับคุณ เพื่อให้คุณสามารถ เริ่มได้ ทำได้ จนปลดหนี้สำเร็จ
                     </p>
                   </div>
                 </div>

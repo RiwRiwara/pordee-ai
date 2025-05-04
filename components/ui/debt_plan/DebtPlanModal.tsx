@@ -32,6 +32,7 @@ ChartJS.register(
 import { DebtItem } from "../types";
 import type { DebtPlan, DebtPlanModalProps } from "./types";
 import { DEBT_TYPES, formatNumber } from "./utils/debtPlanUtils";
+import { useTracking } from "@/lib/tracking";
 
 // Import new partials
 import PlanTopSummarySection from "./partials/PlanTopSummarySection";
@@ -53,8 +54,17 @@ export default function DebtPlanModalRefactored({
   existingPlanId,
   onSavePlan,
 }: DebtPlanModalProps) {
+  // Initialize tracking functionality
+  const { trackRadarView, trackEdit, trackCompletion } = useTracking();
   // Ref for modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
+  
+  // Track when user views the radar page
+  useEffect(() => {
+    if (isOpen) {
+      trackRadarView();
+    }
+  }, [isOpen, trackRadarView]);
 
   // Plan data state
   const [goalType, setGoalType] = useState<string>(initialGoalType);
@@ -164,6 +174,9 @@ export default function DebtPlanModalRefactored({
         setTimeInMonths(Math.ceil(totalDebt / value));
       }
     }
+    
+    // Track edit when slider is changed
+    trackEdit();
   };
 
   // Handle slider change for goal balance (speed vs interest savings)
@@ -183,6 +196,9 @@ export default function DebtPlanModalRefactored({
       setGoalType("ประหยัดดอกเบี้ย");
       setPaymentStrategy("Avalanche");
     }
+    
+    // Track edit when goal slider is changed
+    trackEdit();
   };
 
   // Update payment strategy based on goal slider
@@ -192,7 +208,7 @@ export default function DebtPlanModalRefactored({
       setGoalType("เห็นผลเร็ว");
     } else if (goalSliderValue > 60) {
       setPaymentStrategy("Avalanche");
-      setGoalType("ประหยัดดอกเบี้ย");
+      setGoalType("คุ้มดอกเบี้ย");
     } else {
       // Balanced approach
       setPaymentStrategy("Snowball");
@@ -397,6 +413,9 @@ export default function DebtPlanModalRefactored({
       // Call the parent component's save function
       await onSavePlan(plan as unknown as DebtPlan);
 
+      // Track completion when plan is saved
+      trackCompletion(true);
+      
       // Close the modal after saving
       onOpenChange(false);
     } catch (error) {
@@ -414,6 +433,8 @@ export default function DebtPlanModalRefactored({
 
     if (newIndex !== -1) {
       setCurrentDebtTypeIndex(newIndex);
+      // Track edit when tab changes
+      trackEdit();
     }
   };
 
