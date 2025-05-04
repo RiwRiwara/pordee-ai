@@ -75,12 +75,12 @@ export default function DebtModal({
         notes: selectedDebt.notes || "",
       });
     }
-    
+
     // Track when user starts inputting debt data
-    if (isOpen) {
-      trackDebtInputStart();
-    }
-  }, [isOpen, selectedDebt, reset, trackDebtInputStart]);
+    // if (isOpen) {
+    //   trackDebtInputStart();
+    // }
+  }, [isOpen, selectedDebt, reset]);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -213,9 +213,8 @@ export default function DebtModal({
                       <select
                         {...field}
                         aria-labelledby="debtType-label"
-                        className={`block w-full px-3 py-2 border ${
-                          errors.debtType ? "border-red-500" : "border-gray-300"
-                        } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        className={`block w-full px-3 py-2 border ${errors.debtType ? "border-red-500" : "border-gray-300"
+                          } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                         id="debtType"
                       >
                         <option disabled value="">

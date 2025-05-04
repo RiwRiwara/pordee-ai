@@ -59,7 +59,7 @@ export default function DebtPlanModalRefactored({
   const { trackRadarView, trackEdit, trackCompletion } = useTracking();
   // Ref for modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
-  
+
   // Track when user views the radar page
   useEffect(() => {
     if (isOpen) {
@@ -175,9 +175,9 @@ export default function DebtPlanModalRefactored({
         setTimeInMonths(Math.ceil(totalDebt / value));
       }
     }
-    
+
     // Track edit when slider is changed
-    trackEdit();
+    // trackEdit();
   };
 
   // Handle slider change for goal balance (speed vs interest savings)
@@ -197,9 +197,9 @@ export default function DebtPlanModalRefactored({
       setGoalType("ประหยัดดอกเบี้ย");
       setPaymentStrategy("Avalanche");
     }
-    
+
     // Track edit when goal slider is changed
-    trackEdit();
+    // trackEdit();
   };
 
   // Update payment strategy based on goal slider
@@ -372,31 +372,31 @@ export default function DebtPlanModalRefactored({
     // Reset payment strategy and goal type to defaults
     setPaymentStrategy(initialPaymentStrategy);
     setGoalType(initialGoalType);
-    
+
     // Reset payment values
     setMonthlyPayment(originalMonthlyPayment);
     setSliderValue(originalMonthlyPayment);
-    
+
     // Reset goal slider to middle (balanced)
     setGoalSliderValue(50);
-    
+
     // Reset time values
     setTimeInMonths(originalTimeInMonths);
-    
+
     // Reset reduced and accelerated time calculations
     setReducedTimeInMonths(Math.round(originalTimeInMonths * 0.8)); // 20% reduction as default
     setAcceleratedTimeInMonths(Math.round(originalTimeInMonths * 0.2)); // 20% acceleration as default
-    
+
     // Show a notification or feedback
     alert('แผนการชำระหนี้ถูกรีเซ็ตเป็นค่าเริ่มต้น');
   };
 
   // Get the user session if available
   const { data: session } = useSession();
-  
+
   // Anonymous user ID management
   const [anonymousId, setAnonymousId] = useState<string>("");
-  
+
   // Initialize anonymous ID on component mount if user is not logged in
   useEffect(() => {
     // Only create anonymous ID if user is not logged in
@@ -413,7 +413,7 @@ export default function DebtPlanModalRefactored({
       }
     }
   }, [session]);
-  
+
   // Direct API call to save debt plan
   const saveDebtPlanToDatabase = async (planData: any) => {
     try {
@@ -422,21 +422,21 @@ export default function DebtPlanModalRefactored({
       if (!dataToSend.id) {
         delete dataToSend.id;
       }
-      
+
       // Add anonymous ID if user is not logged in
       if (!session?.user && anonymousId) {
         dataToSend.anonymousId = anonymousId;
       }
-      
+
       // Determine if this is an update or create operation
-      const url = planData.id 
-        ? `/api/debt-plans/${planData.id}` 
+      const url = planData.id
+        ? `/api/debt-plans/${planData.id}`
         : '/api/debt-plans';
-      
+
       const method = planData.id ? 'PUT' : 'POST';
-      
+
       console.log('Saving debt plan to database:', JSON.stringify(dataToSend, null, 2));
-      
+
       // Make API request
       const response = await fetch(url, {
         method,
@@ -445,13 +445,13 @@ export default function DebtPlanModalRefactored({
         },
         body: JSON.stringify(dataToSend),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('API error response:', errorData);
         throw new Error(errorData.error || 'Failed to save debt plan');
       }
-      
+
       const result = await response.json();
       console.log('Debt plan saved successfully:', result);
       return result;
@@ -480,14 +480,14 @@ export default function DebtPlanModalRefactored({
 
       // Get current selected debt type
       const currentDebtType = DEBT_TYPES[currentDebtTypeIndex];
-      
+
       // Create debt items from debtContext with proper validation
       const debtItems = debtContext.map((debt, index) => {
         // Ensure all required fields have valid values
         if (!debt._id) {
           console.warn("Debt missing _id, using fallback");
         }
-        
+
         return {
           debtId: debt._id || new Date().getTime().toString(),
           name: debt.name || `หนี้ ${index + 1}`,
@@ -499,7 +499,7 @@ export default function DebtPlanModalRefactored({
           paymentOrder: getPaymentOrder(debt, index, paymentStrategy)
         };
       });
-      
+
       // Create plan object with all necessary data
       const plan = {
         id: existingPlanId,
@@ -520,7 +520,7 @@ export default function DebtPlanModalRefactored({
         // Save directly to database first
         const savedPlan = await saveDebtPlanToDatabase(plan);
         console.log('Plan saved directly to database:', savedPlan);
-        
+
         // Then notify parent component if callback exists
         if (onSavePlan) {
           try {
@@ -528,7 +528,7 @@ export default function DebtPlanModalRefactored({
             const planWithId = savedPlan && savedPlan._id && !plan.id
               ? { ...plan, id: savedPlan._id }
               : plan;
-            
+
             await onSavePlan(planWithId as unknown as DebtPlan);
           } catch (parentError) {
             console.warn("Parent onSavePlan callback failed, but plan was saved to database", parentError);
@@ -542,7 +542,7 @@ export default function DebtPlanModalRefactored({
 
       // Track completion when plan is saved
       trackCompletion(true);
-      
+
       // Close the modal after saving
       onOpenChange(false);
     } catch (error) {
@@ -557,7 +557,7 @@ export default function DebtPlanModalRefactored({
   const getPaymentOrder = (debt: DebtItem, index: number, strategy: string): number => {
     // Default order (by index)
     if (!debtContext || debtContext.length === 0) return index + 1;
-    
+
     // For Snowball strategy: order by remaining amount (smallest first)
     if (strategy === "Snowball") {
       return debtContext
@@ -565,7 +565,7 @@ export default function DebtPlanModalRefactored({
         .sort((a, b) => a.remainingAmount - b.remainingAmount)
         .findIndex(d => d._id === debt._id) + 1;
     }
-    
+
     // For Avalanche strategy: order by interest rate (highest first)
     if (strategy === "Avalanche") {
       return debtContext
@@ -573,7 +573,7 @@ export default function DebtPlanModalRefactored({
         .sort((a, b) => b.interestRate - a.interestRate)
         .findIndex(d => d._id === debt._id) + 1;
     }
-    
+
     // For Proportional/Balanced strategy: use default order
     return index + 1;
   };
@@ -586,7 +586,7 @@ export default function DebtPlanModalRefactored({
     if (newIndex !== -1) {
       setCurrentDebtTypeIndex(newIndex);
       // Track edit when tab changes
-      trackEdit();
+      // trackEdit();
     }
   };
 
@@ -706,14 +706,14 @@ export default function DebtPlanModalRefactored({
               onValueChange={(paymentValue, goalValue) => {
                 // Update monthly payment based on slider value
                 setMonthlyPayment(paymentValue);
-                
+
                 // Adjust time in months based on payment changes
                 const ratio = originalMonthlyPayment / paymentValue;
                 const newTimeInMonths = Math.round(originalTimeInMonths * ratio);
                 setTimeInMonths(newTimeInMonths);
-                
+
                 // Update reduced and accelerated values based on goal slider
-                setReducedTimeInMonths(Math.round(newTimeInMonths * (1 - goalValue/100)));
+                setReducedTimeInMonths(Math.round(newTimeInMonths * (1 - goalValue / 100)));
                 setAcceleratedTimeInMonths(Math.round(originalTimeInMonths - newTimeInMonths));
               }}
               onResetPlan={handleResetPlan}

@@ -17,9 +17,8 @@ export default function SummarySection({
   return (
     <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
       {/* Planning Button */}
-      <Button
-        className="w-full mb-4 py-3 text-white flex items-center justify-center"
-        color="primary"
+      <div
+        className="w-full mb-4 py-3 text-white flex items-center justify-center bg-primary rounded-t-lg"
       >
         <svg
           className="w-5 h-5 mr-2"
@@ -36,7 +35,7 @@ export default function SummarySection({
           />
         </svg>
         สรุปภาพรวมหนี้ของฉัน
-      </Button>
+      </div>
 
       {/* Summary Grid */}
       <div className="grid grid-cols-2 gap-4">
