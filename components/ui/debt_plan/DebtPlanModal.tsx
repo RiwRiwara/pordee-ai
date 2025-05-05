@@ -42,6 +42,7 @@ import OverallDebtSection from "./partials/OverallDebtSection";
 import { DebtPlan, DebtPlanModalProps } from "./types";
 import { DebtItem } from "../types";
 import { FiX } from "react-icons/fi";
+import SurveyModal from "./SurveyModal";
 
 export default function DebtPlanModalRefactored({
   isOpen,
@@ -58,7 +59,8 @@ export default function DebtPlanModalRefactored({
   // Initialize tracking functionality
   const { trackRadarView, trackEdit, trackCompletion } = useTracking();
   // Ref for modal content
-  const modalContentRef = useRef<HTMLDivElement>(null);
+  const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
+
 
   // Track when user views the radar page
   useEffect(() => {
@@ -94,21 +96,11 @@ export default function DebtPlanModalRefactored({
 
   // UI state
   const [activeTab, setActiveTab] = useState<string>("ยอดหนี้รวม");
-  const [showComparisonDetails, setShowComparisonDetails] =
-    useState<boolean>(false);
   const [currentDebtTypeIndex, setCurrentDebtTypeIndex] = useState<number>(0);
   const [showAIRecommendation, setShowAIRecommendation] =
     useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>("");
-
-  // Format numbers with commas
-  const formatNumberLocal = (num: number) => {
-    return num.toLocaleString("th-TH", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-  };
 
   // Calculate total debt and minimum payments
   useEffect(() => {
@@ -157,50 +149,7 @@ export default function DebtPlanModalRefactored({
     }
   }, [debtContext]);
 
-  // Handle slider change for payment amount
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
 
-    setSliderValue(value);
-    setMonthlyPayment(value);
-
-    // Recalculate months based on new payment
-    if (debtContext) {
-      const totalDebt = debtContext.reduce(
-        (sum: number, debt: DebtItem) => sum + debt.remainingAmount,
-        0,
-      );
-
-      if (value > 0) {
-        setTimeInMonths(Math.ceil(totalDebt / value));
-      }
-    }
-
-    // Track edit when slider is changed
-    // trackEdit();
-  };
-
-  // Handle slider change for goal balance (speed vs interest savings)
-  const handleGoalSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(e.target.value);
-
-    setGoalSliderValue(value);
-
-    // Update goal type based on slider position
-    if (value < 33) {
-      setGoalType("เห็นผลเร็ว");
-      setPaymentStrategy("Snowball");
-    } else if (value < 66) {
-      setGoalType("สมดุล");
-      setPaymentStrategy("Proportional");
-    } else {
-      setGoalType("ประหยัดดอกเบี้ย");
-      setPaymentStrategy("Avalanche");
-    }
-
-    // Track edit when goal slider is changed
-    // trackEdit();
-  };
 
   // Update payment strategy based on goal slider
   useEffect(() => {
@@ -543,8 +492,8 @@ export default function DebtPlanModalRefactored({
       // Track completion when plan is saved
       trackCompletion(true);
 
-      // Close the modal after saving
-      onOpenChange(false);
+      // Open survey modal instead of closing the debt plan modal
+      setIsSurveyModalOpen(true);
     } catch (error) {
       console.error("Error saving plan:", error);
       setSaveError("เกิดข้อผิดพลาดในการบันทึกแผน กรุณาลองใหม่อีกครั้ง");
@@ -578,17 +527,6 @@ export default function DebtPlanModalRefactored({
     return index + 1;
   };
 
-  // Update payment strategy and recalculate when tab changes
-  const handleTabChange = (tabKey: React.Key) => {
-    setActiveTab(tabKey as string);
-    const newIndex = DEBT_TYPES.findIndex((type) => type.label === tabKey);
-
-    if (newIndex !== -1) {
-      setCurrentDebtTypeIndex(newIndex);
-      // Track edit when tab changes
-      // trackEdit();
-    }
-  };
 
   // Fetch existing plan data if available
   useEffect(() => {
@@ -624,6 +562,16 @@ export default function DebtPlanModalRefactored({
     initialPaymentStrategy,
     initialTimeInMonths,
   ]);
+
+  const handleSurveyComplete = (skipped = false) => {
+    setIsSurveyModalOpen(false);
+    
+    // Only now close the debt plan modal after survey is completed or skipped
+    onOpenChange(false);
+    
+    // Log whether survey was completed or skipped
+    console.log(skipped ? 'Survey skipped' : 'Survey completed');
+  };
 
   return (
     <Modal
@@ -745,6 +693,11 @@ export default function DebtPlanModalRefactored({
               {existingPlanId ? "อัพเดตแผนการชำระหนี้" : "ยืนยันแผนการชำระหนี้"}
             </Button>
 
+            <SurveyModal
+              isOpen={isSurveyModalOpen}
+              onOpenChange={setIsSurveyModalOpen}
+              onComplete={handleSurveyComplete}
+            />
 
           </div>
         </ModalBody>

@@ -220,9 +220,13 @@ export default function DebtModal({
                         <option disabled value="">
                           เลือกประเภทหนี้
                         </option>
-                        <option value="บัตรเครดิต">บัตรเครดิต</option>
-                        <option value="สินเชื่อ">สินเชื่อ</option>
-                        <option value="อื่นๆ">อื่นๆ</option>
+                        <option value={DebtCategory.RevolvingDebt}>{DebtCategory.RevolvingDebt} (บัตรเครดิต, บัตรกดเงินสด)</option>
+                        <option value={DebtCategory.ProductInstallment}>{DebtCategory.ProductInstallment} (ผ่อนสินค้า, เครื่องใช้ไฟฟ้า)</option>
+                        <option value={DebtCategory.PersonalLoan}>{DebtCategory.PersonalLoan} (กู้ยืมส่วนบุคคล)</option>
+                        <option value={DebtCategory.HousingLoan}>{DebtCategory.HousingLoan} (ผ่อนบ้าน, คอนโด)</option>
+                        <option value={DebtCategory.VehicleLoan}>{DebtCategory.VehicleLoan} (ผ่อนรถ, มอเตอร์ไซค์)</option>
+                        <option value={DebtCategory.InformalLoan}>{DebtCategory.InformalLoan} (เงินกู้นอกระบบ)</option>
+                        <option value={DebtCategory.Other}>{DebtCategory.Other} (หนี้ประเภทอื่นๆ)</option>
                       </select>
                       {errors.debtType && (
                         <p className="mt-1 text-sm text-red-500">
@@ -436,25 +440,25 @@ export default function DebtModal({
                       }}
                     >
                       <SelectItem key={DebtCategory.RevolvingDebt}>
-                        {DebtCategory.RevolvingDebt} (Revolving Debt)
+                        {DebtCategory.RevolvingDebt} (บัตรเครดิต, บัตรกดเงินสด)
                       </SelectItem>
                       <SelectItem key={DebtCategory.ProductInstallment}>
-                        {DebtCategory.ProductInstallment} (Product Installment)
+                        {DebtCategory.ProductInstallment} (ผ่อนสินค้า, เครื่องใช้ไฟฟ้า)
                       </SelectItem>
                       <SelectItem key={DebtCategory.PersonalLoan}>
-                        {DebtCategory.PersonalLoan} (Personal Loan)
+                        {DebtCategory.PersonalLoan} (กู้ยืมส่วนบุคคล)
                       </SelectItem>
                       <SelectItem key={DebtCategory.HousingLoan}>
-                        {DebtCategory.HousingLoan} (Housing Loan)
+                        {DebtCategory.HousingLoan} (ผ่อนบ้าน, คอนโด)
                       </SelectItem>
                       <SelectItem key={DebtCategory.VehicleLoan}>
-                        {DebtCategory.VehicleLoan} (Vehicle Loan)
+                        {DebtCategory.VehicleLoan} (ผ่อนรถ, มอเตอร์ไซค์)
                       </SelectItem>
                       <SelectItem key={DebtCategory.InformalLoan}>
-                        {DebtCategory.InformalLoan} (Informal Loan)
+                        {DebtCategory.InformalLoan} (เงินกู้นอกระบบ)
                       </SelectItem>
                       <SelectItem key={DebtCategory.Other}>
-                        {DebtCategory.Other} (Other Debts)
+                        {DebtCategory.Other} (หนี้ประเภทอื่นๆ)
                       </SelectItem>
                     </Select>
                   )}

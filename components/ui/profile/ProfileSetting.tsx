@@ -11,10 +11,12 @@ import {
   FiStar,
   FiTrash2,
   FiX,
+  FiFileText,
 } from "react-icons/fi";
 
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-hot-toast";
+import SurveyModal from "../debt_plan/SurveyModal";
 
 interface ProfileSettingProps {
   languagePreference: string;
@@ -34,6 +36,7 @@ export default function ProfileSetting({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -121,22 +124,23 @@ export default function ProfileSetting({
         logout();
         router.push("/login");
       } catch (error) {
-        console.error("Delete error:", error);
+        console.error("Delete account error:", error);
         toast.error("เกิดข้อผิดพลาดในการลบบัญชี");
       }
     }
   };
 
   const handleUpgradeClick = () => {
-    try {
-      router.push("/premium");
-    } catch (error) {
-      console.error("Navigation error:", error);
-      toast.error("ไม่สามารถไปยังหน้าอัพเกรดได้");
-    }
+    toast("Premium features coming soon! 🚀", {
+      icon: "✨",
+    });
   };
 
-  const isEnglish = languagePreference === "en";
+  const handleSurveyComplete = (skipped?: boolean) => {
+    if (!skipped) {
+      toast.success("ขอบคุณสำหรับการตอบแบบสอบถาม");
+    }
+  };
 
   return (
     <>
@@ -149,29 +153,31 @@ export default function ProfileSetting({
 
           <div className="space-y-4 rounded-xl bg-white p-4 shadow-sm">
             {/* Language Setting */}
-            <div className="flex items-center justify-between py-2">
+            {/* <div className="flex items-center justify-between py-2">
               <div className="flex items-center">
                 <FiGlobe className="mr-3 text-gray-500" />
                 <span>ภาษา</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span
-                  className={`text-sm ${!isEnglish ? "font-bold text-[#3776C1]" : "text-gray-500"}`}
+                  className={`cursor-pointer ${
+                    languagePreference === "th" ? "text-blue-500 font-medium" : ""
+                  }`}
+                  onClick={() => onLanguageToggle(true)}
                 >
                   TH
                 </span>
-                <Switch
-                  isSelected={isEnglish}
-                  size="sm"
-                  onValueChange={onLanguageToggle}
-                />
+                <span>/</span>
                 <span
-                  className={`text-sm ${isEnglish ? "font-bold text-[#3776C1]" : "text-gray-500"}`}
+                  className={`cursor-pointer ${
+                    languagePreference === "en" ? "text-blue-500 font-medium" : ""
+                  }`}
+                  onClick={() => onLanguageToggle(false)}
                 >
                   EN
                 </span>
               </div>
-            </div>
+            </div> */}
 
             {/* Notification Setting */}
             <div className="flex items-center justify-between border-t py-2">
@@ -185,63 +191,71 @@ export default function ProfileSetting({
                 onValueChange={onNotificationToggle}
               />
             </div>
+
+            {/* Survey option */}
+            <button
+              className="flex w-full items-center justify-between border-t py-2 cursor-pointer"
+              onClick={() => setIsSurveyModalOpen(true)}
+            >
+              <div className="flex items-center">
+                <FiFileText className="mr-3 text-gray-500" />
+                <span>แบบสอบถามความคิดเห็น</span>
+              </div>
+              <FiChevronRight className="text-gray-400" />
+            </button>
+
           </div>
         </div>
 
-        {/* Account Settings Section */}
+        {/* Reset Data Section */}
         <div className="mb-6">
-          <h2 className="mb-4 text-lg font-semibold text-[#3776C1]">
-            จัดการบัญชี
+          <h2 className="mb-4 text-lg font-semibold text-red-500">
+            ดำเนินการบัญชี
           </h2>
 
           <div className="space-y-4 rounded-xl bg-white p-4 shadow-sm">
-            {/* Premium Features */}
-            <button
-              className="flex w-full items-center justify-between py-2"
-              onClick={handleUpgradeClick}
-            >
+            {/* Reset Data Button */}
+            <div className="flex items-center justify-between py-2">
               <div className="flex items-center">
-                <FiStar className="mr-3 text-yellow-500" />
-                <span>อัพเกรดบัญชี</span>
+                <FiRefreshCw className="mr-3 text-yellow-500" />
+                <div>
+                  <p>รีเซ็ตข้อมูล</p>
+                  <p className="text-xs text-gray-500">
+                    ล้างข้อมูลหนี้ แผนการจัดการหนี้ และข้อมูลการเงินทั้งหมด
+                  </p>
+                </div>
               </div>
-              <FiChevronRight className="text-gray-400" />
-            </button>
+              <Button
+                size="sm"
+                color="warning"
+                variant="flat"
+                onClick={() => setIsResetModalOpen(true)}
+              >
+                รีเซ็ต
+              </Button>
+            </div>
 
-            {/* Reset Account */}
-            <button
-              className="flex w-full items-center justify-between border-t py-2"
-              onClick={() => setIsResetModalOpen(true)}
-            >
+            {/* Delete Account Button */}
+            <div className="flex items-center justify-between border-t py-2">
               <div className="flex items-center">
-                <FiRefreshCw className="mr-3 text-orange-500" />
-                <span>รีเซ็ตข้อมูลทั้งหมด</span>
+                <FiTrash2 className="mr-3 text-red-500" />
+                <div>
+                  <p>ลบบัญชี</p>
+                  <p className="text-xs text-gray-500">
+                    ลบบัญชีและข้อมูลทั้งหมดออกจากระบบ (ไม่สามารถย้อนกลับได้)
+                  </p>
+                </div>
               </div>
-              <FiChevronRight className="text-gray-400" />
-            </button>
-
-            {/* Delete Account */}
-            <button
-              className="flex w-full items-center justify-between border-t py-2 text-red-500"
-              onClick={handleDeleteAccount}
-            >
-              <div className="flex items-center">
-                <FiTrash2 className="mr-3" />
-                <span>ลบบัญชีถาวร</span>
-              </div>
-              <FiChevronRight className="text-gray-400" />
-            </button>
+              <Button
+                size="sm"
+                color="danger"
+                variant="flat"
+                onClick={handleDeleteAccount}
+              >
+                ลบ
+              </Button>
+            </div>
           </div>
-        </div>
-
-        {/* Logout Button */}
-        <div className="mt-4">
-          <Button
-            className="w-full bg-red-50 text-red-600 hover:bg-red-100"
-            variant="flat"
-            onClick={logout}
-          >
-            ออกจากระบบ
-          </Button>
         </div>
       </div>
 
@@ -258,17 +272,17 @@ export default function ProfileSetting({
             aria-label="Close modal"
           />
           {/* Container for the actual modal content */}
-          <div 
-            className="fixed inset-0 flex items-center justify-center p-4"
+          <div
+            className="fixed inset-0 flex items-center justify-center p-2 sm:p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="reset-modal-title"
           >
-            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               {/* Modal header with title and close button */}
               <div className="flex justify-between items-center mb-4">
-                <h3 
-                  id="reset-modal-title" 
+                <h3
+                  id="reset-modal-title"
                   className="text-lg font-semibold text-red-500"
                 >
                   รีเซ็ตข้อมูลทั้งหมด
@@ -339,6 +353,14 @@ export default function ProfileSetting({
           </div>
         </div>
       )}
+
+      {/* Survey Modal */}
+      <SurveyModal
+        isOpen={isSurveyModalOpen}
+        onOpenChange={setIsSurveyModalOpen}
+        onComplete={handleSurveyComplete}
+        source="profile"
+      />
     </>
   );
 }
