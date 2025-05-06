@@ -1,6 +1,6 @@
 "use client";
 
-import type { DebtContext } from "@/lib/aiService";
+import type { DebtContext } from "@/lib/dtiService";
 
 import React, { useState, useEffect } from "react";
 
@@ -89,25 +89,23 @@ export default function Dashboard() {
   };
 
   // Create a DebtContext object for the RiskMeter component
-  const createDebtContext = (): DebtContext => {
-    // Format debt items according to DebtContext interface
+  const createDebtContext = () => {
+    // Format debt items according to dtiService.DebtContext interface
     const debtItems = debts.map((debt) => ({
-      id: debt._id || String(debt.id) || "",
+      _id: debt._id || String(debt.id) || "",
       name: debt.name || "",
       debtType: debt.debtType || "",
-      totalAmount: String(debt.remainingAmount || 0),
-      minimumPayment: String(debt.minimumPayment || 0),
-      interestRate: String(debt.interestRate || 0),
-      dueDate: debt.dueDate || "",
-      paymentStatus: debt.paymentStatus || "",
+      totalAmount: Number(debt.totalAmount || debt.remainingAmount || 0),
+      remainingAmount: Number(debt.remainingAmount || 0),
+      interestRate: Number(debt.interestRate || 0),
+      minimumPayment: Number(debt.minimumPayment || 0),
+      paymentDueDay: debt.paymentDueDay || 1,
     }));
 
-    // Create the debt context object
+    // Create the debt context object that matches dtiService.DebtContext
     return {
       debtItems,
       income: monthlyIncome.replace(/,/g, ""),
-      expense: monthlyExpense.replace(/,/g, ""),
-      riskPercentage: debtRiskPercentage,
     };
   };
 

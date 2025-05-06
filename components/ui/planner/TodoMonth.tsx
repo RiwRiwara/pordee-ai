@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@heroui/button";
+import { Spinner } from "@heroui/spinner";
 import {
   Modal,
   ModalContent,
@@ -7,7 +9,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
-import { FiChevronDown, FiChevronUp, FiPlus, FiMinus } from "react-icons/fi";
+import { FiChevronDown, FiChevronUp, FiPlus, FiMinus, FiCalendar, FiAlertCircle } from "react-icons/fi";
 
 interface DebtItem {
   _id: string;
@@ -18,29 +20,33 @@ interface DebtItem {
   interestRate: number;
   minimumPayment?: number;
   paymentDueDay?: number;
+  originalPaymentType?: string;
 }
 
 interface PaymentItem {
+  id: string; // Unique identifier for the payment item in the UI
   debtId: string;
   debtName: string;
   amount: number;
   dueDate: number;
   details?: { name: string; amount: number }[];
+  status?: 'pending' | 'completed';
+  daysUntilDue?: number;
+  isPastDue?: boolean;
 }
 
 export default function TodoMonth() {
-  // We don't directly use debts state but need the setter for API response
-  const [, setDebts] = useState<DebtItem[]>([]);
+  const { data: session } = useSession();
+  const [debts, setDebts] = useState<DebtItem[]>([]);
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentPayment, setCurrentPayment] = useState<PaymentItem | null>(
-    null,
-  );
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentPayment, setCurrentPayment] = useState<PaymentItem | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
-  const [expandedDetails, setExpandedDetails] = useState<{
-    [key: string]: boolean;
-  }>({});
+  const [expandedDetails, setExpandedDetails] = useState<{[key: string]: boolean}>({});
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0); // Used to trigger re-fetching
 
   // Format with commas for display
   const formatNumber = (num: number) => {
@@ -50,73 +56,139 @@ export default function TodoMonth() {
     });
   };
 
-  // Load debt data
+  // Load debt data and payment history
   useEffect(() => {
-    const fetchDebts = async () => {
+    const fetchData = async () => {
+      if (!session) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         setIsLoading(true);
-        const response = await fetch("/api/debts");
-
-        if (response.ok) {
-          const { debts } = await response.json();
-
-          setDebts(debts || []);
-
-          // Create payment items from debts
-          const currentMonth = new Date().getMonth() + 1;
-          const currentYear = new Date().getFullYear();
-          const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-          // Filter debts with due dates in this month
-          const monthlyPayments = debts
-            .filter(
-              (debt: DebtItem) =>
-                debt.paymentDueDay && debt.paymentDueDay <= daysInMonth,
-            )
-            .map((debt: DebtItem) => {
-              // Create payment details if available
-              const details = [];
-
-              if (debt.debtType === "บัตรเครดิต") {
+        setError(null);
+        
+        // Fetch debts
+        const debtsResponse = await fetch("/api/debts");
+        if (!debtsResponse.ok) {
+          throw new Error(`Error fetching debts: ${debtsResponse.status}`);
+        }
+        
+        const { debts } = await debtsResponse.json();
+        const validDebts = (debts || []).filter((debt: any) => 
+          debt && typeof debt.minimumPayment === 'number' && 
+          typeof debt.paymentDueDay === 'number'
+        );
+        
+        setDebts(validDebts);
+        
+        // Fetch completed payments for this month to exclude them
+        const paymentsResponse = await fetch("/api/payments");
+        let completedPayments: any[] = [];
+        
+        if (paymentsResponse.ok) {
+          const { payments } = await paymentsResponse.json();
+          
+          // Filter payments for the current month
+          const currentDate = new Date();
+          const currentMonth = currentDate.getMonth();
+          const currentYear = currentDate.getFullYear();
+          
+          completedPayments = payments.filter((payment: any) => {
+            const paymentDate = new Date(payment.paymentDate);
+            return paymentDate.getMonth() === currentMonth && 
+                   paymentDate.getFullYear() === currentYear;
+          });
+        }
+        
+        // Get the completed debt IDs for this month
+        const completedDebtIds = completedPayments.map((payment: any) => payment.debtId);
+        
+        // Create payment items from debts that haven't been paid this month
+        const currentDate = new Date();
+        const currentDay = currentDate.getDate();
+        const currentMonth = currentDate.getMonth() + 1;
+        const currentYear = currentDate.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        
+        // Filter debts with due dates in this month and not yet paid
+        const monthlyPayments = validDebts
+          .filter((debt: DebtItem) => 
+            debt.paymentDueDay && 
+            debt.paymentDueDay <= daysInMonth && 
+            !completedDebtIds.includes(debt._id)
+          )
+          .map((debt: DebtItem) => {
+            // Calculate days until due or if past due
+            const dueDay = debt.paymentDueDay || 1;
+            let daysUntilDue = dueDay - currentDay;
+            const isPastDue = daysUntilDue < 0;
+            
+            if (isPastDue) {
+              daysUntilDue = 0; // Just show 0 days if past due
+            }
+            
+            // Create payment details if available (for credit cards)
+            const details = [];
+            if (debt.debtType === "บัตรเครดิต" || debt.originalPaymentType === "credit_card") {
+              // In a real app, these would be fetched from the API
+              // For now, we'll use placeholder data
+              const minimumPayment = debt.minimumPayment || 0;
+              if (minimumPayment > 0) {
                 details.push(
-                  { name: "Topic 1", amount: 1200 },
-                  { name: "Topic 2", amount: 2500 },
-                  { name: "Topic 3", amount: 2000 },
+                  { name: "ยอดขั้นต่ำ", amount: minimumPayment },
+                  { name: "ยอดแนะนำ", amount: Math.round(minimumPayment * 1.5) }
                 );
               }
-
-              return {
-                debtId: debt._id,
-                debtName: debt.name,
-                amount: debt.minimumPayment || 0,
-                dueDate: debt.paymentDueDay || 1,
-                details: details.length > 0 ? details : undefined,
-              };
-            })
-            .sort((a: PaymentItem, b: PaymentItem) => a.dueDate - b.dueDate);
-
-          setPayments(monthlyPayments);
-        }
+            }
+            
+            return {
+              id: `payment-${debt._id}`, // Create a unique ID for UI purposes
+              debtId: debt._id,
+              debtName: debt.name,
+              amount: debt.minimumPayment || 0,
+              dueDate: debt.paymentDueDay || 1,
+              details: details.length > 0 ? details : undefined,
+              status: 'pending',
+              daysUntilDue,
+              isPastDue
+            };
+          })
+          .sort((a: PaymentItem, b: PaymentItem) => {
+            // Sort by past due first, then by due date
+            if (a.isPastDue && !b.isPastDue) return -1;
+            if (!a.isPastDue && b.isPastDue) return 1;
+            return a.dueDate - b.dueDate;
+          });
+        
+        setPayments(monthlyPayments);
       } catch (error) {
-        // Error handled by setting empty array in finally block
+        console.error("Error fetching data:", error);
+        setError("ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
+        setDebts([]);
+        setPayments([]);
       } finally {
         setIsLoading(false);
       }
     };
+    
+    fetchData();
+  }, [session, refreshTrigger]); // Re-fetch when session changes or refreshTrigger is updated
 
-    fetchDebts();
-  }, []);
-
+  // Handle opening the payment modal
   const handleCompletePayment = (payment: PaymentItem) => {
     setCurrentPayment(payment);
     setPaymentAmount(payment.amount);
     setIsModalOpen(true);
   };
 
+  // Handle confirming and recording a payment
   const handleConfirmPayment = async () => {
-    if (!currentPayment) return;
+    if (!currentPayment || !session) return;
 
     try {
+      setIsProcessing(true);
+      
       // Call the payments API to record the payment
       const response = await fetch("/api/payments", {
         method: "POST",
@@ -127,29 +199,43 @@ export default function TodoMonth() {
           debtId: currentPayment.debtId,
           amount: paymentAmount,
           paymentDate: new Date().toISOString(),
-          paymentType: "regular",
+          paymentType: paymentAmount === currentPayment.amount ? "minimum" : "regular",
+          notes: `Payment for ${currentPayment.debtName}`,
         }),
       });
 
-      if (response.ok) {
-        // Remove the payment from the list and refresh data
-        setPayments((prevPayments) =>
-          prevPayments.filter((p) => p.debtId !== currentPayment.debtId),
-        );
-
-        // Show a success message or toast notification here if you have one
-        // Payment recorded successfully
-      } else {
-        // Failed to record payment
+      if (!response.ok) {
+        throw new Error(`Error recording payment: ${response.status}`);
       }
-    } catch (error) {
-      // Error handled by closing modal and resetting state in finally block
-    } finally {
+      
+      // Get the updated debt information
+      const debtResponse = await fetch(`/api/debts?id=${currentPayment.debtId}`);
+      
+      if (debtResponse.ok) {
+        // Remove the payment from the list
+        setPayments((prevPayments) =>
+          prevPayments.filter((p) => p.id !== currentPayment.id),
+        );
+        
+        // Show success message (in a real app, you might use a toast notification)
+        console.log(`Payment of ${paymentAmount} recorded successfully`);
+      }
+      
+      // Close the modal
       setIsModalOpen(false);
       setCurrentPayment(null);
+      
+      // Trigger a refresh of the data
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error("Error recording payment:", error);
+      alert("เกิดข้อผิดพลาดในการบันทึกการชำระเงิน กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
+  // Toggle showing/hiding payment details
   const toggleDetails = (paymentId: string) => {
     setExpandedDetails((prev) => ({
       ...prev,
@@ -157,13 +243,58 @@ export default function TodoMonth() {
     }));
   };
 
+  // Format the due date with Thai month
+  const formatDueDate = (day: number) => {
+    const currentDate = new Date();
+    const dueDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    
+    return dueDate.toLocaleDateString('th-TH', {
+      day: 'numeric',
+      month: 'long',
+    });
+  };
+
+  // Calculate the current month and year for display
+  const currentDate = new Date();
+  const thaiMonthNames = [
+    "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", 
+    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+  ];
+  const currentMonth = thaiMonthNames[currentDate.getMonth()];
+  const currentYear = currentDate.getFullYear() + 543; // Convert to Buddhist Era
+
   if (isLoading) {
     return (
       <div className="p-4">
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded mb-4" />
-          <div className="h-32 bg-gray-200 rounded mb-4" />
-          <div className="h-32 bg-gray-200 rounded" />
+        <div className="flex justify-center items-center py-12">
+          <Spinner size="lg" color="primary" />
+          <span className="ml-2 text-gray-600">กำลังโหลดข้อมูล...</span>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+          <p className="text-red-600">{error}</p>
+          <button 
+            onClick={() => setRefreshTrigger(prev => prev + 1)} 
+            className="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium"
+          >
+            ลองใหม่
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!session) {
+    return (
+      <div className="p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+          <p className="text-yellow-700">กรุณาเข้าสู่ระบบเพื่อดูข้อมูลหนี้ของคุณ</p>
         </div>
       </div>
     );
@@ -171,136 +302,178 @@ export default function TodoMonth() {
 
   return (
     <div className="p-4">
-      <h2 className="text-xl font-bold mb-4 text-[#3776C1]">
-        สิ่งที่ต้องทำในเดือนนี้
+      <h2 className="text-xl font-bold mb-1 text-[#3776C1]">
+        รายการที่ต้องชำระเดือนนี้
       </h2>
+      <p className="text-sm text-gray-500 mb-4">
+        {currentMonth} {currentYear}
+      </p>
 
       {payments.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          ไม่พบรายการที่ต้องชำระในเดือนนี้
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+          <div className="flex justify-center mb-2">
+            <FiCalendar className="text-green-500 text-2xl" />
+          </div>
+          <p className="text-green-700">ไม่พบรายการที่ต้องชำระในเดือนนี้</p>
+          <p className="text-sm text-green-600 mt-1">คุณได้ชำระหนี้ทั้งหมดสำหรับเดือนนี้แล้ว</p>
         </div>
       ) : (
         <div className="space-y-4">
           {payments.map((payment) => (
             <div
-              key={payment.debtId}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+              key={payment.id}
+              className={`bg-white rounded-xl border ${payment.isPastDue ? 'border-red-200' : 'border-gray-200'} p-4`}
             >
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      ชำระหนี้{payment.debtName} {formatNumber(payment.amount)}{" "}
-                      บาท
-                    </h3>
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-500">
-                        วันที่ต้องชำระ:
-                      </span>
-                      <span className="ml-1 text-sm font-medium bg-blue-100 px-2 py-0.5 rounded-full">
-                        {payment.dueDate}
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    color="primary"
-                    size="sm"
-                    onPress={() => handleCompletePayment(payment)}
-                  >
-                    เสร็จสิ้น
-                  </Button>
-                </div>
-
-                {payment.details && (
-                  <div className="mt-2">
-                    <button
-                      aria-controls="payment-details"
-                      aria-expanded={expandedDetails[payment.debtId]}
-                      className="flex items-center text-sm text-blue-600 bg-transparent border-none p-0 cursor-pointer"
-                      onClick={() => toggleDetails(payment.debtId)}
-                    >
-                      {expandedDetails[payment.debtId] ? (
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-bold">{payment.debtName}</h3>
+                  <p className="text-sm text-gray-500">
+                    ยอดชำระขั้นต่ำ: {formatNumber(payment.amount)} บาท
+                  </p>
+                  <div className="mt-1">
+                    <span className={`inline-block ${payment.isPastDue ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'} text-xs px-2 py-1 rounded-full`}>
+                      {payment.isPastDue ? (
                         <>
-                          <span>เห็นน้อยลง</span>
-                          <FiChevronUp className="ml-1" />
+                          <FiAlertCircle className="inline-block mr-1" />
+                          เลยกำหนดชำระ: {formatDueDate(payment.dueDate)}
                         </>
                       ) : (
-                        <>
-                          <span>รายละเอียดเพิ่มเติม</span>
-                          <FiChevronDown className="ml-1" />
-                        </>
+                        <>ครบกำหนด: {formatDueDate(payment.dueDate)}</>  
                       )}
-                    </button>
-
-                    {expandedDetails[payment.debtId] && (
-                      <div className="mt-2 border-t pt-2" id="payment-details">
-                        {payment.details.map((detail, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between items-center py-1"
-                          >
-                            <span className="text-sm">{detail.name}</span>
-                            <span className="text-sm font-medium text-blue-600">
-                              {formatNumber(detail.amount)} บาท
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    </span>
                   </div>
-                )}
+                </div>
+                <Button
+                  color={payment.isPastDue ? "danger" : "primary"}
+                  size="sm"
+                  isLoading={isProcessing && currentPayment?.id === payment.id}
+                  onPress={() => handleCompletePayment(payment)}
+                >
+                  ชำระเงิน
+                </Button>
               </div>
+
+              {payment.details && (
+                <div className="mt-2">
+                  <button
+                    aria-controls={`payment-details-${payment.id}`}
+                    aria-expanded={expandedDetails[payment.id]}
+                    className="flex items-center text-sm text-blue-600 bg-transparent border-none p-0 cursor-pointer"
+                    onClick={() => toggleDetails(payment.id)}
+                  >
+                    {expandedDetails[payment.id] ? (
+                      <>
+                        <span>เห็นน้อยลง</span>
+                        <FiChevronUp className="ml-1" />
+                      </>
+                    ) : (
+                      <>
+                        <span>ตัวเลือกการชำระ</span>
+                        <FiChevronDown className="ml-1" />
+                      </>
+                    )}
+                  </button>
+
+                  {expandedDetails[payment.id] && (
+                    <div className="mt-2 border-t pt-2" id={`payment-details-${payment.id}`}>
+                      {payment.details.map((detail, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center py-1"
+                        >
+                          <span className="text-sm">{detail.name}</span>
+                          <span className="text-sm font-medium text-blue-600">
+                            {formatNumber(detail.amount)} บาท
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* Payment Confirmation Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal isOpen={isModalOpen} onClose={() => !isProcessing && setIsModalOpen(false)}>
         <ModalContent>
           <ModalHeader>
-            <div className="text-center font-bold">คุณชำระไปเท่าไหร่ ?</div>
+            <div className="text-center font-bold">
+              {currentPayment ? `ชำระเงิน ${currentPayment.debtName}` : 'ชำระเงิน'}
+            </div>
           </ModalHeader>
           <ModalBody>
-            <div className="flex justify-center items-center space-x-4">
-              <button
-                className="bg-gray-200 p-2 rounded-full"
-                onClick={() =>
-                  setPaymentAmount((prev) => Math.max(0, prev - 100))
-                }
-              >
-                <FiMinus />
-              </button>
+            <div className="mb-4 text-center">
+              <p className="text-sm text-gray-600 mb-2">ยอดที่ต้องชำระ</p>
+              <p className="text-xl font-bold text-blue-600">
+                {currentPayment ? formatNumber(currentPayment.amount) : 0} บาท
+              </p>
+              {currentPayment?.isPastDue && (
+                <div className="mt-2 p-2 bg-red-50 rounded-lg text-sm text-red-600">
+                  <FiAlertCircle className="inline-block mr-1" />
+                  เลยกำหนดชำระแล้ว กรุณาชำระโดยเร็วที่สุด
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600 mb-2">ระบุจำนวนเงินที่ชำระ</p>
+              <div className="flex justify-center items-center space-x-4">
+                <button
+                  className="bg-gray-200 p-2 rounded-full disabled:opacity-50"
+                  disabled={isProcessing || paymentAmount <= 100}
+                  onClick={() => setPaymentAmount((prev) => Math.max(0, prev - 100))}
+                >
+                  <FiMinus />
+                </button>
 
-              <div className="relative w-32">
-                <input
-                  className="w-full text-center text-2xl font-bold py-2 border-b-2 border-gray-300 focus:outline-none focus:border-blue-500"
-                  type="text"
-                  value={paymentAmount}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, "");
+                <div className="relative w-32">
+                  <input
+                    className="w-full text-center text-2xl font-bold py-2 border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:bg-gray-50"
+                    type="text"
+                    value={formatNumber(paymentAmount)}
+                    disabled={isProcessing}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+                      setPaymentAmount(value ? parseInt(value) : 0);
+                    }}
+                  />
+                  <div className="absolute right-0 bottom-2 text-gray-500">บาท</div>
+                </div>
 
-                    setPaymentAmount(value ? parseInt(value) : 0);
-                  }}
-                />
+                <button
+                  className="bg-gray-200 p-2 rounded-full disabled:opacity-50"
+                  disabled={isProcessing}
+                  onClick={() => setPaymentAmount((prev) => prev + 100)}
+                >
+                  <FiPlus />
+                </button>
               </div>
-
-              <button
-                className="bg-gray-200 p-2 rounded-full"
-                onClick={() => setPaymentAmount((prev) => prev + 100)}
-              >
-                <FiPlus />
-              </button>
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button
-              className="w-full"
-              color="primary"
-              onPress={handleConfirmPayment}
-            >
-              ยืนยัน
-            </Button>
+            <div className="flex w-full gap-2">
+              <Button
+                className="flex-1"
+                color="default"
+                variant="light"
+                onPress={() => !isProcessing && setIsModalOpen(false)}
+                isDisabled={isProcessing}
+              >
+                ยกเลิก
+              </Button>
+              <Button
+                className="flex-1"
+                color="primary"
+                onPress={handleConfirmPayment}
+                isLoading={isProcessing}
+                isDisabled={paymentAmount <= 0}
+              >
+                ยืนยันการชำระ
+              </Button>
+            </div>
           </ModalFooter>
         </ModalContent>
       </Modal>

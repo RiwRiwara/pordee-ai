@@ -15,6 +15,7 @@ import {
   Legend,
 } from "chart.js";
 import { useSession } from "next-auth/react";
+import { getDTIRiskStatus, saveDTIRiskAssessment } from "@/lib/dtiService";
 
 // Register ChartJS components
 ChartJS.register(
@@ -271,35 +272,14 @@ export default function DebtPlanModalRefactored({
     );
   };
 
-  // Determine risk status based on percentage using the provided rules
+  // Get risk status from shared service
   const getRiskStatus = () => {
-    if (riskPercentage <= 40)
-      return {
-        label: "ปลอดภัย",
-        color: "text-green-500",
-        bgColor: "bg-green-500",
-        description: "อยู่ในระดับดี จัดการหนี้ได้โดยไม่กระทบค่าใช้จ่ายจำเป็น",
-      };
-    if (riskPercentage <= 60)
-      return {
-        label: "เริ่มเสี่ยง",
-        color: "text-yellow-500",
-        bgColor: "bg-yellow-500",
-        description: "เริ่มกระทบกับการออมและสภาพคล่อง แต่ยังพอจัดการได้",
-      };
-    if (riskPercentage <= 80)
-      return {
-        label: "เสี่ยงสูง",
-        color: "text-orange-500",
-        bgColor: "bg-orange-500",
-        description: "มีภาระหนี้มาก รายได้เริ่มไม่พอใช้หลังชำระหนี้",
-      };
-
+    const status = getDTIRiskStatus(riskPercentage);
     return {
-      label: "วิกฤติ",
-      color: "text-red-500",
-      bgColor: "bg-red-500",
-      description: "อยู่ในภาวะอาจหมุนเงินไม่ทัน และเข้าใกล้หนี้เสีย",
+      label: status.label,
+      color: status.color,
+      bgColor: status.bgColor,
+      description: status.description,
     };
   };
 
@@ -366,47 +346,59 @@ export default function DebtPlanModalRefactored({
   // Direct API call to save debt plan
   const saveDebtPlanToDatabase = async (planData: any) => {
     try {
-      // Remove the id field if it's null or undefined (for new plans)
-      const dataToSend = { ...planData };
-      if (!dataToSend.id) {
-        delete dataToSend.id;
+      setIsSaving(true);
+      setSaveError("");
+
+      // Use the session from the component scope instead of calling useSession() here
+      const userId = session?.user?.id;
+
+      // Prepare plan data
+      const debtPlanData = {
+        ...planData,
+        userId: userId || localStorage.getItem("anonymousId") || `anon_${Date.now()}`,
+        anonymousId: !userId ? localStorage.getItem("anonymousId") || `anon_${Date.now()}` : undefined,
+        isActive: true,
+      };
+
+      // If no anonymous ID in localStorage and no user ID, create and store one
+      if (!userId && !localStorage.getItem("anonymousId")) {
+        const anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem("anonymousId", anonymousId);
+        debtPlanData.anonymousId = anonymousId;
+        debtPlanData.userId = anonymousId;
       }
 
-      // Add anonymous ID if user is not logged in
-      if (!session?.user && anonymousId) {
-        dataToSend.anonymousId = anonymousId;
+      // Add existing plan ID if updating
+      if (existingPlanId) {
+        debtPlanData._id = existingPlanId;
       }
 
-      // Determine if this is an update or create operation
-      const url = planData.id
-        ? `/api/debt-plans/${planData.id}`
-        : '/api/debt-plans';
-
-      const method = planData.id ? 'PUT' : 'POST';
-
-      console.log('Saving debt plan to database:', JSON.stringify(dataToSend, null, 2));
-
-      // Make API request
-      const response = await fetch(url, {
-        method,
+      // Save to database
+      const response = await fetch("/api/debt-plans", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(debtPlanData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API error response:', errorData);
-        throw new Error(errorData.error || 'Failed to save debt plan');
+        throw new Error(`Failed to save plan: ${response.status}`);
+      }
+
+      // Also save the DTI risk assessment if we have a user ID
+      if (userId) {
+        await saveDTIRiskAssessment(userId, riskPercentage);
       }
 
       const result = await response.json();
-      console.log('Debt plan saved successfully:', result);
       return result;
     } catch (error) {
-      console.error('API error saving debt plan:', error);
+      console.error("Error saving debt plan:", error);
+      setSaveError(error instanceof Error ? error.message : "Failed to save plan");
       throw error;
+    } finally {
+      setIsSaving(false);
     }
   };
 

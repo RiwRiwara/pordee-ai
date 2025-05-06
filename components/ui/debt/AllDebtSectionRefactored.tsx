@@ -186,7 +186,7 @@ export default function AllDebtSection({
   return (
     <div className="flex flex-col gap-4">
       <hr className="border border-gray-200 my-2" />
-      <div className="bg-[#3776C1] rounded-full p-2 text-center items-center">
+      <div className="bg-[#3776C1] rounded-t-full rounded-b-md p-2 text-center items-center">
         <h2 className="text-lg font-semibold text-white">รายการหนี้ของฉัน</h2>
       </div>
 

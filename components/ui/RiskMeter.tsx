@@ -11,15 +11,31 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 import ReactMarkdown from "react-markdown";
+import { useSession } from "next-auth/react";
 
 import DebtPlanModal from "./debt_plan/DebtPlanModal";
 
-import AIService, { createDebtPrompt, type DebtContext } from "@/lib/aiService";
+import AIService, { createDebtPrompt, type DebtContext as AIDebtContext } from "@/lib/aiService";
+import { calculateDTI, getDTIRiskStatus, saveDTIRiskAssessment, type DebtContext } from "@/lib/dtiService";
 
 interface RiskMeterProps {
   debtContext?: DebtContext;
   riskPercentage?: number;
   onPlanClick: () => void;
+}
+
+// Extended debt item interface to match what's used in the component
+interface ExtendedDebtItem {
+  id?: string;
+  _id: string;
+  name: string;
+  debtType: string;
+  totalAmount: number;
+  remainingAmount: number;
+  interestRate: number;
+  minimumPayment?: number;
+  paymentDueDay?: number;
+  dueDate?: string | number;
 }
 
 // Maximum length for insight preview before showing "Read more..."
@@ -30,75 +46,41 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
   riskPercentage: propRiskPercentage,
   onPlanClick,
 }) => {
-  // Calculate debt-to-income ratio
+  const { data: session } = useSession();
+
+  // Calculate debt-to-income ratio using shared service
   const calculatedRatio = useMemo(() => {
-    if (!debtContext) return 0;
-
-    // Calculate total minimum debt payments
-    const totalMinimumDebt = debtContext.debtItems.reduce((sum, debt) => {
-      return sum + parseFloat(debt.minimumPayment || "0");
-    }, 0);
-
-    // Get income before expenses and tax
-    const income = parseFloat(debtContext.income || "0");
-
-    // Avoid division by zero
-    if (income <= 0) return 0;
-
-    // Calculate debt-to-income ratio: (all minimum debt / income) * 100
-    return (totalMinimumDebt / income) * 100;
+    return calculateDTI(debtContext);
   }, [debtContext]);
 
   // Use calculated ratio or prop value if available
   const riskPercentage =
     propRiskPercentage !== undefined ? propRiskPercentage : calculatedRatio;
 
-  // Determine risk status based on percentage using the provided rules
-  const getRiskStatus = () => {
-    if (riskPercentage <= 40)
-      return {
-        label: "ปลอดภัย",
-        color: "text-green-500",
-        colorClass: "text-green-500",
-        trackColor: "stroke-green-100",
-        indicatorColor: "stroke-green-500",
-      };
-    if (riskPercentage <= 60)
-      return {
-        label: "เริ่มเสี่ยง",
-        color: "text-yellow-500",
-        colorClass: "text-yellow-500",
-        trackColor: "stroke-yellow-100",
-        indicatorColor: "stroke-yellow-500",
-      };
-    if (riskPercentage <= 80)
-      return {
-        label: "เสี่ยงสูง",
-        color: "text-orange-500",
-        colorClass: "text-orange-500",
-        trackColor: "stroke-orange-100",
-        indicatorColor: "stroke-orange-500",
-      };
+  // Save DTI to database when it changes
+  useEffect(() => {
+    if (session?.user?.id && riskPercentage > 0) {
+      saveDTIRiskAssessment(session.user.id, riskPercentage);
+    }
+  }, [session?.user?.id, riskPercentage]);
 
+  // Get risk status from shared service
+  const getRiskStatus = () => {
+    const status = getDTIRiskStatus(riskPercentage);
     return {
-      label: "วิกฤติ",
-      color: "text-red-500",
-      colorClass: "text-red-500",
-      trackColor: "stroke-red-100",
-      indicatorColor: "stroke-red-500",
+      label: status.label,
+      color: status.color,
+      bgColor: status.bgColor,
+      colorClass: status.colorClass,
+      trackColor: status.trackColor,
+      indicatorColor: status.indicatorColor,
+      description: status.description
     };
   };
 
-  // Get risk description based on percentage
+  // Get risk description from shared service
   const getRiskDescription = () => {
-    if (riskPercentage <= 40)
-      return "อยู่ในระดับดี จัดการหนี้ได้โดยไม่กระทบค่าใช้จ่ายจำเป็น";
-    if (riskPercentage <= 60)
-      return "เริ่มกระทบกับการออมและสภาพคล่อง แต่ยังพอจัดการได้";
-    if (riskPercentage <= 80)
-      return "มีภาระหนี้มาก รายได้เริ่มไม่พอใช้หลังชำระหนี้";
-
-    return "อยู่ในภาวะอาจหมุนเงินไม่ทัน และเข้าใกล้หนี้เสีย";
+    return getRiskStatus().description;
   };
 
   const riskStatus = getRiskStatus();
@@ -119,18 +101,18 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
     }
 
     if (riskPercentage <= 40) {
-      return `คุณใช้ ${riskPercentage.toFixed(0)}% ของรายได้ไปกับหนี้ทั้งหมด ซึ่งอยู่ในเกณฑ์ที่ดี คุณสามารถบริหารจัดการหนี้ได้ดี และมีเงินเหลือสำหรับใช้จ่ายและการออม`;
+      return `คุณใช้ ${riskPercentage.toFixed(2)}% ของรายได้ไปกับหนี้ทั้งหมด ซึ่งอยู่ในเกณฑ์ที่ดี คุณสามารถบริหารจัดการหนี้ได้ดี และมีเงินเหลือสำหรับใช้จ่ายและการออม`;
     }
 
     if (riskPercentage <= 60) {
-      return `คุณใช้ ${riskPercentage.toFixed(0)}% ของรายได้ไปกับหนี้ ควรระมัดระวังไม่ก่อหนี้เพิ่ม และวางแผนชำระหนี้ให้เร็วขึ้นเพื่อลดภาระดอกเบี้ย`;
+      return `คุณใช้ ${riskPercentage.toFixed(2)}% ของรายได้ไปกับหนี้ ควรระมัดระวังไม่ก่อหนี้เพิ่ม และวางแผนชำระหนี้ให้เร็วขึ้นเพื่อลดภาระดอกเบี้ย`;
     }
 
     if (riskPercentage <= 80) {
-      return `คุณใช้ ${riskPercentage.toFixed(0)}% ของรายได้ไปกับหนี้ ซึ่งสูงเกินความปลอดภัย ควรเร่งลดค่าใช้จ่ายที่ไม่จำเป็น และหาแนวทางเพิ่มรายได้หรือปรับโครงสร้างหนี้`;
+      return `คุณใช้ ${riskPercentage.toFixed(2)}% ของรายได้ไปกับหนี้ ซึ่งอยู่ในระดับที่สูง ควรเร่งลดภาระหนี้ลง และอาจต้องปรับลดค่าใช้จ่ายที่ไม่จำเป็น`;
     }
 
-    return `คุณใช้ ${riskPercentage.toFixed(0)}% ของรายได้ไปกับหนี้ทั้งหมด ซึ่งอยู่ในภาวะวิกฤติ ต้องปรึกษาผู้เชี่ยวชาญทางการเงินโดยด่วน เพื่อวางแผนแก้ไขปัญหาอย่างเร่งด่วน`;
+    return `คุณใช้ ${riskPercentage.toFixed(2)}% ของรายได้ไปกับหนี้ ซึ่งอยู่ในระดับวิกฤติ ควรเร่งปรับโครงสร้างหนี้ หรือปรึกษาผู้เชี่ยวชาญเพื่อวางแผนแก้ไขสถานการณ์โดยเร็ว`;
   };
 
   // Generate AI insight using the AIService
@@ -139,10 +121,10 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
     if (
       !debtContext ||
       debtContext.debtItems.length === 0 ||
-      parseFloat(debtContext.income) <= 0
+      !debtContext.income ||
+      parseFloat(debtContext.income.toString()) <= 0
     ) {
       setAiInsight(getFallbackInsight());
-
       return;
     }
 
@@ -150,36 +132,53 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
       setIsLoadingInsight(true);
       setAiError(false);
 
+      if (!debtContext) return;
+
+      // Create AI-compatible debt context
+      const aiDebtContext: AIDebtContext = {
+        debtItems: debtContext.debtItems.map(item => ({
+          id: item._id || '',
+          name: item.name,
+          debtType: item.debtType,
+          totalAmount: item.totalAmount.toString(),
+          minimumPayment: (item.minimumPayment || 0).toString(),
+          interestRate: (item.interestRate || 0).toString(),
+          dueDate: (item.paymentDueDay || 1).toString(),
+          paymentStatus: 'pending'
+        })),
+        income: debtContext.income.toString(),
+        expense: "0", // Required by AIDebtContext but not in our DebtContext
+        riskPercentage: riskPercentage
+      };
+
+      // Create prompt for AI
+      const prompt = createDebtPrompt(aiDebtContext);
+
       // Create an instance of AIService
       const aiService = new AIService();
 
-      // Set a financial advisor context
+      // Set personal context for financial advisor
       aiService.setPersonalContext(
         `คุณคือที่ปรึกษาทางการเงินส่วนบุคคลที่เชี่ยวชาญด้านการจัดการหนี้สิน
-      - ตอบกลับด้วยภาษาไทยเท่านั้น
-      - ใช้ภาษาที่อบอุ่น เป็นกันเอง พูดคุยเหมือนคนใกล้ชิด
-      - ไม่ออกคำสั่ง ไม่วิจารณ์ ชวนให้ผู้ใช้สะท้อนคิดถึงพฤติกรรมการใช้เงินของตัวเอง
-      - สรุปเป็นหัวข้อแบบ Bullet Point ไม่เกิน 2 ข้อ
-      - ไม่ใช้คำสำนวนที่เป็นทางการหรือฟังดูแข็ง เช่น "การวิเคราะห์สถานะทางการเงิน" หรือ "มาเริ่มกันที่..."
-      - เขียนให้กระชับ ชัดเจน และช่วยให้ผู้ใช้เข้าใจตัวเองมากขึ้น
-      - อธิบายหลักการจัดการหนี้เบื้องต้นด้วยภาษาง่าย ๆ โดยไม่ใส่ตัวเลขหรือเปอร์เซ็นต์ตรง ๆ
-      - แนะนำแผนการจัดการหนี้เบื้องต้น
-      `,
+        - ตอบกลับด้วยภาษาไทยเท่านั้น
+        - ใช้ภาษาที่เป็นมืออาชีพแต่เข้าใจง่าย
+        - ให้คำแนะนำที่ปฏิบัติได้จริงและเฉพาะเจาะจงกับสถานการณ์หนี้ของผู้ใช้
+        - อธิบายแผนการจัดการหนี้ที่เหมาะสมกับระดับความเสี่ยงของผู้ใช้
+        - แนะนำวิธีลดความเสี่ยงทางการเงินและเพิ่มความมั่นคง`
       );
 
-      // Create a structured prompt from the debt context
-      const prompt = createDebtPrompt(debtContext);
-
-      // Generate a response using the API
+      // Call AI service using generateResponse method
       const response = await aiService.generateResponse(prompt);
 
-      // Update the state with the AI-generated insight
-      setAiInsight(response);
+      if (response) {
+        setAiInsight(response);
+      } else {
+        throw new Error("No content in AI response");
+      }
     } catch (error) {
       console.error("Error generating AI insight:", error);
       setAiError(true);
-      // Fall back to template-based insight if AI fails
-      setAiInsight(getFallbackInsight());
+      setAiInsight(""); // Clear any partial insights
     } finally {
       setIsLoadingInsight(false);
     }
@@ -195,6 +194,34 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
     }
   }, [debtContext]);
 
+  const renderRiskMeter = () => {
+    return (
+      <div className="flex flex-col items-center justify-center">
+        <div className="relative">
+          <CircularProgress
+            aria-label="Risk Meter"
+            classNames={{
+              svg: "w-36 h-36 drop-shadow-md",
+              indicator: riskStatus.indicatorColor,
+              track: riskStatus.trackColor || "stroke-gray-100",
+              value: `text-xl font-semibold ${riskStatus.colorClass}`,
+            }}
+            size="lg"
+            showValueLabel={true}
+            strokeWidth={4}
+            value={riskPercentage}
+            valueLabel={`${riskPercentage.toFixed(2)}%`}
+          />
+        </div>
+        <div className="mt-2 text-center">
+          <p className={`font-semibold ${riskStatus.colorClass}`}>
+            {riskStatus.label}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
       <h2 className="text-lg font-semibold mb-1">ระดับความเสี่ยงของคุณ</h2>
@@ -202,31 +229,18 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
         Debt-to-Income Ratio (หนี้ต่อรายได้)
       </p>
 
-      {/* Semi-circular Risk Meter Gauge */}
-      <div className="w-full flex justify-center items-center">
-        <div className="justify-center items-center pb-0">
-          <CircularProgress
-            aria-label={`ระดับความเสี่ยงอยู่ที่ ${riskPercentage.toFixed(0)}% ระดับ: ${riskStatus.label}`}
-            classNames={{
-              svg: "w-36 h-36 drop-shadow-md",
-              indicator: riskStatus.indicatorColor,
-              track: riskStatus.trackColor || "stroke-gray-100",
-              value: `text-3xl font-semibold ${riskStatus.colorClass}`,
-            }}
-            showValueLabel={true}
-            strokeWidth={4}
-            value={riskPercentage}
-          />
+      <div >
+        {/* Semi-circular Risk Meter Gauge */}
+        <div className="w-full flex justify-center items-center">
+          <div className="justify-center items-center pb-0">
+            {renderRiskMeter()}
+          </div>
         </div>
+
+
       </div>
 
-      {/* Risk Label */}
       <div className="text-center mt-2">
-        <p className={`text-lg font-medium ${riskStatus.colorClass}`}>
-          {riskPercentage > 0
-            ? `อยู่ในภาวะ${riskStatus.label}`
-            : "(ยังไม่มีข้อมูล)"}
-        </p>
         <p className="text-sm text-gray-600 mb-2">
           {riskPercentage > 0
             ? getRiskDescription()
@@ -325,27 +339,27 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
       <DebtPlanModal
         debtContext={
           debtContext?.debtItems.map((debt) => ({
-            _id: debt.id || "",
+            _id: (debt as any)._id || "",
             name: debt.name,
             debtType: debt.debtType,
             totalAmount:
               typeof debt.totalAmount === "string"
                 ? parseFloat(debt.totalAmount)
-                : 0,
+                : debt.totalAmount,
             remainingAmount:
-              typeof debt.totalAmount === "string"
-                ? parseFloat(debt.totalAmount)
-                : 0,
+              typeof debt.remainingAmount === "string"
+                ? parseFloat(debt.remainingAmount)
+                : debt.remainingAmount,
             interestRate:
               typeof debt.interestRate === "string"
                 ? parseFloat(debt.interestRate)
-                : 0,
+                : debt.interestRate,
             minimumPayment:
               typeof debt.minimumPayment === "string"
                 ? parseFloat(debt.minimumPayment)
-                : 0,
-            paymentDueDay: debt.dueDate
-              ? parseInt(debt.dueDate.toString())
+                : debt.minimumPayment || 0,
+            paymentDueDay: (debt as ExtendedDebtItem).dueDate
+              ? parseInt(((debt as ExtendedDebtItem).dueDate || 0).toString())
               : undefined,
           })) || []  /* Pass as array, not object */
         }
