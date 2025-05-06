@@ -414,17 +414,56 @@ export default function MainTabs({
     // Get each debt type except 'total'
     const debtTypes = Object.values(syncedDebtData).filter(debt => debt.id !== 'total');
 
+    // Calculate the total debt values based on the selected calculation method
+    const calculateTotalDebt = (debt: DebtPlanData, isOriginalPlan: boolean) => {
+      // Get the principal amount (same for both plans)
+      const principal = debt.originalTotalAmount;
+      
+      // Get the monthly interest rate (in decimal form)
+      const monthlyInterestRate = debt.originalInterest / (debt.originalTotalAmount * 12);
+      
+      // Get the monthly payment amount based on plan
+      const monthlyPayment = isOriginalPlan 
+        ? principal / debt.originalTimeInMonths + (principal * monthlyInterestRate)
+        : principal / debt.newPlanTimeInMonths + (principal * monthlyInterestRate * 0.8); // New plan has lower interest
+      
+      // Get the term in months
+      const termMonths = isOriginalPlan ? debt.originalTimeInMonths : debt.newPlanTimeInMonths;
+      
+      let totalDebt;
+      
+      if (calculationMethod === InterestCalculationMethod.REDUCING_BALANCE) {
+        // Formula for reducing balance: D0 = P×r/(1−(1+r)^−n)
+        // Where D0 is monthly payment, P is principal, r is interest rate, n is term
+        // We need to calculate total debt = monthly payment * term
+        
+        // For demonstration, we'll use a simplified calculation
+        const r = monthlyInterestRate;
+        const n = termMonths;
+        const calculatedMonthlyPayment = (principal * r) / (1 - Math.pow(1 + r, -n));
+        totalDebt = calculatedMonthlyPayment * n;
+      } else {
+        // Formula for fixed interest: D0 = P * T/(1+(r * T))
+        // Where D0 is total debt, P is principal, r is interest rate, T is term
+        const r = monthlyInterestRate;
+        const T = termMonths;
+        totalDebt = principal * (1 + (r * T));
+      }
+      
+      return totalDebt;
+    };
+
     return {
       labels: debtTypes.map(debt => debt.label),
       datasets: [
         {
           label: 'แผนเดิม',
-          data: debtTypes.map(debt => debt.originalTotalAmount),
+          data: debtTypes.map(debt => calculateTotalDebt(debt, true)),
           backgroundColor: '#F59E0B',
         },
         {
           label: 'แผนใหม่',
-          data: debtTypes.map(debt => debt.newPlanTotalAmount),
+          data: debtTypes.map(debt => calculateTotalDebt(debt, false)),
           backgroundColor: '#3B82F6',
         },
       ],
