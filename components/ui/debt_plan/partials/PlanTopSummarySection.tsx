@@ -43,9 +43,6 @@ export default function PlanTopSummarySection({
   goalType,
   paymentStrategy,
   getRiskStatusDisplay,
-  timeInMonths,
-  totalInterest,
-  monthlyPayment,
 }: PlanTopSummarySectionProps) {
   // Get strategy based on goal type if not explicitly provided
   const displayStrategy = paymentStrategy || GOAL_STRATEGY_MAP[goalType] || 'Snowball';

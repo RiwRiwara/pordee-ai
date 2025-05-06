@@ -184,6 +184,18 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
     }
   };
 
+  const getTrackColor = (riskPercentage: number) => {
+    if (riskPercentage <= 40) {
+      return "stroke-green-500";
+    } else if (riskPercentage <= 60) {
+      return "stroke-yellow-500";
+    } else if (riskPercentage <= 80) {
+      return "stroke-orange-500";
+    } else {
+      return "stroke-red-500";
+    }
+  };
+
   // Generate AI insight when debt context changes
   useEffect(() => {
     // Only generate AI insights if we have valid debt data
@@ -203,7 +215,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
             classNames={{
               svg: "w-36 h-36 drop-shadow-md",
               indicator: riskStatus.indicatorColor,
-              track: riskStatus.trackColor || "stroke-gray-100",
+              track: getTrackColor(riskPercentage),
               value: `text-xl font-semibold ${riskStatus.colorClass}`,
             }}
             size="lg"

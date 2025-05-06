@@ -272,6 +272,19 @@ export default function DebtPlanModalRefactored({
     );
   };
 
+  // Get track color based on risk percentage
+  const getTrackColor = (riskPercentage: number) => {
+    if (riskPercentage <= 40) {
+      return "stroke-green-500";
+    } else if (riskPercentage <= 60) {
+      return "stroke-yellow-500";
+    } else if (riskPercentage <= 80) {
+      return "stroke-orange-500";
+    } else {
+      return "stroke-red-500";
+    }
+  };
+
   // Get risk status from shared service
   const getRiskStatus = () => {
     const status = getDTIRiskStatus(riskPercentage);
@@ -279,6 +292,9 @@ export default function DebtPlanModalRefactored({
       label: status.label,
       color: status.color,
       bgColor: status.bgColor,
+      colorClass: status.colorClass,
+      trackColor: status.trackColor,
+      indicatorColor: status.indicatorColor,
       description: status.description,
     };
   };
