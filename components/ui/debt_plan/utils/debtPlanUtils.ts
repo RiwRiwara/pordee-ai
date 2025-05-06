@@ -52,7 +52,7 @@ export const mapDebtTypeToCategory = (debtType: string): string => {
     return "credit_card";
   if (debtType === "สินเชื่อที่อยู่อาศัย" || debtType === "สินเชื่อบ้าน")
     return "home";
-  if (debtType === "สินเชื่อยานพาหนะ" || debtType === "สินเชื่อรถยนต์")
+  if (debtType === "สินเชื่อรถยนต์" || debtType === "สินเชื่อรถยนต์")
     return "car";
   if (debtType === "สินเชื่อส่วนบุคคล") return "personal";
   if (debtType === "สินเชื่อธุรกิจ") return "business";

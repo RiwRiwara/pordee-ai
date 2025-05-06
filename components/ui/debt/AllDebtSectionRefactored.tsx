@@ -228,12 +228,12 @@ export default function AllDebtSection({
           onEdit={openEditModal}
         />
 
-        {/* 5. สินเชื่อยานพาหนะ (Vehicle Loan) */}
+        {/* 5. สินเชื่อรถยนต์ (Vehicle Loan) */}
         <DebtTypeSection
           debts={debtsByCategory[DebtCategory.VehicleLoan]}
           formatNumber={formatNumber}
           interestRateColor="bg-cyan-500"
-          title="สินเชื่อยานพาหนะ (Vehicle Loan)"
+          title="สินเชื่อรถยนต์ (Vehicle Loan)"
           onEdit={openEditModal}
         />
 

@@ -6,7 +6,7 @@ export enum DebtCategory {
   ProductInstallment = "หนี้สินผ่อนสินค้า",
   PersonalLoan = "สินเชื่อส่วนบุคคล",
   HousingLoan = "สินเชื่อที่อยู่อาศัย",
-  VehicleLoan = "สินเชื่อยานพาหนะ",
+  VehicleLoan = "สินเชื่อรถยนต์",
   InformalLoan = "เงินกู้นอกระบบ",
   Other = "หนี้อื่นๆ",
 }
@@ -68,7 +68,7 @@ export const categorizeDebt = (debt: DebtItem): DebtCategory => {
   // 5. Vehicle Loan
   if (
     debt.debtType === "สินเชื่อรถ" ||
-    debt.debtType === "สินเชื่อยานพาหนะ" ||
+    debt.debtType === "สินเชื่อรถยนต์" ||
     debt.originalPaymentType === "vehicle_loan" ||
     debt.originalPaymentType === "car_loan"
   ) {

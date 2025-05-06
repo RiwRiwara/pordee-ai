@@ -24,13 +24,13 @@ const teamMembers = [
     name: "Kasira Phootijindanun",
     position: "UX Research & Insight Strategist",
     description: "Leads user interviews and behavioral research, synthesizing insights into actionable UX direction and supporting co-creation of user flows.",
-    image: "/teams/Kasira.png",
+    image: "/teams/Naramon.png",
   },
   {
     name: "Naramon Wanatanasuwan",
     position: "UX Flow Architect & Wireframe Designer",
     description: "Translates insights and product goals into structured user journeys and wireframes that bridge real user needs with functional design.",
-    image: "/teams/Naramon.png",
+    image: "/teams/Kasira.png",
   },
   {
     name: "Pimpida Ratanasuvan",

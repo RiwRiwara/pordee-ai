@@ -169,7 +169,7 @@ export default function DebtsAdmin() {
       case "cash_card":
         return "บัตรกดเงินสด";
       case "personal_loan":
-        return "สินเชื่อบุคคล";
+        return "สินเชื่อส่วนบุคคล";
       case "auto_loan":
         return "สินเชื่อรถยนต์";
       case "mortgage_loan":
@@ -282,7 +282,7 @@ export default function DebtsAdmin() {
                 บัตรกดเงินสด
               </SelectItem>
               <SelectItem key="personal_loan" textValue="personal_loan">
-                สินเชื่อบุคคล
+                สินเชื่อส่วนบุคคล
               </SelectItem>
               <SelectItem key="auto_loan" textValue="auto_loan">
                 สินเชื่อรถยนต์

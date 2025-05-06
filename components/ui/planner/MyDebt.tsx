@@ -65,7 +65,7 @@ export default function MyDebt() {
       return debt.originalPaymentType === "personal_loan";
     if (activeFilter === "สินเชื่อที่อยู่อาศัย")
       return debt.originalPaymentType === "mortgage";
-    if (activeFilter === "สินเชื่อยานพาหนะ")
+    if (activeFilter === "สินเชื่อรถยนต์")
       return debt.originalPaymentType === "auto_loan";
 
     return false;
@@ -79,7 +79,7 @@ export default function MyDebt() {
     "เงินกู้อนุมัติ",
     "สินเชื่อส่วนบุคคล",
     "สินเชื่อที่อยู่อาศัย",
-    "สินเชื่อยานพาหนะ",
+    "สินเชื่อรถยนต์",
   ];
 
   if (isLoading) {

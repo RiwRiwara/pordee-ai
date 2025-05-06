@@ -55,16 +55,12 @@ export default function PlanTopSummarySection({
       <div>
         <p className="text-sm text-gray-600">เป้าหมายที่เลือก:</p>
         <p className="font-medium">{goalType}</p>
-        {goalDescription && (
-          <p className="text-xs text-gray-500">{goalDescription}</p>
-        )}
+
       </div>
       <div>
         <p className="text-sm text-gray-600">รูปแบบแผนการชำระหนี้:</p>
         <p className="font-medium">{displayStrategy}</p>
-        {strategyDescription && (
-          <p className="text-xs text-gray-500">{strategyDescription}</p>
-        )}
+
       </div>
       {getRiskStatusDisplay()}
     </div>

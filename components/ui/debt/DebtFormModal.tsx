@@ -26,7 +26,7 @@ import AIService from "@/lib/aiService";
 const debtTypes = [
   { label: "บัตรเครดิต", value: "credit_card" },
   { label: "บัตรกดเงินสด", value: "cash_card" },
-  { label: "สินเชื่อบุคคล", value: "personal_loan" },
+  { label: "สินเชื่อส่วนบุคคล", value: "personal_loan" },
   { label: "สินเชื่อรถยนต์", value: "auto_loan" },
   { label: "สินเชื่อบ้าน", value: "mortgage_loan" },
   { label: "สินเชื่ออื่นๆ", value: "other_loan" },

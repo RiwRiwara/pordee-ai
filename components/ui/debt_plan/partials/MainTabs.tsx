@@ -367,13 +367,31 @@ export default function MainTabs({
   // Generate chart data based on the actual debt data
   const generateRealChartData = (debtTypeId: string) => {
     const data = syncedDebtData[debtTypeId] || syncedDebtData['total'];
+    
+    // Ensure both plans start from the same initial value
+    const monthlyData = [...data.monthlyData];
+    
+    // If there's data, set the first month values to be the same
+    if (monthlyData.length > 0) {
+      // Use the total remaining amount as the starting point for both plans
+      const startingAmount = data.originalTotalAmount;
+      
+      // Set the first month to have the same value for both plans
+      if (monthlyData[0]) {
+        monthlyData[0] = {
+          ...monthlyData[0],
+          originalAmount: startingAmount,
+          newPlanAmount: startingAmount
+        };
+      }
+    }
 
     return {
-      labels: data.monthlyData.map(item => item.month.toString()),
+      labels: monthlyData.map(item => item.month.toString()),
       datasets: [
         {
           label: 'แผนเดิม',
-          data: data.monthlyData.map(item => item.originalAmount),
+          data: monthlyData.map(item => item.originalAmount),
           borderColor: '#F59E0B',
           backgroundColor: 'rgba(245, 158, 11, 0.2)',
           fill: true,
@@ -381,7 +399,7 @@ export default function MainTabs({
         },
         {
           label: 'แผนใหม่',
-          data: data.monthlyData.map(item => item.newPlanAmount),
+          data: monthlyData.map(item => item.newPlanAmount),
           borderColor: '#3B82F6',
           backgroundColor: 'rgba(59, 130, 246, 0.2)',
           fill: true,
@@ -467,7 +485,7 @@ export default function MainTabs({
       </div>
 
       {/* Debt Type Selection with Swipe Navigation */}
-      {/* <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4">
         <button
           aria-label="ประเภทหนี้ก่อนหน้า"
           className="p-2 rounded-full hover:bg-gray-100"
@@ -487,7 +505,7 @@ export default function MainTabs({
         >
           <FiArrowRight />
         </button>
-      </div> */}
+      </div>
 
       {/* Calculation Method Selector */}
       <div className="mb-4">
@@ -610,7 +628,7 @@ export default function MainTabs({
       </div>
 
       {/* Pagination Dots for Debt Type Navigation */}
-      {/* <div className="flex justify-center gap-1 mb-4">
+      <div className="flex justify-center gap-1 mb-4">
         {DEBT_TYPES.map((type, index) => (
           <div
             key={type.id}
@@ -628,7 +646,7 @@ export default function MainTabs({
             aria-label={`Select ${type.label} debt type`}
           />
         ))}
-      </div> */}
+      </div>
     </div>
   );
 }
