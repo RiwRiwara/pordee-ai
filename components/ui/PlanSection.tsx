@@ -6,6 +6,7 @@ import { Radio, RadioGroup } from "@heroui/radio";
 import { Modal, ModalContent, ModalHeader } from "@heroui/modal";
 
 import { useCustomToast } from "./ToastNotification";
+
 import { useTracking } from "@/lib/tracking";
 
 // Plan types
@@ -21,14 +22,12 @@ const plans: Plan[] = [
   {
     id: "quick",
     title: "เห็นผลเร็ว",
-    description:
-      "เลือกจ่ายหนี้ก้อนเล็กก่อน เพื่อปลดหนี้ก้อนแรกได้ไว",
+    description: "เลือกจ่ายหนี้ก้อนเล็กก่อน เพื่อปลดหนี้ก้อนแรกได้ไว",
   },
   {
     id: "save",
     title: "คุ้มที่สุด",
-    description:
-      "โฟกัสหนี้ดอกเบี้ยสูง ลดต้นทุนได้มากที่สุดเฉพาะบุคคล",
+    description: "โฟกัสหนี้ดอกเบี้ยสูง ลดต้นทุนได้มากที่สุดเฉพาะบุคคล",
   },
   {
     id: "balanced",
@@ -50,7 +49,7 @@ export default function PlanSection({
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const { showNotification } = useCustomToast();
   const { trackPlannerStart, trackEdit } = useTracking();
-  
+
   // Track when user starts viewing/using the planner
   useEffect(() => {
     trackPlannerStart();
@@ -68,7 +67,7 @@ export default function PlanSection({
       "solid",
       "success",
     );
-    
+
     // Track when user saves a plan choice as an edit
     trackEdit();
 
@@ -176,7 +175,7 @@ export default function PlanSection({
               onValueChange={(value) => {
                 // Track edit when user selects a plan
                 trackEdit();
-                
+
                 // Handle value as appropriate PlanType
                 if (value === "") {
                   handleSelectPlan(null);

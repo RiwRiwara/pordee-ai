@@ -10,7 +10,7 @@ export interface DebtPlanData {
 // Calculation methods enum
 export enum InterestCalculationMethod {
   REDUCING_BALANCE = "reducing_balance",
-  FIXED_INTEREST = "fixed_interest"
+  FIXED_INTEREST = "fixed_interest",
 }
 
 // Define debt types
@@ -102,20 +102,20 @@ export const calculateRecommendedPayment = (
 export const calculateTimeToPayOffReducingBalance = (
   principal: number,
   annualInterestRate: number,
-  monthlyPayment: number
+  monthlyPayment: number,
 ): number => {
   // Convert annual interest rate to monthly decimal
   const r = annualInterestRate / 12 / 100;
-  
+
   // Ensure payment is greater than monthly interest
   if (monthlyPayment <= principal * r) {
     return Infinity; // Payment too small to ever pay off debt
   }
-  
+
   // Calculate time to pay off
   const numerator = Math.log(monthlyPayment / (monthlyPayment - principal * r));
   const denominator = Math.log(1 + r);
-  
+
   return Math.ceil(numerator / denominator);
 };
 
@@ -131,16 +131,16 @@ export const calculateTimeToPayOffReducingBalance = (
 export const calculateTimeToPayOffFixedInterest = (
   principal: number,
   annualInterestRate: number,
-  monthlyPayment: number
+  monthlyPayment: number,
 ): number => {
   // Convert annual interest rate to monthly decimal
   const r = annualInterestRate / 12 / 100;
-  
+
   // Ensure payment is greater than monthly interest
   if (monthlyPayment <= principal * r) {
     return Infinity; // Payment too small to ever pay off debt
   }
-  
+
   // Calculate time to pay off
   return Math.ceil(principal / (monthlyPayment - principal * r));
 };
@@ -157,13 +157,13 @@ export const calculateTimeToPayOffFixedInterest = (
 export const calculateRemainingDebtReducingBalance = (
   monthlyPayment: number,
   annualInterestRate: number,
-  months: number
+  months: number,
 ): number => {
   // Convert annual interest rate to monthly decimal
   const r = annualInterestRate / 12 / 100;
-  
+
   // Calculate remaining debt
-  return monthlyPayment * (1 - Math.pow(1 + r, -months)) / r;
+  return (monthlyPayment * (1 - Math.pow(1 + r, -months))) / r;
 };
 
 /**
@@ -178,32 +178,41 @@ export const calculateRemainingDebtReducingBalance = (
 export const calculateRemainingDebtFixedInterest = (
   monthlyPayment: number,
   annualInterestRate: number,
-  months: number
+  months: number,
 ): number => {
   // Convert annual interest rate to monthly decimal
   const r = annualInterestRate / 12 / 100;
-  
+
   // Calculate remaining debt
-  return monthlyPayment * months / (1 + (r * months));
+  return (monthlyPayment * months) / (1 + r * months);
 };
 
 // Calculate time to debt-free with a given monthly payment
 // Define repayment strategy types
-export type RepaymentStrategy = "Snowball" | "Avalanche" | "Proportional" | "PriorityScore";
+export type RepaymentStrategy =
+  | "Snowball"
+  | "Avalanche"
+  | "Proportional"
+  | "PriorityScore";
 
 /**
  * Calculate Priority Score for a debt
  * Priority Score = (Interest × 0.4) + (Overdue × 0.3) + (Minpay × 0.2) + (Balance × 0.1)
  * where values are normalized
  */
-export const calculatePriorityScore = (debts: DebtItem[], debt: DebtItem): number => {
+export const calculatePriorityScore = (
+  debts: DebtItem[],
+  debt: DebtItem,
+): number => {
   if (!debts.length) return 0;
-  
+
   // Extract values for normalization
-  const interestRates = debts.map(d => d.interestRate);
-  const minPayments = debts.map(d => d.minimumPayment || Math.max(d.remainingAmount * 0.01, 500));
-  const balances = debts.map(d => d.remainingAmount);
-  
+  const interestRates = debts.map((d) => d.interestRate);
+  const minPayments = debts.map(
+    (d) => d.minimumPayment || Math.max(d.remainingAmount * 0.01, 500),
+  );
+  const balances = debts.map((d) => d.remainingAmount);
+
   // Find min and max values for normalization
   const minInterest = Math.min(...interestRates);
   const maxInterest = Math.max(...interestRates);
@@ -211,23 +220,33 @@ export const calculatePriorityScore = (debts: DebtItem[], debt: DebtItem): numbe
   const maxPayment = Math.max(...minPayments);
   const minBalance = Math.min(...balances);
   const maxBalance = Math.max(...balances);
-  
+
   // Normalize values (prevent division by zero)
-  const normalizeInterest = maxInterest > minInterest ? 
-    (debt.interestRate - minInterest) / (maxInterest - minInterest) : 1;
-  
-  const normalizeMinPay = maxPayment > minPayment ? 
-    ((debt.minimumPayment || Math.max(debt.remainingAmount * 0.01, 500)) - minPayment) / (maxPayment - minPayment) : 1;
-  
-  const normalizeBalance = maxBalance > minBalance ? 
-    (debt.remainingAmount - minBalance) / (maxBalance - minBalance) : 1;
-  
+  const normalizeInterest =
+    maxInterest > minInterest
+      ? (debt.interestRate - minInterest) / (maxInterest - minInterest)
+      : 1;
+
+  const normalizeMinPay =
+    maxPayment > minPayment
+      ? ((debt.minimumPayment || Math.max(debt.remainingAmount * 0.01, 500)) -
+          minPayment) /
+        (maxPayment - minPayment)
+      : 1;
+
+  const normalizeBalance =
+    maxBalance > minBalance
+      ? (debt.remainingAmount - minBalance) / (maxBalance - minBalance)
+      : 1;
+
   // Check if debt is overdue (using paymentDueDay as a proxy - if it's in the past)
   // This is a simplified approach - in a real app, you'd have actual overdue status
   const currentDay = new Date().getDate();
-  const isOverdue = debt.paymentDueDay ? debt.paymentDueDay < currentDay : false;
+  const isOverdue = debt.paymentDueDay
+    ? debt.paymentDueDay < currentDay
+    : false;
   const overdueValue = isOverdue ? 1 : 0;
-  
+
   // Calculate priority score
   return (
     normalizeInterest * 0.4 +
@@ -315,16 +334,20 @@ export const calculateMonthsToDebtFree = (
       if (strategy === "Proportional") {
         // Proportional strategy: distribute extra payment proportionally based on balance
         const totalRemainingAmount = debtsCopy.reduce(
-          (sum: number, debt: DebtItem) => sum + debt.remainingAmount, 0
+          (sum: number, debt: DebtItem) => sum + debt.remainingAmount,
+          0,
         );
-        
+
         // Distribute extra payment proportionally
         for (let i = 0; i < debtsCopy.length; i++) {
           const debt = debtsCopy[i];
           const proportion = debt.remainingAmount / totalRemainingAmount;
           const proportionalPayment = extraPayment * proportion;
-          
-          debt.remainingAmount = Math.max(0, debt.remainingAmount - proportionalPayment);
+
+          debt.remainingAmount = Math.max(
+            0,
+            debt.remainingAmount - proportionalPayment,
+          );
         }
       } else {
         // Snowball, Avalanche, or PriorityScore: focus on first debt in sorted list

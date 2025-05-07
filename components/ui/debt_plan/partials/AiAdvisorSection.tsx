@@ -1,6 +1,7 @@
-import React from 'react';
-import { FiInfo, FiChevronUp, FiChevronDown } from 'react-icons/fi';
-import { formatNumber } from '../utils/debtPlanUtils';
+import React from "react";
+import { FiInfo, FiChevronUp, FiChevronDown } from "react-icons/fi";
+
+import { formatNumber } from "../utils/debtPlanUtils";
 
 interface AiAdvisorSectionProps {
   showAIRecommendation: boolean;
@@ -18,11 +19,11 @@ export default function AiAdvisorSection({
   return (
     <div className="mb-4">
       <button
-        type="button"
-        className="w-full flex items-center justify-between bg-blue-50 p-3 rounded-t-lg cursor-pointer"
-        onClick={() => setShowAIRecommendation(!showAIRecommendation)}
-        aria-expanded={showAIRecommendation}
         aria-controls="ai-recommendation-content"
+        aria-expanded={showAIRecommendation}
+        className="w-full flex items-center justify-between bg-blue-50 p-3 rounded-t-lg cursor-pointer"
+        type="button"
+        onClick={() => setShowAIRecommendation(!showAIRecommendation)}
       >
         <div className="flex items-center">
           <FiInfo className="text-blue-500 mr-2" />
@@ -33,18 +34,15 @@ export default function AiAdvisorSection({
 
       {showAIRecommendation && (
         <div
-          id="ai-recommendation-content"
           className="bg-blue-50 p-3 rounded-b-lg"
+          id="ai-recommendation-content"
         >
           <p className="text-sm">
-            จากการวิเคราะห์ข้อมูลหนี้ของคุณ
-            เราแนะนำให้เพิ่มยอดชำระต่อเดือนเป็น{" "}
+            จากการวิเคราะห์ข้อมูลหนี้ของคุณ เราแนะนำให้เพิ่มยอดชำระต่อเดือนเป็น{" "}
             {formatNumber(monthlyPayment * 1.2)} บาท
-            เพื่อลดระยะเวลาการชำระหนี้ลงเหลือ{" "}
-            {Math.round(timeInMonths * 0.8)} เดือน
-            และประหยัดดอกเบี้ยได้ถึง{" "}
-            {formatNumber(monthlyPayment * timeInMonths * 0.05 * 0.2)}{" "}
-            บาท
+            เพื่อลดระยะเวลาการชำระหนี้ลงเหลือ {Math.round(timeInMonths * 0.8)}{" "}
+            เดือน และประหยัดดอกเบี้ยได้ถึง{" "}
+            {formatNumber(monthlyPayment * timeInMonths * 0.05 * 0.2)} บาท
           </p>
           <p className="text-sm mt-2">
             หากคุณใช้กลยุทธ์ Snowball คุณควรชำระหนี้ตามลำดับต่อไปนี้:

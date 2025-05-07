@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { FiArrowLeft, FiArrowRight, FiInfo } from 'react-icons/fi';
-import { Line, Bar } from 'react-chartjs-2';
+import React, { useEffect, useState, useCallback } from "react";
+import { FiArrowLeft, FiArrowRight, FiInfo } from "react-icons/fi";
+import { Line, Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,9 +12,16 @@ import {
   Tooltip,
   Legend,
   Filler,
-} from 'chart.js';
-import { DEBT_TYPES, InterestCalculationMethod, calculateTimeToPayOffReducingBalance, calculateTimeToPayOffFixedInterest, calculateRemainingDebtReducingBalance, calculateRemainingDebtFixedInterest } from '../utils/debtPlanUtils';
-import { DebtItem } from '../../types';
+} from "chart.js";
+
+import {
+  DEBT_TYPES,
+  InterestCalculationMethod,
+  calculateTimeToPayOffReducingBalance,
+  calculateTimeToPayOffFixedInterest,
+  calculateRemainingDebtReducingBalance,
+} from "../utils/debtPlanUtils";
+import { DebtItem } from "../../types";
 
 // Register ChartJS components including Filler plugin
 ChartJS.register(
@@ -26,7 +33,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 // Define types for debt data
@@ -63,14 +70,18 @@ interface MainTabsProps {
   showAIRecommendation: boolean;
   setShowAIRecommendation: (show: boolean) => void;
   debtData?: DebtItem[];
-  onDebtTypeChange?: (debtTypeId: string, timeInMonths: number, interestAmount: number) => void;
+  onDebtTypeChange?: (
+    debtTypeId: string,
+    timeInMonths: number,
+    interestAmount: number,
+  ) => void;
 }
 
 // Sample data for debt plans by type
 const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
-  'total': {
-    id: 'total',
-    label: 'ยอดหนี้รวม',
+  total: {
+    id: "total",
+    label: "ยอดหนี้รวม",
     originalTotalAmount: 180000,
     newPlanTotalAmount: 150000,
     originalTimeInMonths: 24,
@@ -79,13 +90,13 @@ const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
     newPlanInterest: 12500,
     monthlyData: Array.from({ length: 24 }, (_, i) => ({
       month: i + 1,
-      originalAmount: Math.max(0, 180000 - (i * 7500)),
-      newPlanAmount: Math.max(0, 150000 - (i * 8500))
-    }))
+      originalAmount: Math.max(0, 180000 - i * 7500),
+      newPlanAmount: Math.max(0, 150000 - i * 8500),
+    })),
   },
-  'credit_card': {
-    id: 'credit_card',
-    label: 'บัตรเครดิต',
+  credit_card: {
+    id: "credit_card",
+    label: "บัตรเครดิต",
     originalTotalAmount: 80000,
     newPlanTotalAmount: 70000,
     originalTimeInMonths: 24,
@@ -94,13 +105,13 @@ const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
     newPlanInterest: 8500,
     monthlyData: Array.from({ length: 24 }, (_, i) => ({
       month: i + 1,
-      originalAmount: Math.max(0, 80000 - (i * 3500)),
-      newPlanAmount: Math.max(0, 70000 - (i * 4200))
-    }))
+      originalAmount: Math.max(0, 80000 - i * 3500),
+      newPlanAmount: Math.max(0, 70000 - i * 4200),
+    })),
   },
-  'personal_loan': {
-    id: 'personal_loan',
-    label: 'สินเชื่อส่วนบุคคล',
+  personal_loan: {
+    id: "personal_loan",
+    label: "สินเชื่อส่วนบุคคล",
     originalTotalAmount: 60000,
     newPlanTotalAmount: 50000,
     originalTimeInMonths: 24,
@@ -109,13 +120,13 @@ const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
     newPlanInterest: 4000,
     monthlyData: Array.from({ length: 24 }, (_, i) => ({
       month: i + 1,
-      originalAmount: Math.max(0, 60000 - (i * 2500)),
-      newPlanAmount: Math.max(0, 50000 - (i * 2800))
-    }))
+      originalAmount: Math.max(0, 60000 - i * 2500),
+      newPlanAmount: Math.max(0, 50000 - i * 2800),
+    })),
   },
-  'auto_loan': {
-    id: 'auto_loan',
-    label: 'สินเชื่อรถยนต์',
+  auto_loan: {
+    id: "auto_loan",
+    label: "สินเชื่อรถยนต์",
     originalTotalAmount: 40000,
     newPlanTotalAmount: 30000,
     originalTimeInMonths: 24,
@@ -124,13 +135,13 @@ const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
     newPlanInterest: 1200,
     monthlyData: Array.from({ length: 24 }, (_, i) => ({
       month: i + 1,
-      originalAmount: Math.max(0, 40000 - (i * 1800)),
-      newPlanAmount: Math.max(0, 30000 - (i * 1400))
-    }))
+      originalAmount: Math.max(0, 40000 - i * 1800),
+      newPlanAmount: Math.max(0, 30000 - i * 1400),
+    })),
   },
-  'mortgage': {
-    id: 'mortgage',
-    label: 'สินเชื่อบ้าน',
+  mortgage: {
+    id: "mortgage",
+    label: "สินเชื่อบ้าน",
     originalTotalAmount: 150000,
     newPlanTotalAmount: 130000,
     originalTimeInMonths: 36,
@@ -139,13 +150,13 @@ const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
     newPlanInterest: 11000,
     monthlyData: Array.from({ length: 36 }, (_, i) => ({
       month: i + 1,
-      originalAmount: Math.max(0, 150000 - (i * 4200)),
-      newPlanAmount: Math.max(0, 130000 - (i * 4100))
-    }))
+      originalAmount: Math.max(0, 150000 - i * 4200),
+      newPlanAmount: Math.max(0, 130000 - i * 4100),
+    })),
   },
-  'education_loan': {
-    id: 'education_loan',
-    label: 'สินเชื่อการศึกษา',
+  education_loan: {
+    id: "education_loan",
+    label: "สินเชื่อการศึกษา",
     originalTotalAmount: 25000,
     newPlanTotalAmount: 22000,
     originalTimeInMonths: 20,
@@ -154,13 +165,13 @@ const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
     newPlanInterest: 1000,
     monthlyData: Array.from({ length: 20 }, (_, i) => ({
       month: i + 1,
-      originalAmount: Math.max(0, 25000 - (i * 1300)),
-      newPlanAmount: Math.max(0, 22000 - (i * 1250))
-    }))
+      originalAmount: Math.max(0, 25000 - i * 1300),
+      newPlanAmount: Math.max(0, 22000 - i * 1250),
+    })),
   },
-  'other': {
-    id: 'other',
-    label: 'หนี้อื่นๆ',
+  other: {
+    id: "other",
+    label: "หนี้อื่นๆ",
     originalTotalAmount: 15000,
     newPlanTotalAmount: 12000,
     originalTimeInMonths: 12,
@@ -169,10 +180,10 @@ const SAMPLE_DEBT_DATA: Record<string, DebtPlanData> = {
     newPlanInterest: 500,
     monthlyData: Array.from({ length: 12 }, (_, i) => ({
       month: i + 1,
-      originalAmount: Math.max(0, 15000 - (i * 1300)),
-      newPlanAmount: Math.max(0, 12000 - (i * 1250))
-    }))
-  }
+      originalAmount: Math.max(0, 15000 - i * 1300),
+      newPlanAmount: Math.max(0, 12000 - i * 1250),
+    })),
+  },
 };
 
 export default function MainTabs({
@@ -187,11 +198,15 @@ export default function MainTabs({
   showAIRecommendation,
   setShowAIRecommendation,
   debtData,
-  onDebtTypeChange
+  onDebtTypeChange,
 }: MainTabsProps) {
   const currentDebtType = DEBT_TYPES[currentDebtTypeIndex];
-  const [syncedDebtData, setSyncedDebtData] = useState<Record<string, DebtPlanData>>(SAMPLE_DEBT_DATA);
-  const [calculationMethod, setCalculationMethod] = useState<InterestCalculationMethod>(InterestCalculationMethod.REDUCING_BALANCE);
+  const [syncedDebtData, setSyncedDebtData] =
+    useState<Record<string, DebtPlanData>>(SAMPLE_DEBT_DATA);
+  const [calculationMethod, setCalculationMethod] =
+    useState<InterestCalculationMethod>(
+      InterestCalculationMethod.REDUCING_BALANCE,
+    );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -200,23 +215,24 @@ export default function MainTabs({
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch('/api/debts');
-      
+
+      const response = await fetch("/api/debts");
+
       if (!response.ok) {
-        throw new Error('Failed to fetch debt data');
+        throw new Error("Failed to fetch debt data");
       }
-      
+
       const data: DebtApiResponse = await response.json();
-      
+
       if (data && data.debts) {
         // Process the debt data and update the state
         const processedData = processDebtData(data.debts);
+
         setSyncedDebtData(processedData);
       }
     } catch (err) {
-      console.error('Error fetching debt data:', err);
-      setError('Failed to fetch debt data. Using sample data instead.');
+      console.error("Error fetching debt data:", err);
+      setError("Failed to fetch debt data. Using sample data instead.");
       // Keep using sample data if there's an error
     } finally {
       setIsLoading(false);
@@ -230,122 +246,155 @@ export default function MainTabs({
     }
 
     const result: Record<string, DebtPlanData> = {};
-    
+
     // Group debts by type
     const debtsByType: Record<string, DebtItem[]> = {};
-    
+
     // Initialize with total
-    debtsByType['total'] = [...debts];
-    
+    debtsByType["total"] = [...debts];
+
     // Group by debt type
-    debts.forEach(debt => {
-      const debtTypeId = DEBT_TYPES.find(type => 
-        type.label === debt.debtType || 
-        (type.id === 'credit_card' && debt.debtType === 'บัตรเครดิต') ||
-        (type.id === 'personal' && debt.debtType === 'สินเชื่อส่วนบุคคล') ||
-        (type.id === 'car' && debt.debtType === 'สินเชื่อรถยนต์') ||
-        (type.id === 'home' && debt.debtType === 'สินเชื่อบ้าน')
-      )?.id || 'other';
-      
+    debts.forEach((debt) => {
+      const debtTypeId =
+        DEBT_TYPES.find(
+          (type) =>
+            type.label === debt.debtType ||
+            (type.id === "credit_card" && debt.debtType === "บัตรเครดิต") ||
+            (type.id === "personal" && debt.debtType === "สินเชื่อส่วนบุคคล") ||
+            (type.id === "car" && debt.debtType === "สินเชื่อรถยนต์") ||
+            (type.id === "home" && debt.debtType === "สินเชื่อบ้าน"),
+        )?.id || "other";
+
       if (!debtsByType[debtTypeId]) {
         debtsByType[debtTypeId] = [];
       }
-      
+
       debtsByType[debtTypeId].push(debt);
     });
-    
+
     // Calculate data for each debt type
     Object.entries(debtsByType).forEach(([debtTypeId, typeDebts]) => {
       // Skip if no debts for this type
       if (typeDebts.length === 0) return;
-      
+
       // Find the corresponding debt type label
-      const debtTypeLabel = DEBT_TYPES.find(type => type.id === debtTypeId)?.label || 'อื่นๆ';
-      
+      const debtTypeLabel =
+        DEBT_TYPES.find((type) => type.id === debtTypeId)?.label || "อื่นๆ";
+
       // Calculate totals
-      const totalRemainingAmount = typeDebts.reduce((sum, debt) => sum + debt.remainingAmount, 0);
-      const avgInterestRate = typeDebts.reduce((sum, debt) => sum + debt.interestRate, 0) / typeDebts.length;
-      
+      const totalRemainingAmount = typeDebts.reduce(
+        (sum, debt) => sum + debt.remainingAmount,
+        0,
+      );
+      const avgInterestRate =
+        typeDebts.reduce((sum, debt) => sum + debt.interestRate, 0) /
+        typeDebts.length;
+
       // Calculate minimum payment (use existing or 3% of balance)
       const minMonthlyPayment = typeDebts.reduce((sum, debt) => {
-        return sum + (debt.minimumPayment || Math.max(debt.remainingAmount * 0.03, 500));
+        return (
+          sum +
+          (debt.minimumPayment || Math.max(debt.remainingAmount * 0.03, 500))
+        );
       }, 0);
-      
+
       // Calculate recommended payment (20% higher than minimum)
       const recommendedMonthlyPayment = minMonthlyPayment * 1.2;
-      
+
       // Calculate time to pay off for both payment plans based on the selected calculation method
       let originalTimeInMonths, newPlanTimeInMonths;
-      
+
       if (calculationMethod === InterestCalculationMethod.REDUCING_BALANCE) {
         originalTimeInMonths = calculateTimeToPayOffReducingBalance(
-          totalRemainingAmount, avgInterestRate, minMonthlyPayment
+          totalRemainingAmount,
+          avgInterestRate,
+          minMonthlyPayment,
         );
         newPlanTimeInMonths = calculateTimeToPayOffReducingBalance(
-          totalRemainingAmount, avgInterestRate, recommendedMonthlyPayment
+          totalRemainingAmount,
+          avgInterestRate,
+          recommendedMonthlyPayment,
         );
       } else {
         originalTimeInMonths = calculateTimeToPayOffFixedInterest(
-          totalRemainingAmount, avgInterestRate, minMonthlyPayment
+          totalRemainingAmount,
+          avgInterestRate,
+          minMonthlyPayment,
         );
         newPlanTimeInMonths = calculateTimeToPayOffFixedInterest(
-          totalRemainingAmount, avgInterestRate, recommendedMonthlyPayment
+          totalRemainingAmount,
+          avgInterestRate,
+          recommendedMonthlyPayment,
         );
       }
-      
+
       // Cap at reasonable values
       originalTimeInMonths = Math.min(originalTimeInMonths, 120); // Max 10 years
       newPlanTimeInMonths = Math.min(newPlanTimeInMonths, 120); // Max 10 years
-      
+
       // Calculate total interest paid
-      const originalInterest = (minMonthlyPayment * originalTimeInMonths) - totalRemainingAmount;
-      const newPlanInterest = (recommendedMonthlyPayment * newPlanTimeInMonths) - totalRemainingAmount;
-      
+      const originalInterest =
+        minMonthlyPayment * originalTimeInMonths - totalRemainingAmount;
+      const newPlanInterest =
+        recommendedMonthlyPayment * newPlanTimeInMonths - totalRemainingAmount;
+
       // Generate monthly data for charts
       const maxMonths = Math.max(originalTimeInMonths, newPlanTimeInMonths);
       const monthlyData = Array.from({ length: maxMonths }, (_, i) => {
         const month = i + 1;
         let originalAmount = 0;
         let newPlanAmount = 0;
-        
+
         // Calculate remaining balance for each month
         if (month <= originalTimeInMonths) {
-          if (calculationMethod === InterestCalculationMethod.REDUCING_BALANCE) {
+          if (
+            calculationMethod === InterestCalculationMethod.REDUCING_BALANCE
+          ) {
             // For reducing balance, calculate remaining principal
             const remainingMonths = originalTimeInMonths - month;
+
             originalAmount = calculateRemainingDebtReducingBalance(
-              minMonthlyPayment, avgInterestRate, remainingMonths
+              minMonthlyPayment,
+              avgInterestRate,
+              remainingMonths,
             );
           } else {
             // For fixed interest, calculate linearly
-            originalAmount = totalRemainingAmount * (1 - month / originalTimeInMonths);
+            originalAmount =
+              totalRemainingAmount * (1 - month / originalTimeInMonths);
           }
         }
-        
+
         if (month <= newPlanTimeInMonths) {
-          if (calculationMethod === InterestCalculationMethod.REDUCING_BALANCE) {
+          if (
+            calculationMethod === InterestCalculationMethod.REDUCING_BALANCE
+          ) {
             // For reducing balance, calculate remaining principal
             const remainingMonths = newPlanTimeInMonths - month;
+
             newPlanAmount = calculateRemainingDebtReducingBalance(
-              recommendedMonthlyPayment, avgInterestRate, remainingMonths
+              recommendedMonthlyPayment,
+              avgInterestRate,
+              remainingMonths,
             );
           } else {
             // For fixed interest, calculate linearly
-            newPlanAmount = totalRemainingAmount * (1 - month / newPlanTimeInMonths);
+            newPlanAmount =
+              totalRemainingAmount * (1 - month / newPlanTimeInMonths);
           }
         }
-        
+
         // Ensure non-negative values
         originalAmount = Math.max(0, originalAmount);
         newPlanAmount = Math.max(0, newPlanAmount);
-        
+
         return {
           month,
           originalAmount,
-          newPlanAmount
+          newPlanAmount,
         };
       });
-      
+
       // Create the debt plan data
       result[debtTypeId] = {
         id: debtTypeId,
@@ -356,52 +405,52 @@ export default function MainTabs({
         newPlanTimeInMonths,
         originalInterest,
         newPlanInterest,
-        monthlyData
+        monthlyData,
       };
     });
-    
+
     // If no data was processed, return sample data
     return Object.keys(result).length > 0 ? result : SAMPLE_DEBT_DATA;
   };
 
   // Generate chart data based on the actual debt data
   const generateRealChartData = (debtTypeId: string) => {
-    const data = syncedDebtData[debtTypeId] || syncedDebtData['total'];
-    
+    const data = syncedDebtData[debtTypeId] || syncedDebtData["total"];
+
     // Ensure both plans start from the same initial value
     const monthlyData = [...data.monthlyData];
-    
+
     // If there's data, set the first month values to be the same
     if (monthlyData.length > 0) {
       // Use the total remaining amount as the starting point for both plans
       const startingAmount = data.originalTotalAmount;
-      
+
       // Set the first month to have the same value for both plans
       if (monthlyData[0]) {
         monthlyData[0] = {
           ...monthlyData[0],
           originalAmount: startingAmount,
-          newPlanAmount: startingAmount
+          newPlanAmount: startingAmount,
         };
       }
     }
 
     return {
-      labels: monthlyData.map(item => item.month.toString()),
+      labels: monthlyData.map((item) => item.month.toString()),
       datasets: [
         {
-          label: 'แผนเดิม',
-          data: monthlyData.map(item => item.originalAmount),
-          borderColor: '#F59E0B',
-          backgroundColor: 'rgba(245, 158, 11, 0.2)',
+          label: "แผนเดิม",
+          data: monthlyData.map((item) => item.originalAmount),
+          borderColor: "#F59E0B",
+          backgroundColor: "rgba(245, 158, 11, 0.2)",
           fill: true,
           tension: 0.4,
         },
         {
-          label: 'แผนใหม่',
-          data: monthlyData.map(item => item.newPlanAmount),
-          borderColor: '#3B82F6',
-          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          label: "แผนใหม่",
+          data: monthlyData.map((item) => item.newPlanAmount),
+          borderColor: "#3B82F6",
+          backgroundColor: "rgba(59, 130, 246, 0.2)",
           fill: true,
           tension: 0.4,
         },
@@ -412,59 +461,72 @@ export default function MainTabs({
   // Generate bar chart data for debt by type
   const generateBarChartData = () => {
     // Get each debt type except 'total'
-    const debtTypes = Object.values(syncedDebtData).filter(debt => debt.id !== 'total');
+    const debtTypes = Object.values(syncedDebtData).filter(
+      (debt) => debt.id !== "total",
+    );
 
     // Calculate the total debt values based on the selected calculation method
-    const calculateTotalDebt = (debt: DebtPlanData, isOriginalPlan: boolean) => {
+    const calculateTotalDebt = (
+      debt: DebtPlanData,
+      isOriginalPlan: boolean,
+    ) => {
       // Get the principal amount (same for both plans)
       const principal = debt.originalTotalAmount;
-      
+
       // Get the monthly interest rate (in decimal form)
-      const monthlyInterestRate = debt.originalInterest / (debt.originalTotalAmount * 12);
-      
+      const monthlyInterestRate =
+        debt.originalInterest / (debt.originalTotalAmount * 12);
+
       // Get the monthly payment amount based on plan
-      const monthlyPayment = isOriginalPlan 
-        ? principal / debt.originalTimeInMonths + (principal * monthlyInterestRate)
-        : principal / debt.newPlanTimeInMonths + (principal * monthlyInterestRate * 0.8); // New plan has lower interest
-      
+      const monthlyPayment = isOriginalPlan
+        ? principal / debt.originalTimeInMonths +
+          principal * monthlyInterestRate
+        : principal / debt.newPlanTimeInMonths +
+          principal * monthlyInterestRate * 0.8; // New plan has lower interest
+
       // Get the term in months
-      const termMonths = isOriginalPlan ? debt.originalTimeInMonths : debt.newPlanTimeInMonths;
-      
+      const termMonths = isOriginalPlan
+        ? debt.originalTimeInMonths
+        : debt.newPlanTimeInMonths;
+
       let totalDebt;
-      
+
       if (calculationMethod === InterestCalculationMethod.REDUCING_BALANCE) {
         // Formula for reducing balance: D0 = P×r/(1−(1+r)^−n)
         // Where D0 is monthly payment, P is principal, r is interest rate, n is term
         // We need to calculate total debt = monthly payment * term
-        
+
         // For demonstration, we'll use a simplified calculation
         const r = monthlyInterestRate;
         const n = termMonths;
-        const calculatedMonthlyPayment = (principal * r) / (1 - Math.pow(1 + r, -n));
+        const calculatedMonthlyPayment =
+          (principal * r) / (1 - Math.pow(1 + r, -n));
+
         totalDebt = calculatedMonthlyPayment * n;
       } else {
         // Formula for fixed interest: D0 = P * T/(1+(r * T))
         // Where D0 is total debt, P is principal, r is interest rate, T is term
         const r = monthlyInterestRate;
         const T = termMonths;
-        totalDebt = principal * (1 + (r * T));
+
+        totalDebt = principal * (1 + r * T);
       }
-      
+
       return totalDebt;
     };
 
     return {
-      labels: debtTypes.map(debt => debt.label),
+      labels: debtTypes.map((debt) => debt.label),
       datasets: [
         {
-          label: 'แผนเดิม',
-          data: debtTypes.map(debt => calculateTotalDebt(debt, true)),
-          backgroundColor: '#F59E0B',
+          label: "แผนเดิม",
+          data: debtTypes.map((debt) => calculateTotalDebt(debt, true)),
+          backgroundColor: "#F59E0B",
         },
         {
-          label: 'แผนใหม่',
-          data: debtTypes.map(debt => calculateTotalDebt(debt, false)),
-          backgroundColor: '#3B82F6',
+          label: "แผนใหม่",
+          data: debtTypes.map((debt) => calculateTotalDebt(debt, false)),
+          backgroundColor: "#3B82F6",
         },
       ],
     };
@@ -477,21 +539,28 @@ export default function MainTabs({
 
   // Notify parent component when debt type changes
   useEffect(() => {
-    const currentData = syncedDebtData[currentDebtType.id] || syncedDebtData['total'];
+    const currentData =
+      syncedDebtData[currentDebtType.id] || syncedDebtData["total"];
 
     if (onDebtTypeChange) {
       onDebtTypeChange(
         currentDebtType.id,
         currentData.newPlanTimeInMonths,
-        currentData.newPlanInterest
+        currentData.newPlanInterest,
       );
     }
-  }, [currentDebtTypeIndex, syncedDebtData, currentDebtType.id, onDebtTypeChange]);
-  
+  }, [
+    currentDebtTypeIndex,
+    syncedDebtData,
+    currentDebtType.id,
+    onDebtTypeChange,
+  ]);
+
   // Update debt calculations when calculation method changes
   useEffect(() => {
     if (debtData && debtData.length > 0) {
       const processedData = processDebtData(debtData);
+
       setSyncedDebtData(processedData);
     }
   }, [calculationMethod, debtData]);
@@ -533,9 +602,7 @@ export default function MainTabs({
           <FiArrowLeft />
         </button>
 
-        <h3 className="text-center font-medium">
-          {currentDebtType.label}
-        </h3>
+        <h3 className="text-center font-medium">{currentDebtType.label}</h3>
 
         <button
           aria-label="ประเภทหนี้ถัดไป"
@@ -548,27 +615,37 @@ export default function MainTabs({
 
       {/* Calculation Method Selector */}
       <div className="mb-4">
-        <div className="block text-sm font-medium text-gray-700 mb-1">วิธีคำนวณดอกเบี้ย</div>
+        <div className="block text-sm font-medium text-gray-700 mb-1">
+          วิธีคำนวณดอกเบี้ย
+        </div>
         <div className="flex gap-4">
           <label className="inline-flex items-center">
             <input
-              type="radio"
+              checked={
+                calculationMethod === InterestCalculationMethod.REDUCING_BALANCE
+              }
               className="form-radio text-blue-600"
               name="calculationMethod"
+              type="radio"
               value={InterestCalculationMethod.REDUCING_BALANCE}
-              checked={calculationMethod === InterestCalculationMethod.REDUCING_BALANCE}
-              onChange={() => setCalculationMethod(InterestCalculationMethod.REDUCING_BALANCE)}
+              onChange={() =>
+                setCalculationMethod(InterestCalculationMethod.REDUCING_BALANCE)
+              }
             />
             <span className="ml-2">ลดต้นลดดอก</span>
           </label>
           <label className="inline-flex items-center">
             <input
-              type="radio"
+              checked={
+                calculationMethod === InterestCalculationMethod.FIXED_INTEREST
+              }
               className="form-radio text-blue-600"
               name="calculationMethod"
+              type="radio"
               value={InterestCalculationMethod.FIXED_INTEREST}
-              checked={calculationMethod === InterestCalculationMethod.FIXED_INTEREST}
-              onChange={() => setCalculationMethod(InterestCalculationMethod.FIXED_INTEREST)}
+              onChange={() =>
+                setCalculationMethod(InterestCalculationMethod.FIXED_INTEREST)
+              }
             />
             <span className="ml-2">คงที่</span>
           </label>
@@ -583,9 +660,7 @@ export default function MainTabs({
             <button
               aria-label="Toggle AI recommendation"
               className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
-              onClick={() =>
-                setShowAIRecommendation(!showAIRecommendation)
-              }
+              onClick={() => setShowAIRecommendation(!showAIRecommendation)}
             >
               <FiInfo size={14} />
             </button>
@@ -593,7 +668,7 @@ export default function MainTabs({
         </div>
         {isLoading ? (
           <div className="h-64 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
           </div>
         ) : error ? (
           <div className="h-64 flex items-center justify-center text-red-500">
@@ -602,66 +677,66 @@ export default function MainTabs({
         ) : (
           <div className="h-64 border border-gray-200 rounded-lg p-2">
             {activeTab === "ยอดหนี้รวม" ? (
-            <Line
-              data={generateRealChartData(currentDebtType.id)}
-              options={{
-                ...chartOptions,
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: "ยอดหนี้ (บาท)",
+              <Line
+                data={generateRealChartData(currentDebtType.id)}
+                options={{
+                  ...chartOptions,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: "ยอดหนี้ (บาท)",
+                      },
+                      ticks: {
+                        callback: function (value: string | number) {
+                          return typeof value === "number"
+                            ? value.toLocaleString("th-TH")
+                            : value;
+                        },
+                      },
                     },
-                    ticks: {
-                      callback: function (value: string | number) {
-                        return typeof value === "number"
-                          ? value.toLocaleString("th-TH")
-                          : value;
+                    x: {
+                      title: {
+                        display: true,
+                        text: "เดือน",
                       },
                     },
                   },
-                  x: {
-                    title: {
-                      display: true,
-                      text: "เดือน",
+                }}
+              />
+            ) : (
+              <Bar
+                data={generateBarChartData()}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: "ยอดหนี้ (บาท)",
+                      },
+                      ticks: {
+                        callback: function (value: string | number) {
+                          return typeof value === "number"
+                            ? value.toLocaleString("th-TH")
+                            : value;
+                        },
+                      },
                     },
-                  },
-                },
-              }}
-            />
-          ) : (
-            <Bar
-              data={generateBarChartData()}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: {
-                      display: true,
-                      text: "ยอดหนี้ (บาท)",
-                    },
-                    ticks: {
-                      callback: function (value: string | number) {
-                        return typeof value === "number"
-                          ? value.toLocaleString("th-TH")
-                          : value;
+                    x: {
+                      title: {
+                        display: true,
+                        text: "ประเภทหนี้",
                       },
                     },
                   },
-                  x: {
-                    title: {
-                      display: true,
-                      text: "ประเภทหนี้",
-                    },
-                  },
-                },
-                plugins: chartOptions.plugins,
-              }}
-            />
-          )}
+                  plugins: chartOptions.plugins,
+                }}
+              />
+            )}
           </div>
         )}
       </div>
@@ -671,18 +746,18 @@ export default function MainTabs({
         {DEBT_TYPES.map((type, index) => (
           <div
             key={type.id}
+            aria-label={`Select ${type.label} debt type`}
             className={`w-2 h-2 rounded-full ${index === currentDebtTypeIndex ? "bg-blue-500" : "bg-gray-300"}`}
             role="button"
+            style={{ cursor: "pointer" }}
             tabIndex={0}
             onClick={() => setCurrentDebtTypeIndex(index)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 setCurrentDebtTypeIndex(index);
               }
             }}
-            style={{ cursor: 'pointer' }}
-            aria-label={`Select ${type.label} debt type`}
           />
         ))}
       </div>

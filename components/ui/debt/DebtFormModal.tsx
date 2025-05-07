@@ -12,10 +12,9 @@ import {
 } from "@heroui/modal";
 import { FiSave } from "react-icons/fi";
 
-import { fileToBase64, parseOcrText } from "./utils";
-
 import { useCustomToast } from "../ToastNotification";
 
+import { fileToBase64, parseOcrText } from "./utils";
 import DebtFileUpload from "./DebtFileUpload";
 import { DebtFormData, FileData, DebtFormModalProps } from "./types";
 
@@ -195,7 +194,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
   // Helper function to convert a PDF page to an image
   const pdfPageToImage = async (
     pdfDoc: PDFDocumentProxy,
-    pageNumber: number
+    pageNumber: number,
   ): Promise<File> => {
     // Load the PDF page
     const page = await pdfDoc.getPage(pageNumber);
@@ -204,6 +203,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
     // Create a canvas to render the PDF page
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
+
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
@@ -218,11 +218,13 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
       canvas.toBlob((blob) => {
         if (!blob) {
           reject(new Error("Failed to convert PDF page to image"));
+
           return;
         }
         const file = new File([blob], `page-${pageNumber}.png`, {
           type: "image/png",
         });
+
         resolve(file);
       }, "image/png");
     });
@@ -235,7 +237,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
       let pdfjs: any;
 
       // Only run this code in the browser
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         // Using a try-catch to handle potential import failures
         try {
           // Dynamic import with type assertion
@@ -244,7 +246,9 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
           throw new Error("Failed to load PDF processing library");
         }
       } else {
-        throw new Error("PDF processing is only available in browser environment");
+        throw new Error(
+          "PDF processing is only available in browser environment",
+        );
       }
 
       // Load the PDF file
@@ -260,14 +264,16 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
           "เกินขีดจำกัดหน้า",
           `ไฟล์ PDF มี ${pdfDoc.numPages} หน้า แต่ระบบจะประมวลผลเพียง ${MAX_PAGES} หน้าแรกเท่านั้น`,
           "solid",
-          "warning"
+          "warning",
         );
       }
 
       // Convert each page to an image
       const pageFiles: File[] = [];
+
       for (let i = 1; i <= numPages; i++) {
         const pageFile = await pdfPageToImage(pdfDoc, i);
+
         pageFiles.push(pageFile);
       }
 
@@ -299,8 +305,9 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
             "ไฟล์ไม่ถูกต้อง",
             `ไฟล์ ${file.name} ไม่ใช่ไฟล์รูปภาพหรือ PDF`,
             "solid",
-            "warning"
+            "warning",
           );
+
           return false;
         }
 
@@ -309,8 +316,9 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
             "ไฟล์ขนาดใหญ่เกินไป",
             `ไฟล์ ${file.name} มีขนาดใหญ่เกิน 10MB`,
             "solid",
-            "warning"
+            "warning",
           );
+
           return false;
         }
 
@@ -319,6 +327,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
 
       if (validFiles.length === 0) {
         setIsUploading(false);
+
         return;
       }
 
@@ -332,6 +341,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
             const pageFiles = await processPdfFile(file);
             const pdfPages = pageFiles.map((pageFile, index) => {
               const url = URL.createObjectURL(pageFile);
+
               return {
                 url,
                 name: `${file.name.replace(".pdf", "")}_page${index + 1}.png`,
@@ -346,6 +356,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                 totalPages: pageFiles.length,
               };
             });
+
             processedFiles = [...processedFiles, ...pdfPages];
           } catch (error) {
             console.error("Error processing PDF file:", error);
@@ -353,12 +364,13 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
               "เกิดข้อผิดพลาด",
               `ไม่สามารถประมวลผลไฟล์ PDF: ${file.name}`,
               "solid",
-              "danger"
+              "danger",
             );
           }
         } else {
           // Normal image file
           const url = URL.createObjectURL(file);
+
           processedFiles.push({
             url,
             name: file.name,
@@ -384,7 +396,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         "อัพโหลดสำเร็จ",
         `อัพโหลดและประมวลผลไฟล์สำเร็จ ${processedFiles.length} หน้า`,
         "solid",
-        "success"
+        "success",
       );
     } catch (error) {
       console.error("File upload error:", error);
@@ -392,7 +404,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         "เกิดข้อผิดพลาด",
         "ไม่สามารถอัพโหลดไฟล์ได้",
         "solid",
-        "danger"
+        "danger",
       );
     } finally {
       setIsUploading(false);
@@ -423,11 +435,11 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         files.map((f) =>
           f.name === file.name
             ? {
-              ...f,
-              isProcessing: false,
-              isOcrProcessed: true,
-              ocrData,
-            }
+                ...f,
+                isProcessing: false,
+                isOcrProcessed: true,
+                ocrData,
+              }
             : f,
         );
 

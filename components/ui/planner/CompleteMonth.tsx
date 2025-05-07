@@ -13,7 +13,9 @@ interface CompletedPayment {
 
 export default function CompleteMonth() {
   const { data: session } = useSession();
-  const [completedPayments, setCompletedPayments] = useState<CompletedPayment[]>([]);
+  const [completedPayments, setCompletedPayments] = useState<
+    CompletedPayment[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalCompleted, setTotalCompleted] = useState(0);
@@ -43,30 +45,35 @@ export default function CompleteMonth() {
     const fetchCompletedPayments = async () => {
       if (!session) {
         setIsLoading(false);
+
         return;
       }
-      
+
       try {
         setIsLoading(true);
         setError(null);
 
         // Fetch payments from the API
         const response = await fetch("/api/payments");
+
         if (!response.ok) {
           throw new Error(`Error fetching payments: ${response.status}`);
         }
-        
+
         const { payments } = await response.json();
-        
+
         // Filter payments for the current month
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth();
         const currentYear = currentDate.getFullYear();
-        
+
         const currentMonthPayments = payments.filter((payment: any) => {
           const paymentDate = new Date(payment.paymentDate);
-          return paymentDate.getMonth() === currentMonth && 
-                 paymentDate.getFullYear() === currentYear;
+
+          return (
+            paymentDate.getMonth() === currentMonth &&
+            paymentDate.getFullYear() === currentYear
+          );
         });
 
         // We need to get debt names for each payment
@@ -79,6 +86,7 @@ export default function CompleteMonth() {
           // Create a map of debt ID to debt name
           debtsMap = debts.reduce((map: any, debt: any) => {
             map[debt._id] = debt.name;
+
             return map;
           }, {});
         }
@@ -91,10 +99,12 @@ export default function CompleteMonth() {
           paymentDate: payment.paymentDate,
           paymentType: payment.paymentType,
         }));
-        
+
         // Sort by payment date (newest first)
-        formattedPayments.sort((a: CompletedPayment, b: CompletedPayment) => 
-          new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+        formattedPayments.sort(
+          (a: CompletedPayment, b: CompletedPayment) =>
+            new Date(b.paymentDate).getTime() -
+            new Date(a.paymentDate).getTime(),
         );
 
         // Calculate total completed amount
@@ -122,21 +132,21 @@ export default function CompleteMonth() {
     return (
       <div className="p-4">
         <div className="flex justify-center items-center py-12">
-          <Spinner size="lg" color="primary" />
+          <Spinner color="primary" size="lg" />
           <span className="ml-2 text-gray-600">กำลังโหลดข้อมูล...</span>
         </div>
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="p-4">
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
           <p className="text-red-600">{error}</p>
-          <button 
-            onClick={() => setRefreshTrigger(prev => prev + 1)} 
+          <button
             className="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium"
+            onClick={() => setRefreshTrigger((prev) => prev + 1)}
           >
             ลองใหม่
           </button>
@@ -144,12 +154,14 @@ export default function CompleteMonth() {
       </div>
     );
   }
-  
+
   if (!session) {
     return (
       <div className="p-4">
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
-          <p className="text-yellow-700">กรุณาเข้าสู่ระบบเพื่อดูข้อมูลหนี้ของคุณ</p>
+          <p className="text-yellow-700">
+            กรุณาเข้าสู่ระบบเพื่อดูข้อมูลหนี้ของคุณ
+          </p>
         </div>
       </div>
     );
@@ -158,8 +170,18 @@ export default function CompleteMonth() {
   // Calculate the current month and year for display
   const currentDate = new Date();
   const thaiMonthNames = [
-    "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", 
-    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    "มกราคม",
+    "กุมภาพันธ์",
+    "มีนาคม",
+    "เมษายน",
+    "พฤษภาคม",
+    "มิถุนายน",
+    "กรกฎาคม",
+    "สิงหาคม",
+    "กันยายน",
+    "ตุลาคม",
+    "พฤศจิกายน",
+    "ธันวาคม",
   ];
   const currentMonth = thaiMonthNames[currentDate.getMonth()];
   const currentYear = currentDate.getFullYear() + 543; // Convert to Buddhist Era
@@ -193,7 +215,9 @@ export default function CompleteMonth() {
             <FiCalendar className="text-blue-500 text-2xl" />
           </div>
           <p className="text-blue-700">ไม่พบรายการที่ชำระแล้วในเดือนนี้</p>
-          <p className="text-sm text-blue-600 mt-1">คุณยังไม่ได้ชำระหนี้ใดๆ ในเดือนนี้</p>
+          <p className="text-sm text-blue-600 mt-1">
+            คุณยังไม่ได้ชำระหนี้ใดๆ ในเดือนนี้
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -213,8 +237,8 @@ export default function CompleteMonth() {
                       {payment.paymentType === "minimum"
                         ? "ยอดขั้นต่ำ"
                         : payment.paymentType === "extra"
-                        ? "ยอดพิเศษ"
-                        : "ยอดปกติ"}
+                          ? "ยอดพิเศษ"
+                          : "ยอดปกติ"}
                     </span>
                   </div>
                 </div>

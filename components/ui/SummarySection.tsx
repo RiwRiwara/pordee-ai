@@ -1,5 +1,4 @@
 import React from "react";
-import { Button } from "@heroui/button";
 
 interface SummarySectionProps {
   totalDebts: number;
@@ -17,9 +16,7 @@ export default function SummarySection({
   return (
     <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
       {/* Planning Button */}
-      <div
-        className="w-full mb-4 py-3 text-white flex items-center justify-center bg-primary rounded-t-lg"
-      >
+      <div className="w-full mb-4 py-3 text-white flex items-center justify-center bg-primary rounded-t-lg">
         <svg
           className="w-5 h-5 mr-2"
           fill="none"

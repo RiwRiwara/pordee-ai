@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { formatNumber } from '../utils/debtPlanUtils';
+import React, { useEffect } from "react";
+
+import { formatNumber } from "../utils/debtPlanUtils";
 
 interface AdjustPlanScrollRangeProps {
   sliderValue: number;
@@ -18,7 +19,7 @@ export default function AdjustPlanScrollRange({
   setGoalSliderValue,
   originalMonthlyPayment,
   onValueChange,
-  onResetPlan
+  onResetPlan,
 }: AdjustPlanScrollRangeProps) {
   // Calculate slider ranges
   const minPayment = Math.max(1000, originalMonthlyPayment * 0.5);
@@ -26,14 +27,18 @@ export default function AdjustPlanScrollRange({
   const step = Math.max(100, Math.floor(originalMonthlyPayment * 0.05)); // 5% increments
 
   // Handle payment slider change
-  const handlePaymentSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePaymentSliderChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const newValue = Number(e.target.value);
+
     setSliderValue(newValue);
   };
 
   // Handle goal slider change
   const handleGoalSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value);
+
     setGoalSliderValue(newValue);
   };
 
@@ -46,18 +51,16 @@ export default function AdjustPlanScrollRange({
 
   // Get goal label based on slider value
   const getGoalLabel = () => {
-    if (goalSliderValue < 33) return 'เห็นผลเร็ว';
-    if (goalSliderValue < 66) return 'สมดุล';
-    return 'ประหยัดดอกเบี้ย';
+    if (goalSliderValue < 33) return "เห็นผลเร็ว";
+    if (goalSliderValue < 66) return "สมดุล";
+
+    return "ประหยัดดอกเบี้ย";
   };
 
   return (
     <div className="bg-gray-100 p-4 rounded-lg mb-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-medium">
-          ปรับแต่งแผนด้วยตัวคุณเอง
-        </h3>
-
+        <h3 className="font-medium">ปรับแต่งแผนด้วยตัวคุณเอง</h3>
       </div>
 
       {/* Payment Amount Slider */}
@@ -80,13 +83,13 @@ export default function AdjustPlanScrollRange({
             max={maxPayment}
             min={minPayment}
             step={step}
+            style={{
+              // Custom styling for better appearance
+              background: `linear-gradient(to right, #3C7DD1 0%, #3C7DD1 ${((sliderValue - minPayment) / (maxPayment - minPayment)) * 100}%, #e5e7eb ${((sliderValue - minPayment) / (maxPayment - minPayment)) * 100}%, #e5e7eb 100%)`,
+            }}
             type="range"
             value={sliderValue}
             onChange={handlePaymentSliderChange}
-            style={{
-              // Custom styling for better appearance
-              background: `linear-gradient(to right, #3C7DD1 0%, #3C7DD1 ${((sliderValue - minPayment) / (maxPayment - minPayment)) * 100}%, #e5e7eb ${((sliderValue - minPayment) / (maxPayment - minPayment)) * 100}%, #e5e7eb 100%)`
-            }}
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>{formatNumber(minPayment)}</span>
@@ -115,13 +118,13 @@ export default function AdjustPlanScrollRange({
             max={100}
             min={0}
             step={5}
+            style={{
+              // Custom styling for better appearance
+              background: `linear-gradient(to right, #3C7DD1 0%, #3C7DD1 ${goalSliderValue}%, #e5e7eb ${goalSliderValue}%, #e5e7eb 100%)`,
+            }}
             type="range"
             value={goalSliderValue}
             onChange={handleGoalSliderChange}
-            style={{
-              // Custom styling for better appearance
-              background: `linear-gradient(to right, #3C7DD1 0%, #3C7DD1 ${goalSliderValue}%, #e5e7eb ${goalSliderValue}%, #e5e7eb 100%)`
-            }}
           />
           <div className="flex justify-between text-xs text-gray-600 mt-1">
             <span>เห็นผลเร็ว</span>

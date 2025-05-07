@@ -38,7 +38,8 @@ export default function DebtModal({
 }: DebtModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { trackDebtInputStart, trackDebtInputFinish, trackEdit } = useTracking();
+  const { trackDebtInputStart, trackDebtInputFinish, trackEdit } =
+    useTracking();
 
   const {
     control,
@@ -213,20 +214,37 @@ export default function DebtModal({
                       <select
                         {...field}
                         aria-labelledby="debtType-label"
-                        className={`block w-full px-3 py-2 border ${errors.debtType ? "border-red-500" : "border-gray-300"
-                          } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        className={`block w-full px-3 py-2 border ${
+                          errors.debtType ? "border-red-500" : "border-gray-300"
+                        } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                         id="debtType"
                       >
                         <option disabled value="">
                           เลือกประเภทหนี้
                         </option>
-                        <option value={DebtCategory.RevolvingDebt}>{DebtCategory.RevolvingDebt} (บัตรเครดิต, บัตรกดเงินสด)</option>
-                        <option value={DebtCategory.ProductInstallment}>{DebtCategory.ProductInstallment} (ผ่อนสินค้า, เครื่องใช้ไฟฟ้า)</option>
-                        <option value={DebtCategory.PersonalLoan}>{DebtCategory.PersonalLoan} (กู้ยืมส่วนบุคคล)</option>
-                        <option value={DebtCategory.HousingLoan}>{DebtCategory.HousingLoan} (ผ่อนบ้าน, คอนโด)</option>
-                        <option value={DebtCategory.VehicleLoan}>{DebtCategory.VehicleLoan} (ผ่อนรถ, มอเตอร์ไซค์)</option>
-                        <option value={DebtCategory.InformalLoan}>{DebtCategory.InformalLoan} (เงินกู้นอกระบบ)</option>
-                        <option value={DebtCategory.Other}>{DebtCategory.Other} (หนี้ประเภทอื่นๆ)</option>
+                        <option value={DebtCategory.RevolvingDebt}>
+                          {DebtCategory.RevolvingDebt} (บัตรเครดิต,
+                          บัตรกดเงินสด)
+                        </option>
+                        <option value={DebtCategory.ProductInstallment}>
+                          {DebtCategory.ProductInstallment} (ผ่อนสินค้า,
+                          เครื่องใช้ไฟฟ้า)
+                        </option>
+                        <option value={DebtCategory.PersonalLoan}>
+                          {DebtCategory.PersonalLoan} (กู้ยืมส่วนบุคคล)
+                        </option>
+                        <option value={DebtCategory.HousingLoan}>
+                          {DebtCategory.HousingLoan} (ผ่อนบ้าน, คอนโด)
+                        </option>
+                        <option value={DebtCategory.VehicleLoan}>
+                          {DebtCategory.VehicleLoan} (ผ่อนรถ, มอเตอร์ไซค์)
+                        </option>
+                        <option value={DebtCategory.InformalLoan}>
+                          {DebtCategory.InformalLoan} (เงินกู้นอกระบบ)
+                        </option>
+                        <option value={DebtCategory.Other}>
+                          {DebtCategory.Other} (หนี้ประเภทอื่นๆ)
+                        </option>
                       </select>
                       {errors.debtType && (
                         <p className="mt-1 text-sm text-red-500">
@@ -443,7 +461,8 @@ export default function DebtModal({
                         {DebtCategory.RevolvingDebt} (บัตรเครดิต, บัตรกดเงินสด)
                       </SelectItem>
                       <SelectItem key={DebtCategory.ProductInstallment}>
-                        {DebtCategory.ProductInstallment} (ผ่อนสินค้า, เครื่องใช้ไฟฟ้า)
+                        {DebtCategory.ProductInstallment} (ผ่อนสินค้า,
+                        เครื่องใช้ไฟฟ้า)
                       </SelectItem>
                       <SelectItem key={DebtCategory.PersonalLoan}>
                         {DebtCategory.PersonalLoan} (กู้ยืมส่วนบุคคล)

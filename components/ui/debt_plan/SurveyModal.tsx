@@ -5,10 +5,10 @@ import { Modal, ModalContent, ModalHeader, ModalBody } from "@heroui/modal";
 import { Button } from "@heroui/button";
 import { RadioGroup, Radio } from "@heroui/radio";
 import { Textarea } from "@heroui/input";
-import { FiX } from "react-icons/fi";
 import { useSession } from "next-auth/react";
-import { useTracking } from "@/lib/tracking";
 import { toast } from "react-hot-toast";
+
+import { useTracking } from "@/lib/tracking";
 
 interface SurveyModalProps {
   isOpen: boolean;
@@ -18,14 +18,14 @@ interface SurveyModalProps {
    * Source where the survey is being opened from (for analytics)
    * @default 'debt_plan' - From debt plan flow
    */
-  source?: 'debt_plan' | 'profile';
+  source?: "debt_plan" | "profile";
 }
 
 export default function SurveyModal({
   isOpen,
   onOpenChange,
   onComplete,
-  source = 'debt_plan',
+  source = "debt_plan",
 }: SurveyModalProps) {
   const { data: session } = useSession();
   const { trackCompletion } = useTracking();
@@ -34,45 +34,60 @@ export default function SurveyModal({
   const [isLoading, setIsLoading] = useState(false);
 
   // Survey responses
-  const [debtInputUnderstandingRating, setDebtInputUnderstandingRating] = useState<number | null>(null);
-  const [debtInputUnderstandingComment, setDebtInputUnderstandingComment] = useState("");
+  const [debtInputUnderstandingRating, setDebtInputUnderstandingRating] =
+    useState<number | null>(null);
+  const [debtInputUnderstandingComment, setDebtInputUnderstandingComment] =
+    useState("");
 
-  const [radarUnderstandingRating, setRadarUnderstandingRating] = useState<number | null>(null);
-  const [radarUnderstandingComment, setRadarUnderstandingComment] = useState("");
+  const [radarUnderstandingRating, setRadarUnderstandingRating] = useState<
+    number | null
+  >(null);
+  const [radarUnderstandingComment, setRadarUnderstandingComment] =
+    useState("");
 
-  const [debtPlanHelpfulnessRating, setDebtPlanHelpfulnessRating] = useState<number | null>(null);
-  const [debtPlanHelpfulnessComment, setDebtPlanHelpfulnessComment] = useState("");
+  const [debtPlanHelpfulnessRating, setDebtPlanHelpfulnessRating] = useState<
+    number | null
+  >(null);
+  const [debtPlanHelpfulnessComment, setDebtPlanHelpfulnessComment] =
+    useState("");
 
-  const [appUsabilityRating, setAppUsabilityRating] = useState<number | null>(null);
+  const [appUsabilityRating, setAppUsabilityRating] = useState<number | null>(
+    null,
+  );
   const [appUsabilityComment, setAppUsabilityComment] = useState("");
 
   const [additionalFeedback, setAdditionalFeedback] = useState("");
-  
+
   // Fetch existing survey if available when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchExistingSurvey();
     }
   }, [isOpen]);
-  
+
   // Function to fetch existing survey
   const fetchExistingSurvey = async () => {
     try {
       setIsLoading(true);
       const response = await fetch("/api/survey");
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         if (data.success && data.data) {
           // Populate form with existing data
           const survey = data.data;
+
           setDebtInputUnderstandingRating(survey.debtInputUnderstandingRating);
-          setDebtInputUnderstandingComment(survey.debtInputUnderstandingComment || "");
+          setDebtInputUnderstandingComment(
+            survey.debtInputUnderstandingComment || "",
+          );
           setRadarUnderstandingRating(survey.radarUnderstandingRating);
           setRadarUnderstandingComment(survey.radarUnderstandingComment || "");
           setDebtPlanHelpfulnessRating(survey.debtPlanHelpfulnessRating);
-          setDebtPlanHelpfulnessComment(survey.debtPlanHelpfulnessComment || "");
+          setDebtPlanHelpfulnessComment(
+            survey.debtPlanHelpfulnessComment || "",
+          );
           setAppUsabilityRating(survey.appUsabilityRating);
           setAppUsabilityComment(survey.appUsabilityComment || "");
           setAdditionalFeedback(survey.additionalFeedback || "");
@@ -134,12 +149,17 @@ export default function SurveyModal({
     setAdditionalFeedback("");
     setError("");
   };
-  
+
   const handleSubmit = async () => {
     // Validate required fields
-    if (!debtInputUnderstandingRating || !radarUnderstandingRating ||
-      !debtPlanHelpfulnessRating || !appUsabilityRating) {
+    if (
+      !debtInputUnderstandingRating ||
+      !radarUnderstandingRating ||
+      !debtPlanHelpfulnessRating ||
+      !appUsabilityRating
+    ) {
       setError("กรุณาให้คะแนนในทุกข้อคำถาม");
+
       return;
     }
 
@@ -167,21 +187,22 @@ export default function SurveyModal({
 
       if (!response.ok) {
         const data = await response.json();
+
         throw new Error(data.error || "เกิดข้อผิดพลาดในการส่งแบบสอบถาม");
       }
 
       // Track survey completion based on source
-      if (source === 'debt_plan') {
+      if (source === "debt_plan") {
         trackCompletion();
       }
 
       // Success message
       toast.success("ขอบคุณสำหรับการตอบแบบสอบถาม");
-      
+
       // Close modal and notify parent that survey was completed
       onComplete(false);
       onOpenChange(false);
-      
+
       // Reset form
       resetForm();
     } catch (err: any) {
@@ -192,36 +213,43 @@ export default function SurveyModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={false}>
+    <Modal isDismissable={false} isOpen={isOpen} onOpenChange={onOpenChange}>
       <ModalContent className="max-w-2xl mx-auto w-[95%] max-h-[90vh]">
         <ModalHeader className="flex justify-between items-center p-3 sm:p-4">
-          <h2 className="text-lg sm:text-xl font-semibold">แบบสอบถามความคิดเห็น</h2>
-  
+          <h2 className="text-lg sm:text-xl font-semibold">
+            แบบสอบถามความคิดเห็น
+          </h2>
         </ModalHeader>
         <ModalBody className="pb-4 px-3 sm:px-6 sm:pb-5 overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center items-center py-10">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
             </div>
           ) : (
             <div className="space-y-8">
               {/* Question 1 */}
               <div className="space-y-3">
-                <h3 className="font-medium">1. ท่านเข้าใจวิธีกรอกข้อมูลหนี้ในระบบไหม?</h3>
+                <h3 className="font-medium">
+                  1. ท่านเข้าใจวิธีกรอกข้อมูลหนี้ในระบบไหม?
+                </h3>
                 <RadioGroup
-                  value={debtInputUnderstandingRating?.toString() || ""}
-                  onValueChange={(value) => setDebtInputUnderstandingRating(parseInt(value))}
-                  orientation="horizontal"
                   className="flex justify-between gap-0.5 sm:gap-2"
+                  orientation="horizontal"
+                  value={debtInputUnderstandingRating?.toString() || ""}
+                  onValueChange={(value) =>
+                    setDebtInputUnderstandingRating(parseInt(value))
+                  }
                 >
                   {[1, 2, 3, 4, 5].map((value) => (
                     <Radio
                       key={`debt-input-${value}`}
-                      value={value.toString()}
                       className="flex flex-col items-center"
                       size="sm"
+                      value={value.toString()}
                     >
-                      <span className="text-xs sm:text-sm mt-1 text-center">{getRatingLabel("debtInput", value)}</span>
+                      <span className="text-xs sm:text-sm mt-1 text-center">
+                        {getRatingLabel("debtInput", value)}
+                      </span>
                     </Radio>
                   ))}
                 </RadioGroup>
@@ -230,97 +258,123 @@ export default function SurveyModal({
                     (ถ้ามี) มีจุดไหนในการกรอกข้อมูลที่ยังทำให้คุณรู้สึกสับสนไหม?
                   </div>
                   <Textarea
-                    value={debtInputUnderstandingComment}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDebtInputUnderstandingComment(e.target.value)}
-                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
                     className="w-full"
+                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
+                    value={debtInputUnderstandingComment}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setDebtInputUnderstandingComment(e.target.value)
+                    }
                   />
                 </div>
               </div>
 
               {/* Question 2 */}
               <div className="space-y-3">
-                <h3 className="font-medium">2. Radar ช่วยให้ท่านเห็นภาพรวมหนี้ได้ไหม?</h3>
+                <h3 className="font-medium">
+                  2. Radar ช่วยให้ท่านเห็นภาพรวมหนี้ได้ไหม?
+                </h3>
                 <RadioGroup
-                  value={radarUnderstandingRating?.toString() || ""}
-                  onValueChange={(value) => setRadarUnderstandingRating(parseInt(value))}
-                  orientation="horizontal"
                   className="flex justify-between gap-0.5 sm:gap-2"
+                  orientation="horizontal"
+                  value={radarUnderstandingRating?.toString() || ""}
+                  onValueChange={(value) =>
+                    setRadarUnderstandingRating(parseInt(value))
+                  }
                 >
                   {[1, 2, 3, 4, 5].map((value) => (
                     <Radio
                       key={`radar-${value}`}
-                      value={value.toString()}
                       className="flex flex-col items-center"
                       size="sm"
+                      value={value.toString()}
                     >
-                      <span className="text-xs sm:text-sm mt-1 text-center">{getRatingLabel("radar", value)}</span>
+                      <span className="text-xs sm:text-sm mt-1 text-center">
+                        {getRatingLabel("radar", value)}
+                      </span>
                     </Radio>
                   ))}
                 </RadioGroup>
                 <div>
                   <div className="text-sm text-gray-600 block mb-1">
-                    (ถ้ามี) มีอะไรยังไม่ชัดใน Radar ที่อยากให้ทำให้เข้าใจง่ายขึ้นไหม?
+                    (ถ้ามี) มีอะไรยังไม่ชัดใน Radar
+                    ที่อยากให้ทำให้เข้าใจง่ายขึ้นไหม?
                   </div>
                   <Textarea
-                    value={radarUnderstandingComment}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRadarUnderstandingComment(e.target.value)}
-                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
                     className="w-full"
+                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
+                    value={radarUnderstandingComment}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setRadarUnderstandingComment(e.target.value)
+                    }
                   />
                 </div>
               </div>
 
               {/* Question 3 */}
               <div className="space-y-3">
-                <h3 className="font-medium">3. แผนการจัดการหนี้ทำให้คุณเห็นทางออกจากหนี้หรือไม่?</h3>
+                <h3 className="font-medium">
+                  3. แผนการจัดการหนี้ทำให้คุณเห็นทางออกจากหนี้หรือไม่?
+                </h3>
                 <RadioGroup
-                  value={debtPlanHelpfulnessRating?.toString() || ""}
-                  onValueChange={(value) => setDebtPlanHelpfulnessRating(parseInt(value))}
-                  orientation="horizontal"
                   className="flex justify-between gap-0.5 sm:gap-2"
+                  orientation="horizontal"
+                  value={debtPlanHelpfulnessRating?.toString() || ""}
+                  onValueChange={(value) =>
+                    setDebtPlanHelpfulnessRating(parseInt(value))
+                  }
                 >
                   {[1, 2, 3, 4, 5].map((value) => (
                     <Radio
                       key={`debt-plan-${value}`}
-                      value={value.toString()}
                       className="flex flex-col items-center"
                       size="sm"
+                      value={value.toString()}
                     >
-                      <span className="text-xs sm:text-sm mt-1 text-center">{getRatingLabel("debtPlan", value)}</span>
+                      <span className="text-xs sm:text-sm mt-1 text-center">
+                        {getRatingLabel("debtPlan", value)}
+                      </span>
                     </Radio>
                   ))}
                 </RadioGroup>
                 <div>
                   <div className="text-sm text-gray-600 block mb-1">
-                    (ถ้ามี) มีอะไรใน Planner ที่ยังทำให้ท่านไม่แน่ใจหรือยังลังเลไหม?
+                    (ถ้ามี) มีอะไรใน Planner
+                    ที่ยังทำให้ท่านไม่แน่ใจหรือยังลังเลไหม?
                   </div>
                   <Textarea
-                    value={debtPlanHelpfulnessComment}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDebtPlanHelpfulnessComment(e.target.value)}
-                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
                     className="w-full"
+                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
+                    value={debtPlanHelpfulnessComment}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setDebtPlanHelpfulnessComment(e.target.value)
+                    }
                   />
                 </div>
               </div>
 
               {/* Question 4 */}
               <div className="space-y-3">
-                <h3 className="font-medium">4. โดยรวมแล้ว แอปนี้ใช้ง่ายแค่ไหน?</h3>
+                <h3 className="font-medium">
+                  4. โดยรวมแล้ว แอปนี้ใช้ง่ายแค่ไหน?
+                </h3>
                 <RadioGroup
-                  value={appUsabilityRating?.toString() || ""}
-                  onValueChange={(value) => setAppUsabilityRating(parseInt(value))}
-                  orientation="horizontal"
                   className="flex justify-between gap-0.5 sm:gap-2"
+                  orientation="horizontal"
+                  value={appUsabilityRating?.toString() || ""}
+                  onValueChange={(value) =>
+                    setAppUsabilityRating(parseInt(value))
+                  }
                 >
                   {[1, 2, 3, 4, 5].map((value) => (
                     <Radio
                       key={`usability-${value}`}
-                      value={value.toString()}
                       className="flex flex-col items-center"
                       size="sm"
+                      value={value.toString()}
                     >
-                      <span className="text-xs sm:text-sm mt-1 text-center">{getRatingLabel("usability", value)}</span>
+                      <span className="text-xs sm:text-sm mt-1 text-center">
+                        {getRatingLabel("usability", value)}
+                      </span>
                     </Radio>
                   ))}
                 </RadioGroup>
@@ -329,10 +383,12 @@ export default function SurveyModal({
                     (ถ้ามี) มีอะไรในแอปนี้ที่ยังทำให้ท่านสับสนหรือไม่ชอบไหม?
                   </div>
                   <Textarea
-                    value={appUsabilityComment}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAppUsabilityComment(e.target.value)}
-                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
                     className="w-full"
+                    placeholder="ช่องพิมพ์ (ไม่บังคับ)"
+                    value={appUsabilityComment}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setAppUsabilityComment(e.target.value)
+                    }
                   />
                 </div>
               </div>
@@ -340,13 +396,16 @@ export default function SurveyModal({
               {/* Question 5 */}
               <div className="space-y-3">
                 <h3 className="font-medium">
-                  5. มีอะไรเพิ่มเติมที่อยากให้เรารู้ หรืออยากให้ Pordee ปรับปรุงตรงไหนไหม?
+                  5. มีอะไรเพิ่มเติมที่อยากให้เรารู้ หรืออยากให้ Pordee
+                  ปรับปรุงตรงไหนไหม?
                 </h3>
                 <Textarea
-                  value={additionalFeedback}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdditionalFeedback(e.target.value)}
-                  placeholder="ช่องพิมพ์ (ไม่บังคับ)"
                   className="w-full"
+                  placeholder="ช่องพิมพ์ (ไม่บังคับ)"
+                  value={additionalFeedback}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAdditionalFeedback(e.target.value)
+                  }
                 />
               </div>
 
@@ -371,8 +430,8 @@ export default function SurveyModal({
                 <Button
                   className="flex-1 py-2 sm:py-3 text-sm sm:text-base"
                   color="default"
-                  variant="ghost"
                   isDisabled={isSubmitting}
+                  variant="ghost"
                   onPress={() => {
                     // Skip survey
                     onComplete(true);

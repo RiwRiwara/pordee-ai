@@ -3,13 +3,14 @@ import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 
 import { authOptions } from "../../../auth/[...nextauth]/options";
+
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
 
 // Get user's context
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Check authentication
@@ -26,7 +27,7 @@ export async function GET(
     if (userId !== currentUserId) {
       return NextResponse.json(
         { error: "Unauthorized to access this user's context" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -34,7 +35,7 @@ export async function GET(
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return NextResponse.json(
         { error: "Invalid user ID format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,9 +52,10 @@ export async function GET(
     return NextResponse.json({ context: user.context || "" });
   } catch (error) {
     console.error("Error fetching user context:", error);
+
     return NextResponse.json(
       { error: "Failed to fetch user context" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -61,7 +63,7 @@ export async function GET(
 // Update user's context
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Check authentication
@@ -78,7 +80,7 @@ export async function PUT(
     if (userId !== currentUserId) {
       return NextResponse.json(
         { error: "Unauthorized to update this user's context" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -86,7 +88,7 @@ export async function PUT(
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return NextResponse.json(
         { error: "Invalid user ID format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -96,7 +98,7 @@ export async function PUT(
     if (typeof context !== "string") {
       return NextResponse.json(
         { error: "Context must be a string" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -107,7 +109,7 @@ export async function PUT(
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { context },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedUser) {
@@ -120,9 +122,10 @@ export async function PUT(
     });
   } catch (error) {
     console.error("Error updating user context:", error);
+
     return NextResponse.json(
       { error: "Failed to update user context" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

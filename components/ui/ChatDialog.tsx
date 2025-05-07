@@ -46,11 +46,14 @@ export default function ChatDialog({ isOpen, onClose }: ChatDialogProps) {
       if (session?.user?.id) {
         try {
           const context = await getUserContext(session.user.id);
+
           if (context) {
             // Convert the context object to a string if it's not already
-            const contextString = typeof context === 'string' 
-              ? context 
-              : JSON.stringify(context, null, 2);
+            const contextString =
+              typeof context === "string"
+                ? context
+                : JSON.stringify(context, null, 2);
+
             setDebtContext(contextString);
           }
         } catch (error) {
@@ -75,12 +78,12 @@ export default function ChatDialog({ isOpen, onClose }: ChatDialogProps) {
       - ใช้ Markdown ในการจัดรูปแบบคำตอบ โดยเฉพาะการใช้ **ตัวหนา** สำหรับคำสำคัญ และใช้ - สำหรับข้อความแบบ bullet points
       - เมื่อให้คำแนะนำหลายข้อ ให้ขึ้นต้นด้วยหัวข้อสั้นๆ แล้วตามด้วย bullet points
       - ตอบสั้นกระชับ ไม่เกิน 3-4 ประโยค และเพิ่มข้อความให้กำลังใจที่ท้ายคำตอบ`;
-    
+
     // Add user's debt context if available and user is logged in
     if (debtContext && session?.user?.id) {
       personalContext += `\n\nข้อมูลหนี้ของผู้ใช้:\n${debtContext}`;
     }
-    
+
     // Set the context in the AI service
     aiService.current.setPersonalContext(personalContext);
 

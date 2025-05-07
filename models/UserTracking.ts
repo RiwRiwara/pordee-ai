@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+
 import { IUser } from "./User";
 
 export interface IUserTracking extends Document {
@@ -66,7 +67,7 @@ const UserTrackingSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export default mongoose.models.UserTracking ||

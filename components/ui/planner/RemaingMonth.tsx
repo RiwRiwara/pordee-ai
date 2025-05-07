@@ -35,25 +35,28 @@ export default function RemaingMonth() {
     const fetchDebts = async () => {
       if (!session) {
         setIsLoading(false);
+
         return;
       }
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const response = await fetch("/api/debts");
 
         if (!response.ok) {
           throw new Error(`Error fetching debts: ${response.status}`);
         }
-        
+
         const { debts } = await response.json();
 
         // Filter out debts with invalid data
-        const validDebts = (debts || []).filter((debt: any) => 
-          debt && typeof debt.remainingAmount === 'number' && 
-          typeof debt.totalAmount === 'number'
+        const validDebts = (debts || []).filter(
+          (debt: any) =>
+            debt &&
+            typeof debt.remainingAmount === "number" &&
+            typeof debt.totalAmount === "number",
         );
 
         setDebts(validDebts);
@@ -87,27 +90,27 @@ export default function RemaingMonth() {
     };
 
     fetchDebts();
-  }, [session]);  // Re-fetch when session changes
+  }, [session]); // Re-fetch when session changes
 
   if (isLoading) {
     return (
       <div className="p-4">
         <div className="flex justify-center items-center py-12">
-          <Spinner size="lg" color="primary" />
+          <Spinner color="primary" size="lg" />
           <span className="ml-2 text-gray-600">กำลังโหลดข้อมูล...</span>
         </div>
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="p-4">
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
           <p className="text-red-600">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
             className="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium"
+            onClick={() => window.location.reload()}
           >
             ลองใหม่
           </button>
@@ -115,17 +118,19 @@ export default function RemaingMonth() {
       </div>
     );
   }
-  
+
   if (!session) {
     return (
       <div className="p-4">
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
-          <p className="text-yellow-700">กรุณาเข้าสู่ระบบเพื่อดูข้อมูลหนี้ของคุณ</p>
+          <p className="text-yellow-700">
+            กรุณาเข้าสู่ระบบเพื่อดูข้อมูลหนี้ของคุณ
+          </p>
         </div>
       </div>
     );
   }
-  
+
   if (debts.length === 0) {
     return (
       <div className="p-4">
@@ -139,8 +144,18 @@ export default function RemaingMonth() {
   // Calculate the current month and year for display
   const currentDate = new Date();
   const thaiMonthNames = [
-    "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", 
-    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    "มกราคม",
+    "กุมภาพันธ์",
+    "มีนาคม",
+    "เมษายน",
+    "พฤษภาคม",
+    "มิถุนายน",
+    "กรกฎาคม",
+    "สิงหาคม",
+    "กันยายน",
+    "ตุลาคม",
+    "พฤศจิกายน",
+    "ธันวาคม",
   ];
   const currentMonth = thaiMonthNames[currentDate.getMonth()];
   const currentYear = currentDate.getFullYear() + 543; // Convert to Buddhist Era

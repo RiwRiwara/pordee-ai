@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@heroui/button";
 import { Modal, ModalContent, ModalHeader, ModalBody } from "@heroui/modal";
 import {
@@ -15,7 +15,11 @@ import {
   Legend,
 } from "chart.js";
 import { useSession } from "next-auth/react";
-import { getDTIRiskStatus, saveDTIRiskAssessment } from "@/lib/dtiService";
+import { FiX } from "react-icons/fi";
+
+import { DebtItem } from "../types";
+
+import PlanTopSummarySection from "./partials/PlanTopSummarySection";
 
 // Register ChartJS components
 ChartJS.register(
@@ -31,19 +35,18 @@ ChartJS.register(
 
 // Import components
 import { DEBT_TYPES } from "./utils/debtPlanUtils";
-import { useTracking } from "@/lib/tracking";
 
 // Import new partials
-import PlanTopSummarySection from "./partials/PlanTopSummarySection";
 import AiAdvisorSection from "./partials/AiAdvisorSection";
 import MainTabs from "./partials/MainTabs";
 import CalulatePlanSection from "./partials/CalulatePlanSection";
 import AdjustPlanScrollRange from "./partials/AdjustPlanScrollRange";
 import OverallDebtSection from "./partials/OverallDebtSection";
 import { DebtPlan, DebtPlanModalProps } from "./types";
-import { DebtItem } from "../types";
-import { FiX } from "react-icons/fi";
 import SurveyModal from "./SurveyModal";
+
+import { useTracking } from "@/lib/tracking";
+import { getDTIRiskStatus, saveDTIRiskAssessment } from "@/lib/dtiService";
 
 export default function DebtPlanModalRefactored({
   isOpen,
@@ -61,7 +64,6 @@ export default function DebtPlanModalRefactored({
   const { trackRadarView, trackEdit, trackCompletion } = useTracking();
   // Ref for modal content
   const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
-
 
   // Track when user views the radar page
   useEffect(() => {
@@ -149,8 +151,6 @@ export default function DebtPlanModalRefactored({
       }
     }
   }, [debtContext]);
-
-
 
   // Update payment strategy based on goal slider
   useEffect(() => {
@@ -288,6 +288,7 @@ export default function DebtPlanModalRefactored({
   // Get risk status from shared service
   const getRiskStatus = () => {
     const status = getDTIRiskStatus(riskPercentage);
+
     return {
       label: status.label,
       color: status.color,
@@ -333,7 +334,7 @@ export default function DebtPlanModalRefactored({
     setAcceleratedTimeInMonths(Math.round(originalTimeInMonths * 0.2)); // 20% acceleration as default
 
     // Show a notification or feedback
-    alert('แผนการชำระหนี้ถูกรีเซ็ตเป็นค่าเริ่มต้น');
+    alert("แผนการชำระหนี้ถูกรีเซ็ตเป็นค่าเริ่มต้น");
   };
 
   // Get the user session if available
@@ -347,13 +348,15 @@ export default function DebtPlanModalRefactored({
     // Only create anonymous ID if user is not logged in
     if (!session?.user) {
       // Try to get existing anonymous ID from localStorage
-      const storedAnonymousId = localStorage.getItem('anonymousId');
+      const storedAnonymousId = localStorage.getItem("anonymousId");
+
       if (storedAnonymousId) {
         setAnonymousId(storedAnonymousId);
       } else {
         // Generate a new anonymous ID
         const newAnonymousId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        localStorage.setItem('anonymousId', newAnonymousId);
+
+        localStorage.setItem("anonymousId", newAnonymousId);
         setAnonymousId(newAnonymousId);
       }
     }
@@ -371,14 +374,18 @@ export default function DebtPlanModalRefactored({
       // Prepare plan data
       const debtPlanData = {
         ...planData,
-        userId: userId || localStorage.getItem("anonymousId") || `anon_${Date.now()}`,
-        anonymousId: !userId ? localStorage.getItem("anonymousId") || `anon_${Date.now()}` : undefined,
+        userId:
+          userId || localStorage.getItem("anonymousId") || `anon_${Date.now()}`,
+        anonymousId: !userId
+          ? localStorage.getItem("anonymousId") || `anon_${Date.now()}`
+          : undefined,
         isActive: true,
       };
 
       // If no anonymous ID in localStorage and no user ID, create and store one
       if (!userId && !localStorage.getItem("anonymousId")) {
         const anonymousId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
         localStorage.setItem("anonymousId", anonymousId);
         debtPlanData.anonymousId = anonymousId;
         debtPlanData.userId = anonymousId;
@@ -408,10 +415,13 @@ export default function DebtPlanModalRefactored({
       }
 
       const result = await response.json();
+
       return result;
     } catch (error) {
       console.error("Error saving debt plan:", error);
-      setSaveError(error instanceof Error ? error.message : "Failed to save plan");
+      setSaveError(
+        error instanceof Error ? error.message : "Failed to save plan",
+      );
       throw error;
     } finally {
       setIsSaving(false);
@@ -427,11 +437,13 @@ export default function DebtPlanModalRefactored({
       // Validate required data
       if (!debtContext || debtContext.length === 0) {
         setSaveError("ไม่พบข้อมูลหนี้ กรุณาเพิ่มข้อมูลหนี้ก่อนสร้างแผน");
+
         return;
       }
 
       if (monthlyPayment <= 0) {
         setSaveError("กรุณาระบุยอดชำระรายเดือนที่มากกว่า 0");
+
         return;
       }
 
@@ -453,7 +465,7 @@ export default function DebtPlanModalRefactored({
           remainingAmount: debt.remainingAmount || 0,
           interestRate: debt.interestRate || 0,
           minimumPayment: debt.minimumPayment || 0,
-          paymentOrder: getPaymentOrder(debt, index, paymentStrategy)
+          paymentOrder: getPaymentOrder(debt, index, paymentStrategy),
         };
       });
 
@@ -476,19 +488,24 @@ export default function DebtPlanModalRefactored({
       try {
         // Save directly to database first
         const savedPlan = await saveDebtPlanToDatabase(plan);
-        console.log('Plan saved directly to database:', savedPlan);
+
+        console.log("Plan saved directly to database:", savedPlan);
 
         // Then notify parent component if callback exists
         if (onSavePlan) {
           try {
             // Include the saved plan ID from the database response if it's a new plan
-            const planWithId = savedPlan && savedPlan._id && !plan.id
-              ? { ...plan, id: savedPlan._id }
-              : plan;
+            const planWithId =
+              savedPlan && savedPlan._id && !plan.id
+                ? { ...plan, id: savedPlan._id }
+                : plan;
 
             await onSavePlan(planWithId as unknown as DebtPlan);
           } catch (parentError) {
-            console.warn("Parent onSavePlan callback failed, but plan was saved to database", parentError);
+            console.warn(
+              "Parent onSavePlan callback failed, but plan was saved to database",
+              parentError,
+            );
             // Plan is already saved to database, so we can continue
           }
         }
@@ -511,30 +528,37 @@ export default function DebtPlanModalRefactored({
   };
 
   // Helper function to determine payment order based on strategy
-  const getPaymentOrder = (debt: DebtItem, index: number, strategy: string): number => {
+  const getPaymentOrder = (
+    debt: DebtItem,
+    index: number,
+    strategy: string,
+  ): number => {
     // Default order (by index)
     if (!debtContext || debtContext.length === 0) return index + 1;
 
     // For Snowball strategy: order by remaining amount (smallest first)
     if (strategy === "Snowball") {
-      return debtContext
-        .slice()
-        .sort((a, b) => a.remainingAmount - b.remainingAmount)
-        .findIndex(d => d._id === debt._id) + 1;
+      return (
+        debtContext
+          .slice()
+          .sort((a, b) => a.remainingAmount - b.remainingAmount)
+          .findIndex((d) => d._id === debt._id) + 1
+      );
     }
 
     // For Avalanche strategy: order by interest rate (highest first)
     if (strategy === "Avalanche") {
-      return debtContext
-        .slice()
-        .sort((a, b) => b.interestRate - a.interestRate)
-        .findIndex(d => d._id === debt._id) + 1;
+      return (
+        debtContext
+          .slice()
+          .sort((a, b) => b.interestRate - a.interestRate)
+          .findIndex((d) => d._id === debt._id) + 1
+      );
     }
 
     // For Proportional/Balanced strategy: use default order
     return index + 1;
   };
-
 
   // Fetch existing plan data if available
   useEffect(() => {
@@ -573,12 +597,12 @@ export default function DebtPlanModalRefactored({
 
   const handleSurveyComplete = (skipped = false) => {
     setIsSurveyModalOpen(false);
-    
+
     // Only now close the debt plan modal after survey is completed or skipped
     onOpenChange(false);
-    
+
     // Log whether survey was completed or skipped
-    console.log(skipped ? 'Survey skipped' : 'Survey completed');
+    console.log(skipped ? "Survey skipped" : "Survey completed");
   };
 
   return (
@@ -604,28 +628,30 @@ export default function DebtPlanModalRefactored({
           <div className="p-4 bg-white">
             {/* DTI Risk Indicator */}
             <PlanTopSummarySection
+              getRiskStatusDisplay={getRiskStatusDisplay}
               goalType={goalType}
               paymentStrategy={paymentStrategy}
               riskPercentage={riskPercentage}
-              getRiskStatusDisplay={getRiskStatusDisplay}
             />
-
-
 
             {/* Main Tabs and Charts */}
             <MainTabs
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              currentDebtTypeIndex={currentDebtTypeIndex}
-              setCurrentDebtTypeIndex={setCurrentDebtTypeIndex}
-              generateChartData={generateChartData}
               chartOptions={chartOptions}
+              currentDebtTypeIndex={currentDebtTypeIndex}
+              debtData={debtContext}
+              generateChartData={generateChartData}
               goToNextDebtType={goToNextDebtType}
               goToPrevDebtType={goToPrevDebtType}
-              showAIRecommendation={showAIRecommendation}
+              setActiveTab={setActiveTab}
+              setCurrentDebtTypeIndex={setCurrentDebtTypeIndex}
               setShowAIRecommendation={setShowAIRecommendation}
-              debtData={debtContext}
-              onDebtTypeChange={(debtTypeId, newTimeInMonths, newInterestAmount) => {
+              showAIRecommendation={showAIRecommendation}
+              onDebtTypeChange={(
+                debtTypeId,
+                newTimeInMonths,
+                newInterestAmount,
+              ) => {
                 // Update the time and interest values based on debt type selection
                 setTimeInMonths(newTimeInMonths);
                 // Could also update interest amount if needed in the UI
@@ -635,44 +661,51 @@ export default function DebtPlanModalRefactored({
 
             {/* Calculation Plan Section */}
             <CalulatePlanSection
-              originalTimeInMonths={originalTimeInMonths}
-              originalMonthlyPayment={originalMonthlyPayment}
-              newPlanTimeInMonths={reducedTimeInMonths}
-              newPlanMonthlyPayment={reducedMonthlyPayment}
-              savedTimeInMonths={acceleratedTimeInMonths}
-              savedAmount={acceleratedMonthlyPayment}
               currentDebtTypeId={currentDebtType.id}
+              newPlanMonthlyPayment={reducedMonthlyPayment}
+              newPlanTimeInMonths={reducedTimeInMonths}
+              originalMonthlyPayment={originalMonthlyPayment}
+              originalTimeInMonths={originalTimeInMonths}
+              savedAmount={acceleratedMonthlyPayment}
+              savedTimeInMonths={acceleratedTimeInMonths}
             />
 
             {/* AI Recommendation Section */}
             <AiAdvisorSection
-              showAIRecommendation={showAIRecommendation}
-              setShowAIRecommendation={setShowAIRecommendation}
               monthlyPayment={monthlyPayment}
+              setShowAIRecommendation={setShowAIRecommendation}
+              showAIRecommendation={showAIRecommendation}
               timeInMonths={timeInMonths}
             />
 
             {/* Adjustable Plan Sliders */}
             <AdjustPlanScrollRange
-              sliderValue={sliderValue}
-              setSliderValue={setSliderValue}
               goalSliderValue={goalSliderValue}
-              setGoalSliderValue={setGoalSliderValue}
               originalMonthlyPayment={originalMonthlyPayment}
+              setGoalSliderValue={setGoalSliderValue}
+              setSliderValue={setSliderValue}
+              sliderValue={sliderValue}
+              onResetPlan={handleResetPlan}
               onValueChange={(paymentValue, goalValue) => {
                 // Update monthly payment based on slider value
                 setMonthlyPayment(paymentValue);
 
                 // Adjust time in months based on payment changes
                 const ratio = originalMonthlyPayment / paymentValue;
-                const newTimeInMonths = Math.round(originalTimeInMonths * ratio);
+                const newTimeInMonths = Math.round(
+                  originalTimeInMonths * ratio,
+                );
+
                 setTimeInMonths(newTimeInMonths);
 
                 // Update reduced and accelerated values based on goal slider
-                setReducedTimeInMonths(Math.round(newTimeInMonths * (1 - goalValue / 100)));
-                setAcceleratedTimeInMonths(Math.round(originalTimeInMonths - newTimeInMonths));
+                setReducedTimeInMonths(
+                  Math.round(newTimeInMonths * (1 - goalValue / 100)),
+                );
+                setAcceleratedTimeInMonths(
+                  Math.round(originalTimeInMonths - newTimeInMonths),
+                );
               }}
-              onResetPlan={handleResetPlan}
             />
 
             {/* Error Message */}
@@ -686,8 +719,11 @@ export default function DebtPlanModalRefactored({
 
             <OverallDebtSection
               monthlyPayment={monthlyPayment}
+              totalInterestSaved={
+                originalMonthlyPayment * originalTimeInMonths -
+                monthlyPayment * timeInMonths
+              }
               totalRepaymentAmount={monthlyPayment * timeInMonths}
-              totalInterestSaved={(originalMonthlyPayment * originalTimeInMonths) - (monthlyPayment * timeInMonths)}
             />
 
             {/* Save Plan Button */}
@@ -703,10 +739,9 @@ export default function DebtPlanModalRefactored({
 
             <SurveyModal
               isOpen={isSurveyModalOpen}
-              onOpenChange={setIsSurveyModalOpen}
               onComplete={handleSurveyComplete}
+              onOpenChange={setIsSurveyModalOpen}
             />
-
           </div>
         </ModalBody>
       </ModalContent>

@@ -1,8 +1,7 @@
 // components/ui/FileUploadSection.tsx
 import React from "react";
 import { Button } from "@heroui/button";
-import { FaWallet, FaFileAlt, FaFilePdf, FaCheck, FaTimesCircle } from "react-icons/fa";
-import { FiUpload } from "react-icons/fi";
+import { FaWallet } from "react-icons/fa";
 
 import FileItem from "./FileItem";
 import { FileUploadSectionProps } from "./types";
@@ -49,8 +48,10 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         type="file"
         onChange={(e) => handleFileChange(e, fileType)}
       />
-      
-      <div className={`border ${borderColor} rounded-lg p-4 ${lightBgColor} mb-4`}>
+
+      <div
+        className={`border ${borderColor} rounded-lg p-4 ${lightBgColor} mb-4`}
+      >
         <Button
           className={`${bgColor} text-white w-full flex items-center justify-center py-3 ${hoverColor}`}
           color={themeColor === "green" ? "success" : "warning"}
@@ -72,10 +73,16 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           }
           onPress={triggerFileUpload}
         >
-          {isIncome ? "อัพโหลดสลิปเงินเดือนหรือเอกสารรายได้" : "อัพโหลดบิลหรือเอกสารรายจ่าย"}
+          {isIncome
+            ? "อัพโหลดสลิปเงินเดือนหรือเอกสารรายได้"
+            : "อัพโหลดบิลหรือเอกสารรายจ่าย"}
         </Button>
         <p className="text-xs text-center text-gray-600 mt-2">
-          อัพโหลด{isIncome ? "สลิปเงินเดือนหรือเอกสารรายได้" : "บิลหรือเอกสารรายจ่าย"} ระบบจะอ่านข้อมูลให้อัตโนมัติ
+          อัพโหลด
+          {isIncome
+            ? "สลิปเงินเดือนหรือเอกสารรายได้"
+            : "บิลหรือเอกสารรายจ่าย"}{" "}
+          ระบบจะอ่านข้อมูลให้อัตโนมัติ
         </p>
         <p className="text-xs text-center text-gray-600">
           รองรับไฟล์ PDF และรูปภาพ (PNG, JPEG) ขนาดไม่เกิน 10MB
@@ -91,16 +98,12 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             {uploadedFiles.map((file, index) => (
               <FileItem
                 key={index}
-                acceptOcrRecommendation={() =>
-                  acceptOcrRecommendation(file)
-                }
+                acceptOcrRecommendation={() => acceptOcrRecommendation(file)}
                 file={file}
                 fileType={fileType}
                 index={index}
                 isProcessingOcr={isProcessingOcr}
-                rejectOcrRecommendation={() =>
-                  rejectOcrRecommendation(file)
-                }
+                rejectOcrRecommendation={() => rejectOcrRecommendation(file)}
                 removeFile={() => removeFile(index)}
                 viewFilePreview={() => viewFilePreview(file)}
               />

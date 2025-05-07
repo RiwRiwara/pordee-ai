@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+
 import { IUser } from "./User";
 
 // Interface for survey responses
@@ -72,7 +73,7 @@ const SurveyResponseSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Create or retrieve the model

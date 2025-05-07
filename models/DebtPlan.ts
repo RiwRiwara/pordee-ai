@@ -79,7 +79,13 @@ const DebtPlanSchema: Schema = new Schema(
     goalType: {
       type: String,
       required: true,
-      enum: ["เห็นผลเร็ว", "สมดุล", "ประหยัดดอกเบี้ย", "คุ้มดอกเบี้ย", "คุ้มที่สุด"],
+      enum: [
+        "เห็นผลเร็ว",
+        "สมดุล",
+        "ประหยัดดอกเบี้ย",
+        "คุ้มดอกเบี้ย",
+        "คุ้มที่สุด",
+      ],
     },
     paymentStrategy: {
       type: String,
@@ -113,17 +119,17 @@ const DebtPlanSchema: Schema = new Schema(
 );
 
 // Add a pre-save hook to ensure debtItems are properly formatted
-DebtPlanSchema.pre('save', function(next) {
+DebtPlanSchema.pre("save", function (next) {
   // Make sure debtItems is at least an empty array if undefined
   if (!this.debtItems) {
     this.debtItems = [];
   }
-  
+
   // Ensure debtTypeId is set
   if (!this.debtTypeId) {
-    this.debtTypeId = 'all';
+    this.debtTypeId = "all";
   }
-  
+
   next();
 });
 

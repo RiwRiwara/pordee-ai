@@ -11,37 +11,43 @@ const teamMembers = [
   {
     name: "Akekarach Panumphan",
     position: "Project & Market Strategy Lead",
-    description: "Oversees the product vision, aligns team operations, and crafts go-to-market strategies to ensure that Pordee is both technically sound and business-ready.",
+    description:
+      "Oversees the product vision, aligns team operations, and crafts go-to-market strategies to ensure that Pordee is both technically sound and business-ready.",
     image: "/teams/Akekarach.png",
   },
   {
     name: "Thamonwan Kumam",
     position: "Product Owner & Financial Logic Designer",
-    description: "Defines product priorities, works closely with developers, and designs financial algorithms that power personalized debt repayment plans.",
+    description:
+      "Defines product priorities, works closely with developers, and designs financial algorithms that power personalized debt repayment plans.",
     image: "/teams/Thamonwan.png",
   },
   {
     name: "Kasira Phootijindanun",
     position: "UX Research & Insight Strategist",
-    description: "Leads user interviews and behavioral research, synthesizing insights into actionable UX direction and supporting co-creation of user flows.",
+    description:
+      "Leads user interviews and behavioral research, synthesizing insights into actionable UX direction and supporting co-creation of user flows.",
     image: "/teams/Naramon.png",
   },
   {
     name: "Naramon Wanatanasuwan",
     position: "UX Flow Architect & Wireframe Designer",
-    description: "Translates insights and product goals into structured user journeys and wireframes that bridge real user needs with functional design.",
+    description:
+      "Translates insights and product goals into structured user journeys and wireframes that bridge real user needs with functional design.",
     image: "/teams/Kasira.png",
   },
   {
     name: "Pimpida Ratanasuvan",
     position: "UX/UI Reviewer & Usability Designer",
-    description: "Ensures visual and interaction consistency, refines user flows, and co-designs intuitive interfaces that enhance user experience.",
+    description:
+      "Ensures visual and interaction consistency, refines user flows, and co-designs intuitive interfaces that enhance user experience.",
     image: "/teams/Pimpida.png",
   },
   {
     name: "Tinthiti Puttipeerawit",
     position: "Product Strategist & Presentation Lead",
-    description: "Shapes product logic and communication, creates compelling presentations, and supports user testing to validate core ideas.",
+    description:
+      "Shapes product logic and communication, creates compelling presentations, and supports user testing to validate core ideas.",
     image: "/teams/Tinthiti.png",
   },
 ];
@@ -125,7 +131,8 @@ export default function LandingPage() {
                     </h4>
                     <div className="w-full h-px bg-gray-200 my-4" />
                     <p className="text-gray-700 text-lg mx-16">
-                      เห็นภาพรวมหนี้ ชำระขั้นต่ำ ดอกเบี้ย และความเสี่ยง ได้ภายในหน้าแรก
+                      เห็นภาพรวมหนี้ ชำระขั้นต่ำ ดอกเบี้ย และความเสี่ยง
+                      ได้ภายในหน้าแรก
                     </p>
                   </div>
 
@@ -134,11 +141,13 @@ export default function LandingPage() {
                       วางแผนหนี้ <span className="text-4xl">ง่าย</span>
                     </h3>
                     <h4 className="text-gray-700 mb-4 text-xl font-bold">
-                      เหมือนมี<span className="text-[#3C7DD1]">ที่ปรึกษาส่วนตัว</span>
+                      เหมือนมี
+                      <span className="text-[#3C7DD1]">ที่ปรึกษาส่วนตัว</span>
                     </h4>
                     <div className="w-full h-px bg-gray-200 my-4" />
                     <p className="text-gray-700 text-lg mx-16">
-                      เราใช้ AI ช่วยออกแบบแผนการชำระหนี้ที่เหมาะกับรายได้ รายจ่าย และและปรับตามพฤติกรรมการใช้จ่ายและเป้าหมายของคุณ
+                      เราใช้ AI ช่วยออกแบบแผนการชำระหนี้ที่เหมาะกับรายได้
+                      รายจ่าย และและปรับตามพฤติกรรมการใช้จ่ายและเป้าหมายของคุณ
                     </p>
                   </div>
 
@@ -151,7 +160,9 @@ export default function LandingPage() {
                     </h4>
                     <div className="w-full h-px bg-gray-200 my-4" />
                     <p className="text-gray-700 text-lg mx-16">
-                      Pordee ไม่ได้แค่คำนวณสูตรสำเร็จ แต่เราเข้าใจชีวิตจริงของคุณ เราจึงวางแผนหนี้ให้เหมาะกับคุณ เพื่อให้คุณสามารถ เริ่มได้ ทำได้ จนปลดหนี้สำเร็จ
+                      Pordee ไม่ได้แค่คำนวณสูตรสำเร็จ
+                      แต่เราเข้าใจชีวิตจริงของคุณ เราจึงวางแผนหนี้ให้เหมาะกับคุณ
+                      เพื่อให้คุณสามารถ เริ่มได้ ทำได้ จนปลดหนี้สำเร็จ
                     </p>
                   </div>
                 </div>
@@ -310,9 +321,12 @@ export default function LandingPage() {
                   {/* Pordee Radar Section */}
                   <div className="bg-[#3C7DD1] p-8 rounded-lg mb-8 flex flex-col md:flex-row items-center justify-between">
                     <div className="md:w-1/2 text-white mb-6 md:mb-0 md:pr-8">
-                      <h3 className="text-2xl md:text-3xl font-bold mb-4">Pordee Radar</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                        Pordee Radar
+                      </h3>
                       <p className="text-lg">
-                        สรุปสถานะหนี้และวัดความเสี่ยงทางการเงิน<br />
+                        สรุปสถานะหนี้และวัดความเสี่ยงทางการเงิน
+                        <br />
                         เพื่อให้มองเห็นภาพรวมและวางแผนได้แม่นยำ
                       </p>
                     </div>
@@ -339,9 +353,12 @@ export default function LandingPage() {
                       />
                     </div>
                     <div className="md:w-1/2 text-white mb-6 md:mb-0 md:pl-8">
-                      <h3 className="text-2xl md:text-3xl font-bold mb-4">Pordee Planner</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                        Pordee Planner
+                      </h3>
                       <p className="text-lg">
-                        กำหนดเป้าหมาย วางแผนชำระหนี้ที่เหมาะสมกับคุณ<br />
+                        กำหนดเป้าหมาย วางแผนชำระหนี้ที่เหมาะสมกับคุณ
+                        <br />
                         พร้อมเช็คเรื่องอื่นได้ด้วย
                       </p>
                     </div>
@@ -350,9 +367,12 @@ export default function LandingPage() {
                   {/* Pordee Assistant Section */}
                   <div className="bg-[#3C7DD1] p-8 rounded-lg mb-8 flex flex-col md:flex-row items-center justify-between">
                     <div className="md:w-1/2 text-white mb-6 md:mb-0 md:pr-8">
-                      <h3 className="text-2xl md:text-3xl font-bold mb-4">Pordee Assistant</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                        Pordee Assistant
+                      </h3>
                       <p className="text-lg">
-                        AI ที่ช่วยตอบคำถามเรื่องหนี้ จากการวิเคราะห์พฤติกรรม<br />
+                        AI ที่ช่วยตอบคำถามเรื่องหนี้ จากการวิเคราะห์พฤติกรรม
+                        <br />
                         และสถานการณ์ของคุณ เพื่อให้คำแนะนำอย่างตรงจุด
                       </p>
                     </div>
@@ -383,10 +403,10 @@ export default function LandingPage() {
                     <div className="">
                       <Image
                         alt="Step 1: Add Debt and Income Information"
+                        className="rounded-lg"
+                        height={600}
                         src="/landing/appshow4.png"
                         width={300}
-                        height={600}
-                        className="rounded-lg"
                       />
                     </div>
                   </div>
@@ -400,14 +420,19 @@ export default function LandingPage() {
                       </h3>
                     </div>
                     <p className="text-gray-700 text-lg mb-6">
-                      ใส่ข้อมูลหนี้หรือบิลใดๆได้ในเจ้งหนี้ พร้อมระบุรายได้<br />
-                      Pordee จะวิเคราะห์ภาพรวมการเงินแบบอัตโนมัติ<br />
-                      และสรุปผลด้วย Pordee Radar<br />
+                      ใส่ข้อมูลหนี้หรือบิลใดๆได้ในเจ้งหนี้ พร้อมระบุรายได้
+                      <br />
+                      Pordee จะวิเคราะห์ภาพรวมการเงินแบบอัตโนมัติ
+                      <br />
+                      และสรุปผลด้วย Pordee Radar
+                      <br />
                       เพื่อให้คุณเห็นภาพรวมสถานะการเงินของคุณอย่างชัดเจน
                     </p>
                     <div className="text-right">
                       <div className="inline-block bg-yellow-400 rounded-lg p-2">
-                        <span className="text-xl font-bold text-white">ต่อไป</span>
+                        <span className="text-xl font-bold text-white">
+                          ต่อไป
+                        </span>
                         <span className="text-yellow-600 ml-2">▶</span>
                       </div>
                     </div>
@@ -434,7 +459,6 @@ export default function LandingPage() {
               </div>
             </section>
 
-
             {/* Our Team Section */}
             <section className="py-16 bg-[#3C7DD1] text-white">
               <div className="container mx-auto px-4 md:px-8 max-w-7xl">
@@ -457,12 +481,18 @@ export default function LandingPage() {
                             />
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold text-white">{member.name}</h3>
-                            <p className="text-blue-200 text-xs leading-tight mt-1">{member.position}</p>
+                            <h3 className="text-lg font-bold text-white">
+                              {member.name}
+                            </h3>
+                            <p className="text-blue-200 text-xs leading-tight mt-1">
+                              {member.position}
+                            </p>
                           </div>
                         </div>
                       </div>
-                      <p className="text-gray-300 text-sm leading-relaxed">{member.description}</p>
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        {member.description}
+                      </p>
                     </div>
                   ))}
                 </div>

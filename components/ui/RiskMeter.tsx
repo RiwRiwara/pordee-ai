@@ -15,8 +15,16 @@ import { useSession } from "next-auth/react";
 
 import DebtPlanModal from "./debt_plan/DebtPlanModal";
 
-import AIService, { createDebtPrompt, type DebtContext as AIDebtContext } from "@/lib/aiService";
-import { calculateDTI, getDTIRiskStatus, saveDTIRiskAssessment, type DebtContext } from "@/lib/dtiService";
+import AIService, {
+  createDebtPrompt,
+  type DebtContext as AIDebtContext,
+} from "@/lib/aiService";
+import {
+  calculateDTI,
+  getDTIRiskStatus,
+  saveDTIRiskAssessment,
+  type DebtContext,
+} from "@/lib/dtiService";
 
 interface RiskMeterProps {
   debtContext?: DebtContext;
@@ -67,6 +75,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
   // Get risk status from shared service
   const getRiskStatus = () => {
     const status = getDTIRiskStatus(riskPercentage);
+
     return {
       label: status.label,
       color: status.color,
@@ -74,7 +83,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
       colorClass: status.colorClass,
       trackColor: status.trackColor,
       indicatorColor: status.indicatorColor,
-      description: status.description
+      description: status.description,
     };
   };
 
@@ -125,6 +134,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
       parseFloat(debtContext.income.toString()) <= 0
     ) {
       setAiInsight(getFallbackInsight());
+
       return;
     }
 
@@ -136,19 +146,19 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
 
       // Create AI-compatible debt context
       const aiDebtContext: AIDebtContext = {
-        debtItems: debtContext.debtItems.map(item => ({
-          id: item._id || '',
+        debtItems: debtContext.debtItems.map((item) => ({
+          id: item._id || "",
           name: item.name,
           debtType: item.debtType,
           totalAmount: item.totalAmount.toString(),
           minimumPayment: (item.minimumPayment || 0).toString(),
           interestRate: (item.interestRate || 0).toString(),
           dueDate: (item.paymentDueDay || 1).toString(),
-          paymentStatus: 'pending'
+          paymentStatus: "pending",
         })),
         income: debtContext.income.toString(),
         expense: "0", // Required by AIDebtContext but not in our DebtContext
-        riskPercentage: riskPercentage
+        riskPercentage: riskPercentage,
       };
 
       // Create prompt for AI
@@ -164,7 +174,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
         - ใช้ภาษาที่เป็นมืออาชีพแต่เข้าใจง่าย
         - ให้คำแนะนำที่ปฏิบัติได้จริงและเฉพาะเจาะจงกับสถานการณ์หนี้ของผู้ใช้
         - อธิบายแผนการจัดการหนี้ที่เหมาะสมกับระดับความเสี่ยงของผู้ใช้
-        - แนะนำวิธีลดความเสี่ยงทางการเงินและเพิ่มความมั่นคง`
+        - แนะนำวิธีลดความเสี่ยงทางการเงินและเพิ่มความมั่นคง`,
       );
 
       // Call AI service using generateResponse method
@@ -218,8 +228,8 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
               track: getTrackColor(riskPercentage),
               value: `text-xl font-semibold ${riskStatus.colorClass}`,
             }}
-            size="lg"
             showValueLabel={true}
+            size="lg"
             strokeWidth={4}
             value={riskPercentage}
             valueLabel={`${riskPercentage.toFixed(2)}%`}
@@ -241,15 +251,13 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
         Debt-to-Income Ratio (หนี้ต่อรายได้)
       </p>
 
-      <div >
+      <div>
         {/* Semi-circular Risk Meter Gauge */}
         <div className="w-full flex justify-center items-center">
           <div className="justify-center items-center pb-0">
             {renderRiskMeter()}
           </div>
         </div>
-
-
       </div>
 
       <div className="text-center mt-2">
@@ -373,7 +381,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
             paymentDueDay: (debt as ExtendedDebtItem).dueDate
               ? parseInt(((debt as ExtendedDebtItem).dueDate || 0).toString())
               : undefined,
-          })) || []  /* Pass as array, not object */
+          })) || [] /* Pass as array, not object */
         }
         goalType="เห็นผลเร็ว"
         isOpen={isDebtPlanModalOpen}

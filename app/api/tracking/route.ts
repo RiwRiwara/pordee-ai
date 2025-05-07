@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+
 import UserTracking from "@/models/UserTracking";
 import connectToDatabase from "@/lib/mongodb";
-import mongoose from "mongoose";
 
 // Initialize or update user tracking data
 export async function POST(req: NextRequest) {
@@ -10,20 +10,28 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
     const session = await getServerSession();
     const data = await req.json();
-    
+
     // Generate a userId even for anonymous users
     let userId = "anonymous";
     let isAnonymous = true;
-    
+
     // Try multiple ways to get a valid userId
     if (session?.user?.id) {
       // Use authenticated user ID if available
       userId = session.user.id;
       isAnonymous = false;
-    } else if (data.anonymousId && typeof data.anonymousId === 'string' && data.anonymousId.length > 0) {
+    } else if (
+      data.anonymousId &&
+      typeof data.anonymousId === "string" &&
+      data.anonymousId.length > 0
+    ) {
       // Use provided anonymousId for guest users
       userId = data.anonymousId;
-    } else if (data.sessionId && typeof data.sessionId === 'string' && data.sessionId.length > 0) {
+    } else if (
+      data.sessionId &&
+      typeof data.sessionId === "string" &&
+      data.sessionId.length > 0
+    ) {
       // If no anonymousId, use sessionId as userId (still anonymous)
       userId = `anon-${data.sessionId}`;
     } else {
@@ -51,12 +59,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Update tracking fields if provided in request
-    if (data.startTimeInputDebt) tracking.startTimeInputDebt = new Date(data.startTimeInputDebt);
-    if (data.finishTimeInputDebt) tracking.finishTimeInputDebt = new Date(data.finishTimeInputDebt);
-    if (data.startTimeRadar) tracking.startTimeRadar = new Date(data.startTimeRadar);
-    if (data.startTimePlanner) tracking.startTimePlanner = new Date(data.startTimePlanner);
+    if (data.startTimeInputDebt)
+      tracking.startTimeInputDebt = new Date(data.startTimeInputDebt);
+    if (data.finishTimeInputDebt)
+      tracking.finishTimeInputDebt = new Date(data.finishTimeInputDebt);
+    if (data.startTimeRadar)
+      tracking.startTimeRadar = new Date(data.startTimeRadar);
+    if (data.startTimePlanner)
+      tracking.startTimePlanner = new Date(data.startTimePlanner);
     if (data.ocrUsed !== undefined) tracking.ocrUsed = data.ocrUsed;
-    if (data.completedAll !== undefined) tracking.completedAll = data.completedAll;
+    if (data.completedAll !== undefined)
+      tracking.completedAll = data.completedAll;
 
     // Increment edit count if specified
     if (data.incrementEdit) {
@@ -68,9 +81,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, tracking });
   } catch (error) {
     console.error("Error tracking user activity:", error);
+
     return NextResponse.json(
       { error: "Failed to track user activity" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -84,7 +98,7 @@ export async function GET(req: NextRequest) {
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -93,6 +107,7 @@ export async function GET(req: NextRequest) {
     const sessionId = searchParams.get("sessionId");
 
     const query: any = { userId };
+
     if (sessionId) query.sessionId = sessionId;
 
     const tracking = await UserTracking.find(query)
@@ -102,9 +117,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, tracking });
   } catch (error) {
     console.error("Error fetching tracking data:", error);
+
     return NextResponse.json(
       { error: "Failed to fetch tracking data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

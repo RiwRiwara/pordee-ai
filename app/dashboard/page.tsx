@@ -1,7 +1,5 @@
 "use client";
 
-import type { DebtContext } from "@/lib/dtiService";
-
 import React, { useState, useEffect } from "react";
 
 import { useAuth } from "@/context/AuthContext";

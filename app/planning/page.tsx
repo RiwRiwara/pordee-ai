@@ -35,37 +35,41 @@ export default function Planning() {
   const [income, setIncome] = useState<number>(0);
   const [dtiPercentage, setDtiPercentage] = useState<number>(0);
   const [debtContext, setDebtContext] = useState<DebtContext | undefined>();
-  
+
   // Fetch debt data and user financial profile
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch debts
         const debtsResponse = await fetch("/api/debts");
-        
+
         if (debtsResponse.ok) {
           const { debts: debtsData } = await debtsResponse.json();
+
           setDebts(debtsData || []);
-          
+
           // Fetch user financial profile to get income
           const profileResponse = await fetch("/api/financial-profile");
-          
+
           if (profileResponse.ok) {
             const profile = await profileResponse.json();
             const monthlyIncome = profile?.monthlyIncome || 0;
+
             setIncome(monthlyIncome);
-            
+
             // Calculate DTI (Debt-to-Income ratio) based on the formula from memory
             // Formula: (all minimum debt / all income before expense and tax) * 100
             if (monthlyIncome > 0) {
               const totalMinimumDebt = debtsData.reduce(
-                (sum: number, debt: DebtItem) => sum + (debt.minimumPayment || 0),
-                0
+                (sum: number, debt: DebtItem) =>
+                  sum + (debt.minimumPayment || 0),
+                0,
               );
-              
+
               const dtiRatio = (totalMinimumDebt / monthlyIncome) * 100;
+
               setDtiPercentage(Math.round(dtiRatio));
-              
+
               // Create debt context for AI service
               const aiContext: DebtContext = {
                 debtItems: debtsData.map((debt: DebtItem) => ({
@@ -76,13 +80,13 @@ export default function Planning() {
                   minimumPayment: (debt.minimumPayment || 0).toString(),
                   interestRate: debt.interestRate.toString(),
                   dueDate: (debt.paymentDueDay || 1).toString(),
-                  paymentStatus: "pending"
+                  paymentStatus: "pending",
                 })),
                 income: monthlyIncome.toString(),
                 expense: "0", // Default value if not available
-                riskPercentage: dtiRatio
+                riskPercentage: dtiRatio,
               };
-              
+
               setDebtContext(aiContext);
             }
           }
@@ -91,7 +95,7 @@ export default function Planning() {
         console.error("Error fetching data:", error);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -124,7 +128,10 @@ export default function Planning() {
               <MyDebt />
             </Card>
             <Card>
-              <TipSection debtContext={debtContext} riskPercentage={dtiPercentage} />
+              <TipSection
+                debtContext={debtContext}
+                riskPercentage={dtiPercentage}
+              />
             </Card>
             <Card>
               <Calendar />
@@ -133,7 +140,11 @@ export default function Planning() {
               <NewEarly />
             </Card>
           </Tab>
-          <Tab key="this_month" className="flex flex-col gap-4" title="เดือนนี้">
+          <Tab
+            key="this_month"
+            className="flex flex-col gap-4"
+            title="เดือนนี้"
+          >
             <Card>
               <RemaingMonth />
             </Card>

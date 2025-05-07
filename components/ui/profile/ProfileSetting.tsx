@@ -1,22 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { Button } from "@heroui/button";
 import { Switch } from "@heroui/switch";
 import {
   FiBell,
   FiChevronRight,
-  FiGlobe,
   FiRefreshCw,
-  FiStar,
   FiTrash2,
   FiX,
   FiFileText,
 } from "react-icons/fi";
+import { toast } from "react-hot-toast";
+
+import SurveyModal from "../debt_plan/SurveyModal";
 
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "react-hot-toast";
-import SurveyModal from "../debt_plan/SurveyModal";
 
 interface ProfileSettingProps {
   languagePreference: string;
@@ -29,7 +27,7 @@ export default function ProfileSetting({
   languagePreference,
   notificationsEnabled = true,
   onLanguageToggle,
-  onNotificationToggle = () => { },
+  onNotificationToggle = () => {},
 }: ProfileSettingProps) {
   const { logout } = useAuth();
   const router = useRouter();
@@ -47,10 +45,12 @@ export default function ProfileSetting({
 
       // Focus trapping logic
       const focusableElements = modalRef.current?.querySelectorAll(
-        'button, input, [tabindex]:not([tabindex="-1"])'
+        'button, input, [tabindex]:not([tabindex="-1"])',
       );
       const firstElement = focusableElements?.[0] as HTMLElement;
-      const lastElement = focusableElements?.[focusableElements.length - 1] as HTMLElement;
+      const lastElement = focusableElements?.[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
       const handleTab = (e: KeyboardEvent) => {
         if (e.key === "Tab") {
@@ -65,6 +65,7 @@ export default function ProfileSetting({
       };
 
       modalRef.current?.addEventListener("keydown", handleTab);
+
       return () => modalRef.current?.removeEventListener("keydown", handleTab);
     }
   }, [isResetModalOpen]);
@@ -72,6 +73,7 @@ export default function ProfileSetting({
   const handleResetData = async () => {
     if (confirmText !== "Confirm") {
       toast.error("โปรดพิมพ์ 'Confirm' เพื่อยืนยันการรีเซ็ตข้อมูล");
+
       return;
     }
 
@@ -86,6 +88,7 @@ export default function ProfileSetting({
 
       if (!response.ok) {
         const errorData = await response.json();
+
         throw new Error(errorData.message || "การรีเซ็ตข้อมูลล้มเหลว");
       }
 
@@ -117,6 +120,7 @@ export default function ProfileSetting({
 
         if (!response.ok) {
           const errorData = await response.json();
+
           throw new Error(errorData.message || "การลบบัญชีล้มเหลว");
         }
 
@@ -203,7 +207,6 @@ export default function ProfileSetting({
               </div>
               <FiChevronRight className="text-gray-400" />
             </button>
-
           </div>
         </div>
 
@@ -226,8 +229,8 @@ export default function ProfileSetting({
                 </div>
               </div>
               <Button
-                size="sm"
                 color="warning"
+                size="sm"
                 variant="flat"
                 onClick={() => setIsResetModalOpen(true)}
               >
@@ -247,8 +250,8 @@ export default function ProfileSetting({
                 </div>
               </div>
               <Button
-                size="sm"
                 color="danger"
+                size="sm"
                 variant="flat"
                 onClick={handleDeleteAccount}
               >
@@ -261,39 +264,39 @@ export default function ProfileSetting({
 
       {/* Reset Confirmation Modal */}
       {isResetModalOpen && (
-        <div className="fixed inset-0 z-50" ref={modalRef}>
+        <div ref={modalRef} className="fixed inset-0 z-50">
           {/* Backdrop that can be clicked to close the modal */}
           <button
+            aria-label="Close modal"
             className="absolute inset-0 w-full h-full bg-black bg-opacity-50"
             onClick={() => {
               setIsResetModalOpen(false);
               setConfirmText("");
             }}
-            aria-label="Close modal"
           />
           {/* Container for the actual modal content */}
           <div
+            aria-labelledby="reset-modal-title"
+            aria-modal="true"
             className="fixed inset-0 flex items-center justify-center p-2 sm:p-4"
             role="dialog"
-            aria-modal="true"
-            aria-labelledby="reset-modal-title"
           >
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               {/* Modal header with title and close button */}
               <div className="flex justify-between items-center mb-4">
                 <h3
-                  id="reset-modal-title"
                   className="text-lg font-semibold text-red-500"
+                  id="reset-modal-title"
                 >
                   รีเซ็ตข้อมูลทั้งหมด
                 </h3>
                 <button
+                  aria-label="ปิดโมดัล"
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => {
                     setIsResetModalOpen(false);
                     setConfirmText("");
                   }}
-                  aria-label="ปิดโมดัล"
                 >
                   <FiX size={20} />
                 </button>
@@ -314,25 +317,26 @@ export default function ProfileSetting({
                   การดำเนินการนี้ไม่สามารถย้อนกลับได้!
                 </p>
                 <p className="mb-3">
-                  โปรดพิมพ์ <span className="font-bold">Confirm</span> เพื่อยืนยัน
+                  โปรดพิมพ์ <span className="font-bold">Confirm</span>{" "}
+                  เพื่อยืนยัน
                 </p>
                 <input
+                  ref={inputRef}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  type="text"
                   placeholder="Confirm"
+                  type="text"
                   value={confirmText}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setConfirmText(e.target.value)
                   }
-                  ref={inputRef}
                 />
               </div>
 
               {/* Modal footer with action buttons */}
               <div className="flex justify-end space-x-2">
                 <Button
-                  className="bg-gray-100"
                   ref={cancelButtonRef}
+                  className="bg-gray-100"
                   variant="flat"
                   onClick={() => {
                     setIsResetModalOpen(false);
@@ -357,9 +361,9 @@ export default function ProfileSetting({
       {/* Survey Modal */}
       <SurveyModal
         isOpen={isSurveyModalOpen}
-        onOpenChange={setIsSurveyModalOpen}
-        onComplete={handleSurveyComplete}
         source="profile"
+        onComplete={handleSurveyComplete}
+        onOpenChange={setIsSurveyModalOpen}
       />
     </>
   );

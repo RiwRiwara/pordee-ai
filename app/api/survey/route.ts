@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { z } from "zod";
+
 import { authOptions } from "../auth/[...nextauth]/options";
+
 import SurveyResponse from "@/models/Survey";
 import connectToDatabase from "@/lib/mongodb";
-import { z } from "zod";
 
 // Schema for validating survey data
 const surveySchema = z.object({
@@ -25,10 +27,11 @@ export async function GET() {
 
     // Get user session
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -39,13 +42,14 @@ export async function GET() {
 
     return NextResponse.json(
       { success: true, data: survey || null },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching survey:", error);
+
     return NextResponse.json(
       { error: "Failed to fetch survey" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -57,22 +61,24 @@ export async function POST(req: NextRequest) {
 
     // Get user session
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // Parse request body
     const body = await req.json();
-    
+
     // Validate survey data
     const validatedData = surveySchema.safeParse(body);
+
     if (!validatedData.success) {
       return NextResponse.json(
         { error: "Invalid survey data", details: validatedData.error },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,16 +88,16 @@ export async function POST(req: NextRequest) {
     });
 
     let surveyResponse;
-    
+
     if (existingSurvey) {
       // Update existing survey
       surveyResponse = await SurveyResponse.findByIdAndUpdate(
         existingSurvey._id,
         {
           ...validatedData.data,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
-        { new: true } // Return the updated document
+        { new: true }, // Return the updated document
       );
     } else {
       // Create new survey response
@@ -103,13 +109,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       { success: true, data: surveyResponse },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error submitting survey:", error);
+
     return NextResponse.json(
       { error: "Failed to submit survey" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

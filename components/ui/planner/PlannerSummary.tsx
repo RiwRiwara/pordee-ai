@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 
 import DebtPlanModal from "../debt_plan/DebtPlanModal";
 import { DebtPlan } from "../debt_plan/types";
-import { DEBT_TYPES } from "../debt_plan/utils/debtPlanUtils";
 
 interface DebtItem {
   _id: string;
@@ -42,21 +41,21 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
   const [isAdjustPlanModalOpen, setIsAdjustPlanModalOpen] = useState(false);
   const [debts, setDebts] = useState<DebtItem[]>([]);
   const [activePlanId, setActivePlanId] = useState<string>("");
-  
+
   // Available goal types from the model
   const GOAL_TYPES = [
-    "เห็นผลเร็ว",      // Quick results
-    "สมดุล",          // Balanced
+    "เห็นผลเร็ว", // Quick results
+    "สมดุล", // Balanced
     "ประหยัดดอกเบี้ย", // Save interest
-    "คุ้มดอกเบี้ย",    // Interest efficient
-    "คุ้มที่สุด"        // Most efficient
+    "คุ้มดอกเบี้ย", // Interest efficient
+    "คุ้มที่สุด", // Most efficient
   ];
-  
+
   // Available payment strategies
   const PAYMENT_STRATEGIES = [
-    "Snowball",     // Focus on smallest debts first
-    "Avalanche",    // Focus on highest interest first
-    "Proportional"  // Pay proportionally across all debts
+    "Snowball", // Focus on smallest debts first
+    "Avalanche", // Focus on highest interest first
+    "Proportional", // Pay proportionally across all debts
   ];
 
   // Plan data state
@@ -93,16 +92,14 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
     const paymentStrategy = plan.paymentStrategy || "Snowball";
     const timeInMonths = plan.timeInMonths || 30;
     const monthlyPayment = plan.monthlyPayment || 0;
-    
+
     setPlanData({
       ...planData,
       goalType: goalType,
       paymentStrategy: paymentStrategy,
       timeInMonths: timeInMonths,
       // Calculate new interest based on the plan (simplified)
-      totalInterest: Math.round(
-        remainingDebt * 0.05 * (timeInMonths / 12),
-      ),
+      totalInterest: Math.round(remainingDebt * 0.05 * (timeInMonths / 12)),
     });
 
     setMonthlyPayment(monthlyPayment);
@@ -110,37 +107,40 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
     // Save the updated plan to the backend
     saveDebtPlanToDatabase(plan);
   };
-  
+
   // Function to save debt plan to database
   const saveDebtPlanToDatabase = async (plan: DebtPlan) => {
     try {
       // Prepare plan data for API
       const planData = {
         ...plan,
-        userId: session?.user?.id || localStorage.getItem('anonymousId'),
-        anonymousId: !session?.user?.id ? localStorage.getItem('anonymousId') : undefined,
+        userId: session?.user?.id || localStorage.getItem("anonymousId"),
+        anonymousId: !session?.user?.id
+          ? localStorage.getItem("anonymousId")
+          : undefined,
         isActive: true,
         // Include the existing plan ID if we're updating
-        _id: activePlanId || undefined
+        _id: activePlanId || undefined,
       };
-      
+
       // Save to database
-      const response = await fetch('/api/debt-plans', {
-        method: activePlanId ? 'PUT' : 'POST',
+      const response = await fetch("/api/debt-plans", {
+        method: activePlanId ? "PUT" : "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(planData),
       });
-      
+
       if (response.ok) {
         const result = await response.json();
+
         if (result._id) {
           setActivePlanId(result._id);
         }
       }
     } catch (error) {
-      console.error('Error saving debt plan:', error);
+      console.error("Error saving debt plan:", error);
     }
   };
 
@@ -149,17 +149,17 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch debts
         const debtsResponse = await fetch("/api/debts");
-        
+
         // Fetch active debt plan
-        const plansUrl = session?.user?.id 
-          ? `/api/debt-plans?isActive=true` 
-          : `/api/debt-plans?anonymousId=${localStorage.getItem('anonymousId')}&isActive=true`;
-        
+        const plansUrl = session?.user?.id
+          ? `/api/debt-plans?isActive=true`
+          : `/api/debt-plans?anonymousId=${localStorage.getItem("anonymousId")}&isActive=true`;
+
         const plansResponse = await fetch(plansUrl);
-        
+
         if (debtsResponse.ok) {
           const { debts } = await debtsResponse.json();
 
@@ -187,25 +187,26 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
           setMonthlyPayment(monthly);
           setDebts(debts);
         }
-        
+
         // Process active plan if available
         if (plansResponse.ok) {
           const plans = await plansResponse.json();
-          
+
           if (plans && plans.length > 0) {
             // Get the most recent active plan
             const activePlan = plans[0];
-            
+
             setActivePlanId(activePlan._id);
-            
+
             // Update plan data with actual user selections
             setPlanData({
               goalType: activePlan.goalType || planData.goalType,
-              paymentStrategy: activePlan.paymentStrategy || planData.paymentStrategy,
+              paymentStrategy:
+                activePlan.paymentStrategy || planData.paymentStrategy,
               timeInMonths: activePlan.timeInMonths || planData.timeInMonths,
               totalInterest: planData.totalInterest, // Calculate this based on the plan
             });
-            
+
             // Update monthly payment if available
             if (activePlan.monthlyPayment) {
               setMonthlyPayment(activePlan.monthlyPayment);
@@ -259,11 +260,16 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
           {/* Calculate width based on paid debt percentage */}
           <div
             className="absolute top-0 left-0 h-full bg-yellow-400"
-            style={{ width: `${totalDebt > 0 ? Math.min(100, Math.round((paidDebt / totalDebt) * 100)) : 0}%` }}
+            style={{
+              width: `${totalDebt > 0 ? Math.min(100, Math.round((paidDebt / totalDebt) * 100)) : 0}%`,
+            }}
           />
           <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
             <span className="text-xs font-medium text-gray-800">
-              {totalDebt > 0 ? Math.min(100, Math.round((paidDebt / totalDebt) * 100)) : 0}%
+              {totalDebt > 0
+                ? Math.min(100, Math.round((paidDebt / totalDebt) * 100))
+                : 0}
+              %
             </span>
           </div>
         </div>
@@ -299,18 +305,22 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
             <div className="flex justify-between">
               <span className="text-gray-600">เป้าหมายที่เลือก :</span>
               <span className="font-medium">
-                {GOAL_TYPES.includes(planData.goalType) 
-                  ? planData.goalType 
+                {GOAL_TYPES.includes(planData.goalType)
+                  ? planData.goalType
                   : "เห็นผลเร็ว"}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">รูปแบบแผนการชำระหนี้ :</span>
               <span className="font-medium">
-                {planData.paymentStrategy === "Snowball" && "ชำระหนี้ก้อนเล็กก่อน"}
-                {planData.paymentStrategy === "Avalanche" && "ชำระหนี้ดอกเบี้ยสูงก่อน"}
-                {planData.paymentStrategy === "Proportional" && "ชำระตามสัดส่วน"}
-                {!PAYMENT_STRATEGIES.includes(planData.paymentStrategy) && "ชำระหนี้ก้อนเล็กก่อน"}
+                {planData.paymentStrategy === "Snowball" &&
+                  "ชำระหนี้ก้อนเล็กก่อน"}
+                {planData.paymentStrategy === "Avalanche" &&
+                  "ชำระหนี้ดอกเบี้ยสูงก่อน"}
+                {planData.paymentStrategy === "Proportional" &&
+                  "ชำระตามสัดส่วน"}
+                {!PAYMENT_STRATEGIES.includes(planData.paymentStrategy) &&
+                  "ชำระหนี้ก้อนเล็กก่อน"}
               </span>
             </div>
             <div className="flex justify-between">
@@ -350,10 +360,10 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
 
       {/* Adjust Plan Modal */}
       <DebtPlanModal
+        debtContext={debts}
         isOpen={isAdjustPlanModalOpen}
         onOpenChange={setIsAdjustPlanModalOpen}
         onSavePlan={handlePlanUpdate}
-        debtContext={debts}
       />
     </div>
   );

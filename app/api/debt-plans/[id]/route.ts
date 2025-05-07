@@ -8,7 +8,10 @@ import connectToDatabase from "@/lib/mongodb";
 import DebtPlan from "@/models/DebtPlan";
 
 // Get a specific debt plan by ID
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -56,7 +59,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // Update a debt plan
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -121,7 +127,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // Delete a debt plan
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);

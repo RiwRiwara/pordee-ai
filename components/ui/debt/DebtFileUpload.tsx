@@ -1,7 +1,6 @@
 // components/ui/debt/DebtFileUpload.tsx
 import React from "react";
 import { Button } from "@heroui/button";
-import { FiUpload } from "react-icons/fi";
 
 import DebtFileItem from "./DebtFileItem";
 import { DebtFileUploadProps } from "./types";

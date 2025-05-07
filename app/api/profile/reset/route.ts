@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "../../auth/[...nextauth]/options";
+
 import connectToDatabase from "@/lib/mongodb";
-import User from "@/models/User";
 import Debt from "@/models/Debt";
 import DebtPayment from "@/models/DebtPayment";
 import DebtPlan from "@/models/DebtPlan";
@@ -28,29 +28,30 @@ export async function POST(request: NextRequest) {
     const resetPromises = [
       // Delete all user's debts
       Debt.deleteMany({ userId }),
-      
+
       // Delete all user's debt payments (based on debt IDs)
-      DebtPayment.deleteMany({ 
-        debtId: { 
-          $in: await Debt.find({ userId }).select('_id')
-        }
+      DebtPayment.deleteMany({
+        debtId: {
+          $in: await Debt.find({ userId }).select("_id"),
+        },
       }),
-      
+
       // Delete all user's debt plans
       DebtPlan.deleteMany({ userId }),
-      
+
       // Delete all user's finance data
       Finance.deleteMany({ userId }),
     ];
 
     await Promise.all(resetPromises);
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "User data has been reset successfully" 
+    return NextResponse.json({
+      success: true,
+      message: "User data has been reset successfully",
     });
   } catch (error) {
     console.error("Error resetting user data:", error);
+
     return NextResponse.json(
       { error: "Failed to reset user data" },
       { status: 500 },
