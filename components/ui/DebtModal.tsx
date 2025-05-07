@@ -14,7 +14,7 @@ import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import { FiSave, FiTrash2 } from "react-icons/fi";
 
-import { DebtCategory } from "./debt/DebtUtils";
+import { DebtCategory } from "@/types/debt";
 
 import { DebtItem } from "@/components/ui/types";
 import { useTracking } from "@/lib/tracking";

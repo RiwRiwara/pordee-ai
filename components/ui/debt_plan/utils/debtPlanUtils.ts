@@ -1,4 +1,5 @@
 import { DebtItem } from "../../types";
+import { DebtCategory } from "@/types/debt";
 
 // Interface for debt plan data
 export interface DebtPlanData {
@@ -13,15 +14,18 @@ export enum InterestCalculationMethod {
   FIXED_INTEREST = "fixed_interest",
 }
 
-// Define debt types
+// Define debt types using the standardized DebtCategory enum
 export const DEBT_TYPES = [
   { id: "all", label: "ทั้งหมด" },
-  { id: "personal", label: "สินเชื่อส่วนบุคคล" },
-  { id: "credit_card", label: "บัตรเครดิต" },
-  { id: "car", label: "สินเชื่อรถยนต์" },
-  { id: "home", label: "สินเชื่อบ้าน" },
-  { id: "business", label: "สินเชื่อธุรกิจ" },
-  { id: "other", label: "อื่นๆ" },
+  { id: "personal", label: DebtCategory.PersonalLoan },
+  { id: "credit_card", label: DebtCategory.CreditCard },
+  { id: "car", label: DebtCategory.VehicleLoan },
+  { id: "home", label: DebtCategory.HousingLoan },
+  { id: "business", label: DebtCategory.BusinessLoan },
+  { id: "revolving", label: DebtCategory.RevolvingDebt },
+  { id: "installment", label: DebtCategory.ProductInstallment },
+  { id: "informal", label: DebtCategory.InformalLoan },
+  { id: "other", label: DebtCategory.Other },
 ];
 
 // Format numbers with commas
@@ -47,19 +51,36 @@ export const filterDebtsByType = (
 
 // Map debt type to a category for filtering
 export const mapDebtTypeToCategory = (debtType: string): string => {
-  // Map debtType to categories used in DEBT_TYPES
-  if (debtType === "หนี้สินหมุนเวียน" || debtType === "บัตรเครดิต")
-    return "credit_card";
-  if (debtType === "สินเชื่อที่อยู่อาศัย" || debtType === "สินเชื่อบ้าน")
-    return "home";
-  if (debtType === "สินเชื่อรถยนต์" || debtType === "สินเชื่อรถยนต์")
-    return "car";
-  if (debtType === "สินเชื่อส่วนบุคคล") return "personal";
-  if (debtType === "สินเชื่อธุรกิจ") return "business";
-  if (debtType === "เงินกู้นอกระบบ") return "other";
-  if (debtType === "หนี้สินผ่อนสินค้า") return "other"; // Product installment
-
-  return "other";
+  // Map debtType to categories used in DEBT_TYPES based on the standardized DebtCategory enum
+  switch (debtType) {
+    case DebtCategory.CreditCard:
+      return "credit_card";
+    case DebtCategory.RevolvingDebt:
+      return "revolving";
+    case DebtCategory.HousingLoan:
+      return "home";
+    case DebtCategory.VehicleLoan:
+      return "car";
+    case DebtCategory.PersonalLoan:
+      return "personal";
+    case DebtCategory.BusinessLoan:
+      return "business";
+    case DebtCategory.InformalLoan:
+      return "informal";
+    case DebtCategory.ProductInstallment:
+      return "installment";
+    // Legacy mappings for backward compatibility
+    case "บัตรเครดิต":
+      return "credit_card";
+    case "สินเชื่อบ้าน":
+      return "home";
+    case "สินเชื่อรถยนต์":
+      return "car";
+    case "สินเชื่อ":
+      return "personal";
+    default:
+      return "other";
+  }
 };
 
 // Calculate minimum total monthly payment needed for all debts

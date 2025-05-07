@@ -20,6 +20,8 @@ import {
   calculateTimeToPayOffReducingBalance,
   calculateTimeToPayOffFixedInterest,
   InterestCalculationMethod,
+  mapDebtTypeToCategory,
+  DEBT_TYPES
 } from "../../utils/debtPlanUtils";
 
 // Process debt data from API and organize it by debt type
@@ -48,14 +50,22 @@ export const processDebtData = (debtData: DebtItem[]) => {
 
   // Add all debts to appropriate groups
   debtData.forEach((debt) => {
-    // Convert debtType to key format (lowercase with underscores)
-    const debtTypeKey = debt.debtType.toLowerCase().replace(/\s+/g, "_");
+    // Use the standardized debt type mapping function from debtPlanUtils
+    const debtTypeKey = mapDebtTypeToCategory(debt.debtType);
 
     if (!groupedDebts[debtTypeKey]) {
       groupedDebts[debtTypeKey] = [];
     }
 
     groupedDebts[debtTypeKey].push(debt);
+    
+    // Also add to 'all' category for total view
+    if (!groupedDebts['all']) {
+      groupedDebts['all'] = [];
+    }
+    if (debtTypeKey !== 'all') {
+      groupedDebts['all'].push(debt);
+    }
 
     // Add to totals
     totalOriginalAmount += debt.remainingAmount;

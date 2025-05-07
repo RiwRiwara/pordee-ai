@@ -1,15 +1,5 @@
 import { DebtItem } from "../types";
-
-// Define debt types for better categorization
-export enum DebtCategory {
-  RevolvingDebt = "หนี้สินหมุนเวียน",
-  ProductInstallment = "หนี้สินผ่อนสินค้า",
-  PersonalLoan = "สินเชื่อส่วนบุคคล",
-  HousingLoan = "สินเชื่อที่อยู่อาศัย",
-  VehicleLoan = "สินเชื่อรถยนต์",
-  InformalLoan = "เงินกู้นอกระบบ",
-  Other = "หนี้อื่นๆ",
-}
+import { DebtCategory } from "@/types/debt";
 
 // Priority order for categorizing debts to prevent duplicates
 export const categorizeDebt = (debt: DebtItem): DebtCategory => {
@@ -24,16 +14,26 @@ export const categorizeDebt = (debt: DebtItem): DebtCategory => {
     return DebtCategory.HousingLoan;
   if (debt.debtType === DebtCategory.VehicleLoan)
     return DebtCategory.VehicleLoan;
+  if (debt.debtType === DebtCategory.BusinessLoan)
+    return DebtCategory.BusinessLoan;
   if (debt.debtType === DebtCategory.InformalLoan)
     return DebtCategory.InformalLoan;
+  if (debt.debtType === DebtCategory.CreditCard)
+    return DebtCategory.CreditCard;
   if (debt.debtType === DebtCategory.Other) return DebtCategory.Other;
 
   // Then check for specific known types with strict matching
-  // 1. Revolving Debt (Credit cards, etc.)
+  // 1. Credit Card specifically
   if (
     debt.debtType === "บัตรเครดิต" ||
+    debt.originalPaymentType === "credit_card"
+  ) {
+    return DebtCategory.CreditCard;
+  }
+  
+  // 2. Revolving Debt (includes other revolving credit)
+  if (
     debt.originalPaymentType === "revolving" ||
-    debt.originalPaymentType === "credit_card" ||
     debt.originalPaymentType === "cash_card"
   ) {
     return DebtCategory.RevolvingDebt;
@@ -121,7 +121,9 @@ export const groupDebtsByCategory = (
     [DebtCategory.PersonalLoan]: [],
     [DebtCategory.HousingLoan]: [],
     [DebtCategory.VehicleLoan]: [],
+    [DebtCategory.BusinessLoan]: [],
     [DebtCategory.InformalLoan]: [],
+    [DebtCategory.CreditCard]: [],
     [DebtCategory.Other]: [],
   };
 
@@ -233,8 +235,12 @@ export const getCategoryColor = (category: DebtCategory): string => {
       return "bg-indigo-500";
     case DebtCategory.VehicleLoan:
       return "bg-cyan-500";
+    case DebtCategory.BusinessLoan:
+      return "bg-amber-500";
     case DebtCategory.InformalLoan:
       return "bg-red-500";
+    case DebtCategory.CreditCard:
+      return "bg-blue-600";
     case DebtCategory.Other:
       return "bg-gray-500";
     default:

@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
-
 import { IUser } from "./User";
+import { DebtCategory } from "@/types/debt";
 
 export interface IAttachment {
   url: string;
@@ -13,7 +13,7 @@ export interface IAttachment {
 export interface IDebt extends Document {
   userId: IUser["_id"];
   name: string;
-  debtType: "บัตรเครดิต" | "สินเชื่อ" | string;
+  debtType: DebtCategory | string;
   totalAmount: number;
   remainingAmount: number;
   interestRate: number;
@@ -42,7 +42,8 @@ const DebtSchema: Schema = new Schema(
     debtType: {
       type: String,
       required: true,
-      enum: ["บัตรเครดิต", "สินเชื่อ", "อื่นๆ"],
+      enum: Object.values(DebtCategory),
+      default: DebtCategory.Other,
     },
     totalAmount: {
       type: Number,

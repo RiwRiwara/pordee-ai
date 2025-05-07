@@ -92,14 +92,62 @@ export default function MainTabs({
 
   // Handle local navigation between debt types with data updates
   const handlePrevDebtType = useCallback(() => {
-    goToPrevDebtType();
-    // Data will automatically update via useEffect based on currentDebtTypeIndex change
-  }, [goToPrevDebtType]);
-
+    if (isLoading) return; // Prevent navigation during loading
+    setIsLoading(true);
+    
+    // Find the previous valid debt type that has data
+    let newIndex = currentDebtTypeIndex;
+    let attemptsLeft = DEBT_TYPES.length;
+    
+    while (attemptsLeft > 0) {
+      // Calculate new index with wraparound
+      newIndex = (newIndex - 1 + DEBT_TYPES.length) % DEBT_TYPES.length;
+      const debtTypeId = DEBT_TYPES[newIndex].id;
+      
+      // If we have data for this type, or it's "total", use it
+      if (debtTypeId === "total" || syncedDebtData[debtTypeId]) {
+        goToPrevDebtType();
+        break;
+      }
+      attemptsLeft--;
+    }
+    
+    // If we've gone through all types and none have data, just go back
+    if (attemptsLeft === 0) {
+      goToPrevDebtType();
+    }
+    
+    setTimeout(() => setIsLoading(false), 300); // Add a small delay to ensure smooth UI
+  }, [goToPrevDebtType, currentDebtTypeIndex, syncedDebtData, isLoading]);
+  
   const handleNextDebtType = useCallback(() => {
-    goToNextDebtType();
-    // Data will automatically update via useEffect based on currentDebtTypeIndex change
-  }, [goToNextDebtType]);
+    if (isLoading) return; // Prevent navigation during loading
+    setIsLoading(true);
+    
+    // Find the next valid debt type that has data
+    let newIndex = currentDebtTypeIndex;
+    let attemptsLeft = DEBT_TYPES.length;
+    
+    while (attemptsLeft > 0) {
+      // Calculate new index with wraparound
+      newIndex = (newIndex + 1) % DEBT_TYPES.length;
+      const debtTypeId = DEBT_TYPES[newIndex].id;
+      
+      // If we have data for this type, or it's "total", use it
+      if (debtTypeId === "total" || syncedDebtData[debtTypeId]) {
+        goToNextDebtType();
+        break;
+      }
+      attemptsLeft--;
+    }
+    
+    // If we've gone through all types and none have data, just go forward
+    if (attemptsLeft === 0) {
+      goToNextDebtType();
+    }
+    
+    setTimeout(() => setIsLoading(false), 300); // Add a small delay to ensure smooth UI
+  }, [goToNextDebtType, currentDebtTypeIndex, syncedDebtData, isLoading]);
 
   // Process debt data when it's available
   useEffect(() => {
@@ -265,10 +313,13 @@ export default function MainTabs({
       </div>
 
       {/* Debt Type Summary Card - Using our new DebtTypeSummary component */}
-      <DebtTypeSummary
-        currentDebtType={currentDebtType}
-        debtData={currentDebtData}
-      />
+      {/* Only show summary if we have data for this debt type */}
+      {(currentDebtType.id === "total" || syncedDebtData[currentDebtType.id]) && (
+        <DebtTypeSummary 
+          currentDebtType={currentDebtType}
+          debtData={currentDebtData}
+        />
+      )}
 
       {/* Main Content */}
       <div className="flex-1 p-4">
@@ -288,27 +339,28 @@ export default function MainTabs({
         {/* Chart Area */}
         {isLoading ? (
           <div className="h-64 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           </div>
-        ) : error ? (
-          <div className="h-64 flex items-center justify-center text-red-500">
-            <p>{error}</p>
+        ) : !currentDebtData ? (
+          <div className="h-64 flex flex-col items-center justify-center text-gray-500">
+            <div className="text-6xl opacity-30 mb-4">📊</div>
+            <p>ยังไม่มีข้อมูลหนี้</p>
+            <p className="text-sm mt-2">โปรดเพิ่มข้อมูลหนี้เพื่อดูการวิเคราะห์</p>
+          </div>
+        ) : activeTab === "ยอดหนี้รวม" ? (
+          <div className="h-64">
+            <LineChartComponent 
+              debtTypeData={currentDebtData} 
+              chartOptions={chartOptions} 
+            />
           </div>
         ) : (
-          <>
-            {/* Chart display based on selected tab */}
-            {activeTab === "ยอดหนี้รวม" ? (
-              <LineChartComponent
-                chartOptions={chartOptions}
-                debtTypeData={currentDebtData}
-              />
-            ) : (
-              <BarChartComponent
-                chartOptions={chartOptions}
-                debtDataByType={syncedDebtData}
-              />
-            )}
-          </>
+          <div className="h-64">
+            <BarChartComponent 
+              debtDataByType={syncedDebtData}
+              chartOptions={chartOptions}
+            />
+          </div>
         )}
       </div>
 

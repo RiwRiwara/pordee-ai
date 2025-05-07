@@ -4,11 +4,11 @@ import toast from "react-hot-toast";
 
 import DebtModal from "../DebtModal";
 import { DebtItem } from "../types";
+import { DebtCategory } from "@/types/debt";
 
 import DebtTypeSection from "./DebtTypeSection";
 import DebtDetailModal from "./DebtDetailModal";
 import {
-  DebtCategory,
   groupDebtsByCategory,
   formatNumber,
   calculateTotalAmount,

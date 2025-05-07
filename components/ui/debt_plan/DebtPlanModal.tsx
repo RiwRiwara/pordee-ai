@@ -67,19 +67,33 @@ export default function DebtPlanModal({
   existingPlanId,
   onSavePlan,
 }: DebtPlanModalProps) {
-  // Initialize tracking functionality
-  const { trackRadarView, trackEdit, trackCompletion } = useTracking();
+  // Initialize tracking functionality with limited events
+  // Only track modal open, close, and save events
+  const { trackRadarView, trackCompletion } = useTracking();
+  
+  // Track modal views with debounce to prevent excessive tracking
+  const [lastTracked, setLastTracked] = useState<Date | null>(null);
   // Ref for modal content
   const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
 
   const [activeFilter, setActiveFilter] = useState<string>("ทั้งหมด");
 
-  // Track when user views the radar page
+  // Track only when modal is opened or closed (with 1-minute debounce)
   useEffect(() => {
-    if (isOpen) {
+    // Only track if we haven't tracked in the last minute
+    const now = new Date();
+    const shouldTrack = !lastTracked || 
+                      now.getTime() - lastTracked.getTime() > 60000; // 1 minute debounce
+    
+    if (isOpen && shouldTrack) {
+      // Track modal open
       trackRadarView();
+      setLastTracked(now);
+    } else if (!isOpen && lastTracked) {
+      // Reset last tracked when modal closes
+      setLastTracked(null);
     }
-  }, [isOpen, trackRadarView]);
+  }, [isOpen, trackRadarView, lastTracked]);
 
   // Plan data state
   const [goalType, setGoalType] = useState<string>(initialGoalType);
@@ -164,7 +178,27 @@ export default function DebtPlanModal({
 
       setAcceleratedMonthlyPayment(Math.max(0, originalInterest - newInterest));
     }
-  }, [debtContext, paymentStrategy]);
+  }, [debtContext, paymentStrategy, goalType]);
+
+  // Calculate interest savings whenever monthly payment or strategy changes
+  useEffect(() => {
+    if (debtContext?.length > 0 && monthlyPayment > 0 && originalMonthlyPayment > 0) {
+      const originalInterest = calculateTotalInterestPaid(
+        debtContext,
+        originalMonthlyPayment,
+        paymentStrategy as any
+      );
+      
+      const newInterest = calculateTotalInterestPaid(
+        debtContext,
+        monthlyPayment,
+        paymentStrategy as any
+      );
+      
+      // Store the interest difference for the savings display
+      setAcceleratedMonthlyPayment(Math.max(0, originalInterest - newInterest));
+    }
+  }, [debtContext, monthlyPayment, originalMonthlyPayment, paymentStrategy]);
 
   // Update payment strategy based on goal slider
   useEffect(() => {
@@ -397,9 +431,9 @@ export default function DebtPlanModal({
         debtPlanData._id = existingPlanId;
       }
 
-      // Save to database
+      // Save to database - use PUT for updates, POST for new plans
       const response = await fetch("/api/debt-plans", {
-        method: "POST",
+        method: existingPlanId ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -699,14 +733,16 @@ export default function DebtPlanModal({
               }}
             />
 
+            {/* Interest values are calculated in a useEffect hook in the component body */}
+            
             <CalculatePlanSection
               currentDebtTypeId={currentDebtType.id}
-              newPlanMonthlyPayment={reducedMonthlyPayment}
-              newPlanTimeInMonths={reducedTimeInMonths}
+              newPlanMonthlyPayment={monthlyPayment}
+              newPlanTimeInMonths={timeInMonths}
               originalMonthlyPayment={originalMonthlyPayment}
               originalTimeInMonths={originalTimeInMonths}
-              savedAmount={acceleratedMonthlyPayment}
-              savedTimeInMonths={acceleratedTimeInMonths}
+              savedAmount={acceleratedMonthlyPayment} // Use the calculated interest difference
+              savedTimeInMonths={Math.max(0, originalTimeInMonths - timeInMonths)}
             />
 
             {/* AI Recommendation Section */}
@@ -780,8 +816,10 @@ export default function DebtPlanModal({
             <OverallDebtSection
               monthlyPayment={monthlyPayment}
               totalInterestSaved={
-                originalMonthlyPayment * originalTimeInMonths -
-                monthlyPayment * timeInMonths
+                Math.max(0, 
+                  (originalMonthlyPayment * originalTimeInMonths) -
+                  (monthlyPayment * timeInMonths)
+                )
               }
               totalRepaymentAmount={monthlyPayment * timeInMonths}
             />
