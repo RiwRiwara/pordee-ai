@@ -41,6 +41,7 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
   const [isAdjustPlanModalOpen, setIsAdjustPlanModalOpen] = useState(false);
   const [debts, setDebts] = useState<DebtItem[]>([]);
   const [activePlanId, setActivePlanId] = useState<string>("");
+  const [riskPercentage, setRiskPercentage] = useState(60); // Default risk percentage
 
   // Available goal types from the model
   const GOAL_TYPES = [
@@ -119,7 +120,7 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
           ? localStorage.getItem("anonymousId")
           : undefined,
         isActive: true,
-        // Include the existing plan ID if we're updating
+        debtItems: debts.map(debt => debt._id), // Include the debt items from real data
         _id: activePlanId || undefined,
       };
 
@@ -150,7 +151,7 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
       try {
         setIsLoading(true);
 
-        // Fetch debts
+        // Fetch debts - real data for debt context
         const debtsResponse = await fetch("/api/debts");
 
         // Fetch active debt plan
@@ -163,7 +164,7 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
         if (debtsResponse.ok) {
           const { debts } = await debtsResponse.json();
 
-          // Calculate totals
+          // Calculate totals from real debt data
           const total = debts.reduce(
             (sum: number, debt: DebtItem) => sum + debt.totalAmount,
             0,
@@ -177,7 +178,9 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
 
           // Calculate monthly payment (sum of all minimum payments)
           const monthly = debts.reduce((sum: number, debt: DebtItem) => {
-            return sum + (debt.minimumPayment || 0);
+            // Default to 5% of remaining if no minimum payment is set
+            const minPayment = debt.minimumPayment || Math.ceil(debt.remainingAmount * 0.05);
+            return sum + minPayment;
           }, 0);
 
           setTotalDebt(total);
@@ -186,6 +189,11 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
           setPaymentPercentage(percentage);
           setMonthlyPayment(monthly);
           setDebts(debts);
+
+          // Calculate a reasonable risk percentage based on debt-to-income ratio
+          // Here we're using a placeholder calculation - in a real app this would use the user's income data
+          const estimatedRiskPercentage = Math.min(Math.round((remaining / (monthly * 10)) * 100), 80);
+          setRiskPercentage(estimatedRiskPercentage);
         }
 
         // Process active plan if available
@@ -344,8 +352,8 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
               หากชำระหนี้ตามแผนคุณจะปลดหนี้ได้ภายใน{" "}
               {monthlyPayment > 0
                 ? calculateCompletionDate(
-                    Math.ceil(remainingDebt / monthlyPayment),
-                  )
+                  Math.ceil(remainingDebt / monthlyPayment),
+                )
                 : calculateCompletionDate(planData.timeInMonths)}
             </span>
           </button>
@@ -360,10 +368,15 @@ export default function PlannerSummary(props: PlannerSummaryProps) {
 
       {/* Adjust Plan Modal */}
       <DebtPlanModal
-        debtContext={debts}
+        debtContext={debts} /* Pass real debt data as context */
         isOpen={isAdjustPlanModalOpen}
         onOpenChange={setIsAdjustPlanModalOpen}
         onSavePlan={handlePlanUpdate}
+        riskPercentage={riskPercentage}
+        goalType={planData.goalType}
+        paymentStrategy={planData.paymentStrategy}
+        monthlyPayment={monthlyPayment}
+        timeInMonths={planData.timeInMonths}
       />
     </div>
   );

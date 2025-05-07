@@ -34,12 +34,18 @@ ChartJS.register(
 );
 
 // Import components
-import { DEBT_TYPES } from "./utils/debtPlanUtils";
+import {
+  DEBT_TYPES,
+  formatNumber,
+  calculateMinimumMonthlyPayment,
+  calculateMonthsToDebtFree,
+  calculateTotalInterestPaid,
+} from "./utils/debtPlanUtils";
 
 // Import new partials
 import AiAdvisorSection from "./partials/AiAdvisorSection";
 import MainTabs from "./partials/MainTabs";
-import CalulatePlanSection from "./partials/CalulatePlanSection";
+import CalculatePlanSection from "./partials/CalculatePlanSection";
 import AdjustPlanScrollRange from "./partials/AdjustPlanScrollRange";
 import OverallDebtSection from "./partials/OverallDebtSection";
 import { DebtPlan, DebtPlanModalProps } from "./types";
@@ -47,8 +53,9 @@ import SurveyModal from "./SurveyModal";
 
 import { useTracking } from "@/lib/tracking";
 import { getDTIRiskStatus, saveDTIRiskAssessment } from "@/lib/dtiService";
+import MyDebtCarosel from "./partials/MyDebtCarosel";
 
-export default function DebtPlanModalRefactored({
+export default function DebtPlanModal({
   isOpen,
   onOpenChange,
   debtContext,
@@ -64,6 +71,8 @@ export default function DebtPlanModalRefactored({
   const { trackRadarView, trackEdit, trackCompletion } = useTracking();
   // Ref for modal content
   const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
+
+  const [activeFilter, setActiveFilter] = useState<string>("ทั้งหมด");
 
   // Track when user views the radar page
   useEffect(() => {
@@ -108,49 +117,49 @@ export default function DebtPlanModalRefactored({
   // Calculate total debt and minimum payments
   useEffect(() => {
     if (debtContext?.length > 0) {
-      const totalDebt = debtContext.reduce(
-        (sum: number, debt: DebtItem) => sum + debt.remainingAmount,
-        0,
-      );
-
-      const minPayment = debtContext.reduce(
-        (sum: number, debt: DebtItem) => sum + (debt.minimumPayment || 0),
-        0,
-      );
-
-      // Set initial monthly payment to minimum payment
+      // --- Use helper utils for accurate calculations ---
+      const minPayment = calculateMinimumMonthlyPayment(debtContext);
       setMonthlyPayment(minPayment);
       setOriginalMonthlyPayment(minPayment);
       setSliderValue(minPayment);
 
-      // Calculate reduced payment (slightly less than original)
-      setReducedMonthlyPayment(Math.round(minPayment * 0.7));
+      // Calculate months to freedom for original (minimum) payment
+      const baseMonths = calculateMonthsToDebtFree(
+        debtContext,
+        minPayment,
+        paymentStrategy as any,
+      );
+      setTimeInMonths(baseMonths);
+      setOriginalTimeInMonths(baseMonths);
 
-      // Calculate accelerated payment (more than original)
-      setAcceleratedMonthlyPayment(Math.round(minPayment * 2.5));
+      // Propose a +20% payment for the comparison plan
+      const proposalPayment = Math.round(minPayment * 1.2);
+      setReducedMonthlyPayment(proposalPayment);
 
-      // Calculate time to pay off debt with current payment
-      if (minPayment > 0) {
-        const avgInterestRate =
-          debtContext.reduce(
-            (sum: number, debt: DebtItem) => sum + debt.interestRate,
-            0,
-          ) / debtContext.length;
+      const proposalMonths = calculateMonthsToDebtFree(
+        debtContext,
+        proposalPayment,
+        paymentStrategy as any,
+      );
+      setReducedTimeInMonths(proposalMonths);
 
-        // Simple calculation (in real app would be more complex)
-        const months = Math.ceil(totalDebt / minPayment);
+      // Time saved
+      setAcceleratedTimeInMonths(baseMonths - proposalMonths);
 
-        setTimeInMonths(months);
-        setOriginalTimeInMonths(months);
-
-        // Calculate reduced time (faster payoff)
-        setReducedTimeInMonths(Math.ceil(months * 0.8));
-
-        // Calculate accelerated time (much faster payoff)
-        setAcceleratedTimeInMonths(Math.ceil(months * 0.2));
-      }
+      // Interest saved
+      const originalInterest = calculateTotalInterestPaid(
+        debtContext,
+        minPayment,
+        paymentStrategy as any,
+      );
+      const newInterest = calculateTotalInterestPaid(
+        debtContext,
+        proposalPayment,
+        paymentStrategy as any,
+      );
+      setAcceleratedMonthlyPayment(Math.max(0, originalInterest - newInterest));
     }
-  }, [debtContext]);
+  }, [debtContext, paymentStrategy]);
 
   // Update payment strategy based on goal slider
   useEffect(() => {
@@ -270,19 +279,6 @@ export default function DebtPlanModalRefactored({
     setCurrentDebtTypeIndex((prev) =>
       prev === 0 ? DEBT_TYPES.length - 1 : prev - 1,
     );
-  };
-
-  // Get track color based on risk percentage
-  const getTrackColor = (riskPercentage: number) => {
-    if (riskPercentage <= 40) {
-      return "stroke-green-500";
-    } else if (riskPercentage <= 60) {
-      return "stroke-yellow-500";
-    } else if (riskPercentage <= 80) {
-      return "stroke-orange-500";
-    } else {
-      return "stroke-red-500";
-    }
   };
 
   // Get risk status from shared service
@@ -649,18 +645,48 @@ export default function DebtPlanModalRefactored({
               showAIRecommendation={showAIRecommendation}
               onDebtTypeChange={(
                 debtTypeId,
+                origTimeInMonths,
                 newTimeInMonths,
+                origMonthlyPayment,
+                newMonthlyPayment,
+                origInterestAmount,
                 newInterestAmount,
               ) => {
-                // Update the time and interest values based on debt type selection
+                // Use the real calculated time values from MainTabs
+                setOriginalTimeInMonths(origTimeInMonths);
+                setReducedTimeInMonths(newTimeInMonths);
+                
+                // Calculate time saved (difference between original and new plan)
+                const timeSaved = Math.max(0, origTimeInMonths - newTimeInMonths);
+                setAcceleratedTimeInMonths(timeSaved);
+                
+                // Use real payment amounts from calculations
+                setOriginalMonthlyPayment(origMonthlyPayment);
+                setReducedMonthlyPayment(newMonthlyPayment);
+                
+                // Calculate interest/money saved
+                const interestSaved = Math.max(0, origInterestAmount - newInterestAmount);
+                setAcceleratedMonthlyPayment(Math.round(interestSaved));
+                
+                // Update the main time value for other calculations
                 setTimeInMonths(newTimeInMonths);
-                // Could also update interest amount if needed in the UI
-                // This will sync with the calculation plan section
+                
+                // Log real values for debugging
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Debt type selected:', debtTypeId);
+                  console.log('Original time (months):', origTimeInMonths);
+                  console.log('New time (months):', newTimeInMonths);
+                  console.log('Original monthly payment:', origMonthlyPayment);
+                  console.log('New monthly payment:', newMonthlyPayment);
+                  console.log('Original interest:', origInterestAmount);
+                  console.log('New interest:', newInterestAmount);
+                  console.log('Time saved:', timeSaved);
+                  console.log('Interest saved:', interestSaved);
+                }
               }}
             />
 
-            {/* Calculation Plan Section */}
-            <CalulatePlanSection
+            <CalculatePlanSection
               currentDebtTypeId={currentDebtType.id}
               newPlanMonthlyPayment={reducedMonthlyPayment}
               newPlanTimeInMonths={reducedTimeInMonths}
@@ -678,6 +704,13 @@ export default function DebtPlanModalRefactored({
               timeInMonths={timeInMonths}
             />
 
+            {/* My Debt Section */}
+            <MyDebtCarosel
+              debts={debtContext}
+              activeFilter={activeFilter}
+              formatNumber={formatNumber}
+            />
+
             {/* Adjustable Plan Sliders */}
             <AdjustPlanScrollRange
               goalSliderValue={goalSliderValue}
@@ -690,20 +723,33 @@ export default function DebtPlanModalRefactored({
                 // Update monthly payment based on slider value
                 setMonthlyPayment(paymentValue);
 
-                // Adjust time in months based on payment changes
-                const ratio = originalMonthlyPayment / paymentValue;
-                const newTimeInMonths = Math.round(
-                  originalTimeInMonths * ratio,
+                // Re-calculate payoff time with real formula
+                const monthsNeeded = calculateMonthsToDebtFree(
+                  debtContext,
+                  paymentValue,
+                  paymentStrategy as any,
                 );
 
-                setTimeInMonths(newTimeInMonths);
+                setTimeInMonths(monthsNeeded);
 
-                // Update reduced and accelerated values based on goal slider
-                setReducedTimeInMonths(
-                  Math.round(newTimeInMonths * (1 - goalValue / 100)),
-                );
+                // Update reduced & accelerated metrics
+                setReducedTimeInMonths(monthsNeeded);
                 setAcceleratedTimeInMonths(
-                  Math.round(originalTimeInMonths - newTimeInMonths),
+                  Math.max(0, originalTimeInMonths - monthsNeeded),
+                );
+
+                const originalInterest = calculateTotalInterestPaid(
+                  debtContext,
+                  originalMonthlyPayment,
+                  paymentStrategy as any,
+                );
+                const newInterest = calculateTotalInterestPaid(
+                  debtContext,
+                  paymentValue,
+                  paymentStrategy as any,
+                );
+                setAcceleratedMonthlyPayment(
+                  Math.max(0, originalInterest - newInterest),
                 );
               }}
             />

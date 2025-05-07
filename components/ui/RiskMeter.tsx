@@ -10,10 +10,13 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
+import { Radio, RadioGroup } from "@heroui/radio";
 import ReactMarkdown from "react-markdown";
 import { useSession } from "next-auth/react";
 
 import DebtPlanModal from "./debt_plan/DebtPlanModal";
+import { useCustomToast } from "./ToastNotification";
+import { useTracking } from "@/lib/tracking";
 
 import AIService, {
   createDebtPrompt,
@@ -102,6 +105,10 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
     useState<boolean>(false);
   const [isDebtPlanModalOpen, setIsDebtPlanModalOpen] =
     useState<boolean>(false);
+  const [isPlanSelectionModalOpen, setIsPlanSelectionModalOpen] = useState<boolean>(false);
+  const [selectedPlan, setSelectedPlan] = useState<"quick" | "save" | "balanced" | null>(null);
+  const { showNotification } = useCustomToast();
+  const { trackEdit, trackPlannerStart } = useTracking();
 
   // Get fallback AI insight based on risk level
   const getFallbackInsight = () => {
@@ -244,6 +251,51 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
     );
   };
 
+  // Plan types
+  type PlanType = "quick" | "save" | "balanced" | null;
+
+  interface Plan {
+    id: PlanType;
+    title: string;
+    description: string;
+  }
+
+  const plans: Plan[] = [
+    {
+      id: "quick",
+      title: "เห็นผลเร็ว",
+      description: "เลือกจ่ายหนี้ก้อนเล็กก่อน เพื่อปลดหนี้ก้อนแรกได้ไว",
+    },
+    {
+      id: "save",
+      title: "คุ้มที่สุด",
+      description: "โฟกัสหนี้ดอกเบี้ยสูง ลดต้นทุนได้มากที่สุดเฉพาะบุคคล",
+    },
+    {
+      id: "balanced",
+      title: "แผนสมดุล",
+      description:
+        "ผสมผสานวิธีการชำระหนี้ เพื่อสมดุลระหว่างความเร็วและความคุ้มค่า",
+    },
+  ];
+
+  const handleSavePlan = () => {
+    // Show success notification
+    showNotification(
+      "เลือกแผนสำเร็จ",
+      "แผนการชำระหนี้ของคุณถูกบันทึกแล้ว",
+      "solid",
+      "success"
+    );
+    
+    // Track edit when user saves a plan
+    trackEdit();
+    
+    // Close plan selection modal and open debt plan modal
+    setIsPlanSelectionModalOpen(false);
+    setIsDebtPlanModalOpen(true);
+  };
+
   return (
     <div className="rounded-xl border border-gray-200 p-4 bg-white shadow-sm">
       <h2 className="text-lg font-semibold mb-1">ระดับความเสี่ยงของคุณ</h2>
@@ -350,10 +402,83 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
         aria-label="เริ่มวางแผนจัดการหนี้"
         className="w-full py-3"
         color="primary"
-        onPress={() => setIsDebtPlanModalOpen(true)}
+        onPress={() => setIsPlanSelectionModalOpen(true)}
       >
         เริ่มวางแผนจัดการหนี้
       </Button>
+
+      {/* Plan Selection Modal */}
+      <Modal
+        aria-label="เลือกเป้าหมายของคุณ"
+        classNames={{
+          backdrop: "bg-[rgba(0,0,0,0.5)]",
+          base: "mx-auto",
+        }}
+        isOpen={isPlanSelectionModalOpen}
+        placement="center"
+        size="md"
+        onClose={() => setIsPlanSelectionModalOpen(false)}
+      >
+        <ModalContent className="max-h-[80vh] rounded-lg overflow-hidden">
+          <ModalHeader className="border-b border-gray-200 px-5 py-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">เลือกเป้าหมายของคุณ</h2>
+            </div>
+          </ModalHeader>
+
+          <div className="px-5 py-4 overflow-y-auto">
+            <RadioGroup
+              className="space-y-4"
+              value={selectedPlan !== null ? selectedPlan : ""}
+              onValueChange={(value) => {
+                // Track edit when user selects a plan
+                trackEdit();
+
+                // Handle value as appropriate PlanType
+                if (value === "") {
+                  setSelectedPlan(null);
+                } else {
+                  setSelectedPlan(value as "quick" | "save" | "balanced");
+                }
+              }}
+            >
+              {plans.map((plan) => (
+                <Radio
+                  key={plan.id}
+                  className="p-4 border rounded-xl hover:border-primary-200 transition-colors"
+                  classNames={{
+                    base: "max-w-full",
+                    label: "font-medium",
+                    description: "text-gray-600 text-sm mt-1",
+                  }}
+                  description={plan.description}
+                  value={(plan.id as PlanType) || "quick"}
+                >
+                  {plan.title}
+                </Radio>
+              ))}
+            </RadioGroup>
+          </div>
+
+          <div className="px-5 py-4 border-t border-gray-200 flex justify-end space-x-3 mt-2">
+            <Button
+              className="px-4"
+              color="default"
+              variant="light"
+              onPress={() => setIsPlanSelectionModalOpen(false)}
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              className="px-5 font-medium shadow-sm"
+              color="primary"
+              onPress={handleSavePlan}
+            >
+              บันทึก
+            </Button>
+          </div>
+        </ModalContent>
+      </Modal>
 
       {/* Debt Plan Modal */}
       <DebtPlanModal
@@ -383,7 +508,7 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
               : undefined,
           })) || [] /* Pass as array, not object */
         }
-        goalType="เห็นผลเร็ว"
+        goalType={selectedPlan || "เห็นผลเร็ว"}
         isOpen={isDebtPlanModalOpen}
         monthlyPayment={
           debtContext?.debtItems.reduce((sum, debt) => {

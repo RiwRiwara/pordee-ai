@@ -1,0 +1,513 @@
+import React, { useEffect, useState, useCallback } from "react";
+import { FiArrowLeft, FiArrowRight, FiInfo } from "react-icons/fi";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
+
+import {
+  DEBT_TYPES,
+  InterestCalculationMethod,
+  calculateTimeToPayOffReducingBalance,
+  calculateTimeToPayOffFixedInterest,
+  calculateRemainingDebtReducingBalance,
+} from "../utils/debtPlanUtils";
+import { DebtItem } from "../../types";
+import { DebtPlanData } from "./types";
+
+// Import refactored chart components
+import { 
+  LineChartComponent, 
+  BarChartComponent, 
+  DebtTypeSummary,
+  generateLineChartData,
+  generateBarChartData
+} from "./chart_summary";
+
+// Register ChartJS components including Filler plugin
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+);
+
+// Interface for API response
+interface DebtApiResponse {
+  debts: DebtItem[];
+}
+
+interface MainTabsProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  currentDebtTypeIndex: number;
+  setCurrentDebtTypeIndex: (index: number) => void;
+  generateChartData: (debtTypeId: string) => any;
+  chartOptions: any;
+  goToNextDebtType: () => void;
+  goToPrevDebtType: () => void;
+  showAIRecommendation: boolean;
+  setShowAIRecommendation: (show: boolean) => void;
+  debtData?: DebtItem[];
+  onDebtTypeChange?: (
+    debtTypeId: string,
+    originalTimeInMonths: number,
+    newPlanTimeInMonths: number,
+    originalMonthlyPayment: number,
+    newPlanMonthlyPayment: number,
+    originalInterest: number,
+    newPlanInterest: number,
+  ) => void;
+}
+
+// States for component
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState<string | null>(null);
+const [syncedDebtData, setSyncedDebtData] = useState<Record<string, DebtPlanData>>({});
+const [calculationMethod, setCalculationMethod] =
+  useState<InterestCalculationMethod>(
+    InterestCalculationMethod.REDUCING_BALANCE,
+  );
+
+// Fetch debt data from the API
+const fetchDebtData = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
+
+    const response = await fetch("/api/debts");
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch debt data");
+    }
+
+    const data: DebtApiResponse = await response.json();
+
+    if (data && data.debts) {
+      // Process the debt data and update the state
+      const processedData = processDebtData(data.debts);
+
+      setSyncedDebtData(processedData);
+    }
+  } catch (err) {
+    console.error("Error fetching debt data:", err);
+    setError("เกิดข้อผิดพลาดในการประมวลผลข้อมูล");
+  } finally {
+    setIsLoading(false);
+  }
+}, []);
+
+// Process the debt data from the API and calculate payment plans
+const processDebtData = useCallback((debts: DebtItem[]): Record<string, DebtPlanData> => {
+  if (!debts || debts.length === 0) {
+    return {}; // Return empty object if no debts
+  }
+
+  const result: Record<string, DebtPlanData> = {};
+
+  // Group debts by type
+  const debtsByType: Record<string, DebtItem[]> = {};
+
+  // Initialize with total
+  debtsByType["total"] = [...debts];
+
+  // Group by debt type
+  debts.forEach((debt) => {
+    const debtTypeId =
+      DEBT_TYPES.find(
+        (type) =>
+          type.label === debt.debtType ||
+          (type.id === "credit_card" && debt.debtType === "บัตรเครดิต") ||
+          (type.id === "personal_loan" && debt.debtType === "สินเชื่อส่วนบุคคล") ||
+          (type.id === "auto_loan" && debt.debtType === "สินเชื่อรถยนต์") ||
+          (type.id === "mortgage" && debt.debtType === "สินเชื่อบ้าน"),
+      )?.id || "other";
+
+    if (!debtsByType[debtTypeId]) {
+      debtsByType[debtTypeId] = [];
+    }
+
+    debtsByType[debtTypeId].push(debt);
+  });
+
+  // Calculate data for each debt type
+  Object.entries(debtsByType).forEach(([debtTypeId, typeDebts]) => {
+    // Skip if no debts for this type
+    if (typeDebts.length === 0) return;
+
+    // Find the corresponding debt type label
+    const debtTypeLabel =
+      DEBT_TYPES.find((type) => type.id === debtTypeId)?.label || "อื่นๆ";
+
+    // Calculate totals
+    const totalRemainingAmount = typeDebts.reduce(
+      (sum, debt) => sum + debt.remainingAmount,
+      0,
+    );
+    const avgInterestRate =
+      typeDebts.reduce((sum, debt) => sum + debt.interestRate, 0) /
+      typeDebts.length;
+
+    // Calculate minimum payment (use existing or 3% of balance)
+    const minMonthlyPayment = typeDebts.reduce((sum, debt) => {
+      return (
+        sum +
+        (debt.minimumPayment || Math.max(debt.remainingAmount * 0.03, 500))
+      );
+    }, 0);
+
+    // Calculate recommended payment (20% higher than minimum)
+    const recommendedMonthlyPayment = minMonthlyPayment * 1.2;
+
+    // Calculate time to pay off for both payment plans based on the selected calculation method
+    let originalTimeInMonths, newPlanTimeInMonths;
+
+    if (calculationMethod === InterestCalculationMethod.REDUCING_BALANCE) {
+      originalTimeInMonths = calculateTimeToPayOffReducingBalance(
+        totalRemainingAmount,
+        avgInterestRate,
+        minMonthlyPayment,
+      );
+      newPlanTimeInMonths = calculateTimeToPayOffReducingBalance(
+        totalRemainingAmount,
+        avgInterestRate,
+        recommendedMonthlyPayment,
+      );
+    } else {
+      originalTimeInMonths = calculateTimeToPayOffFixedInterest(
+        totalRemainingAmount,
+        avgInterestRate,
+        minMonthlyPayment,
+      );
+      newPlanTimeInMonths = calculateTimeToPayOffFixedInterest(
+        totalRemainingAmount,
+        avgInterestRate,
+        recommendedMonthlyPayment,
+      );
+    }
+
+    // Cap at reasonable values
+    originalTimeInMonths = Math.min(originalTimeInMonths, 120); // Max 10 years
+    newPlanTimeInMonths = Math.min(newPlanTimeInMonths, 120); // Max 10 years
+
+    // Calculate total interest paid
+    const originalInterest =
+      minMonthlyPayment * originalTimeInMonths - totalRemainingAmount;
+    const newPlanInterest =
+      recommendedMonthlyPayment * newPlanTimeInMonths - totalRemainingAmount;
+
+    // Generate monthly data for charts
+    const maxMonths = Math.max(originalTimeInMonths, newPlanTimeInMonths);
+    const monthlyData = Array.from({ length: maxMonths }, (_, i) => {
+      const month = i + 1;
+      let originalAmount = 0;
+      let newPlanAmount = 0;
+
+      // Calculate remaining balance for each month
+      if (month <= originalTimeInMonths) {
+        if (
+          calculationMethod === InterestCalculationMethod.REDUCING_BALANCE
+        ) {
+          // For reducing balance, calculate remaining principal
+          const remainingMonths = originalTimeInMonths - month;
+
+          originalAmount = calculateRemainingDebtReducingBalance(
+            minMonthlyPayment,
+            avgInterestRate,
+            remainingMonths,
+          );
+        } else {
+          // For fixed interest, calculate linearly
+          originalAmount =
+            totalRemainingAmount * (1 - month / originalTimeInMonths);
+        }
+      }
+
+      if (month <= newPlanTimeInMonths) {
+        if (
+          calculationMethod === InterestCalculationMethod.REDUCING_BALANCE
+        ) {
+          // For reducing balance, calculate remaining principal
+          const remainingMonths = newPlanTimeInMonths - month;
+
+          newPlanAmount = calculateRemainingDebtReducingBalance(
+            recommendedMonthlyPayment,
+            avgInterestRate,
+            remainingMonths,
+          );
+        } else {
+          // For fixed interest, calculate linearly
+          newPlanAmount =
+            totalRemainingAmount * (1 - month / newPlanTimeInMonths);
+        }
+      }
+
+      // Ensure non-negative values
+      originalAmount = Math.max(0, originalAmount);
+      newPlanAmount = Math.max(0, newPlanAmount);
+
+      return {
+        month,
+        originalAmount,
+        newPlanAmount,
+      };
+    });
+
+    // Create the debt plan data
+    result[debtTypeId] = {
+      id: debtTypeId,
+      label: debtTypeLabel,
+      originalTotalAmount: totalRemainingAmount,
+      newPlanTotalAmount: totalRemainingAmount,
+      originalTimeInMonths,
+      newPlanTimeInMonths,
+      originalInterest,
+      newPlanInterest,
+      monthlyData,
+    };
+  });
+
+  // If no data was processed, return empty object
+  return Object.keys(result).length > 0 ? result : {};
+}, [calculationMethod]);
+
+// Use useEffect to process real debt data when it's available
+useEffect(() => {
+  if (debtData && debtData.length > 0) {
+    setIsLoading(true);
+    try {
+      // Use the refactored processDebtData function from chart_summary
+      const processedData = processDebtData(debtData);
+      setSyncedDebtData(processedData);
+    } catch (err) {
+      console.error("Error processing debt data:", err);
+      setError("เกิดข้อผิดพลาดในการประมวลผลข้อมูล");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+}, [debtData]);
+
+// Fetch debt data on component mount
+useEffect(() => {
+  fetchDebtData();
+}, [fetchDebtData]);
+
+// Notify parent component when debt type changes or when debt data is updated
+useEffect(() => {
+  // Get the current debt type
+  const currentDebtType = DEBT_TYPES[currentDebtTypeIndex];
+  
+  // Get the current debt data for the selected type
+  const currentData =
+    syncedDebtData[currentDebtType.id] || syncedDebtData["total"];
+
+  if (onDebtTypeChange && currentData) {
+    // Calculate the minimum monthly payment
+    const minMonthlyPayment = currentData.originalTotalAmount / currentData.originalTimeInMonths;
+
+    // Calculate the recommended monthly payment
+    const recommendedMonthlyPayment = currentData.newPlanTotalAmount / currentData.newPlanTimeInMonths;
+
+    // Provide accurate time in months, real payment data, and interest amounts
+    onDebtTypeChange(
+      currentDebtType.id,
+      currentData.originalTimeInMonths,
+      currentData.newPlanTimeInMonths,
+      minMonthlyPayment,
+      recommendedMonthlyPayment,
+      currentData.originalInterest,
+      currentData.newPlanInterest
+    );
+  }
+}, [currentDebtTypeIndex, syncedDebtData, onDebtTypeChange]);
+
+// Get current debt type
+const currentDebtType = DEBT_TYPES[currentDebtTypeIndex];
+  
+// Get current debt data
+const currentDebtData = syncedDebtData[currentDebtType.id] || {
+  id: currentDebtType.id,
+  label: currentDebtType.label,
+  originalTotalAmount: 0,
+  newPlanTotalAmount: 0,
+  originalTimeInMonths: 0,
+  newPlanTimeInMonths: 0,
+  originalInterest: 0,
+  newPlanInterest: 0,
+  monthlyData: [],
+};
+
+export default function MainTabs({
+  activeTab,
+  setActiveTab,
+  currentDebtTypeIndex,
+  setCurrentDebtTypeIndex,
+  generateChartData,
+  chartOptions,
+  goToNextDebtType,
+  goToPrevDebtType,
+  showAIRecommendation,
+  setShowAIRecommendation,
+  debtData,
+  onDebtTypeChange,
+}: MainTabsProps) {
+  return (
+    <div className="rounded-xl bg-white shadow-sm overflow-hidden flex flex-col">
+      {/* Debt Type Navigation */}
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <button
+          onClick={goToPrevDebtType}
+          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+          aria-label="Previous debt type"
+        >
+          <FiArrowLeft />
+        </button>
+
+        <div className="text-center">
+          <h2 className="text-lg font-medium">{currentDebtType.label}</h2>
+        </div>
+
+        <button
+          onClick={goToNextDebtType}
+          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+          aria-label="Next debt type"
+        >
+          <FiArrowRight />
+        </button>
+      </div>
+
+      {/* Debt Type Summary Card - Using our new DebtTypeSummary component */}
+      <DebtTypeSummary 
+        currentDebtType={currentDebtType}
+        debtData={currentDebtData}
+        showAIRecommendation={showAIRecommendation}
+      />
+
+      {/* Debt Trend Chart */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-medium">แนวโน้มการชำระหนี้</h3>
+            <div className="flex items-center space-x-2">
+              <button
+                aria-label="Toggle AI recommendation"
+                className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+                onClick={() => setShowAIRecommendation(!showAIRecommendation)}
+              >
+                <FiInfo size={14} />
+              </button>
+            </div>
+          </div>
+          {isLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+            </div>
+          ) : error ? (
+            <div className="h-64 flex items-center justify-center text-red-500">
+              <p>{error}</p>
+            </div>
+          ) : (
+            <div className="h-64 border border-gray-200 rounded-lg p-2">
+              {activeTab === "ยอดหนี้รวม" ? (
+                <LineChartComponent 
+                  data={generateChartData(currentDebtType.id)}
+                  options={{
+                    ...chartOptions,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: {
+                          display: true,
+                          text: "ยอดหนี้ (บาท)",
+                        },
+                        ticks: {
+                          callback: function (value: string | number) {
+                            return typeof value === "number"
+                              ? value.toLocaleString("th-TH")
+                              : value;
+                          },
+                        },
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: "เดือน",
+                        },
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <BarChartComponent 
+                  data={generateChartData()}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: {
+                          display: true,
+                          text: "ยอดหนี้ (บาท)",
+                        },
+                        ticks: {
+                          callback: function (value: string | number) {
+                            return typeof value === "number"
+                              ? value.toLocaleString("th-TH")
+                              : value;
+                          },
+                        },
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: "ประเภทหนี้",
+                        },
+                      },
+                    },
+                    plugins: chartOptions.plugins,
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+        </div>
+
+      {/* Pagination Dots for Debt Type Navigation */}
+      <div className="flex justify-center gap-1 mb-4">
+        {DEBT_TYPES.map((type, index) => (
+          <div
+            key={type.id}
+            aria-label={`Select ${type.label} debt type`}
+            className={`w-2 h-2 rounded-full ${index === currentDebtTypeIndex ? "bg-blue-500" : "bg-gray-300"}`}
+            role="button"
+            style={{ cursor: "pointer" }}
+            tabIndex={0}
+            onClick={() => setCurrentDebtTypeIndex(index)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setCurrentDebtTypeIndex(index);
+              }
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
