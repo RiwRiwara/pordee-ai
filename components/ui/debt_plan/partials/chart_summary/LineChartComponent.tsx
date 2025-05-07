@@ -1,16 +1,18 @@
-import React from 'react';
-import { Line } from 'react-chartjs-2';
-import { DebtPlanData } from '../types';
-import { generateLineChartData } from './chartUtils';
+import React from "react";
+import { Line } from "react-chartjs-2";
+
+import { DebtPlanData } from "../types";
+
+import { generateLineChartData } from "./chartUtils";
 
 interface LineChartComponentProps {
   debtTypeData: DebtPlanData;
   chartOptions: any;
 }
 
-const LineChartComponent: React.FC<LineChartComponentProps> = ({ 
+const LineChartComponent: React.FC<LineChartComponentProps> = ({
   debtTypeData,
-  chartOptions 
+  chartOptions,
 }) => {
   return (
     <div className="h-64 border border-gray-200 rounded-lg p-2">

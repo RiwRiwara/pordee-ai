@@ -1,7 +1,12 @@
-import LineChartComponent from './LineChartComponent';
-import BarChartComponent from './BarChartComponent';
-import DebtTypeSummary from './DebtTypeSummary';
-import { generateLineChartData, generateBarChartData, processDebtData, getDebtTypeLabel } from './chartUtils';
+import LineChartComponent from "./LineChartComponent";
+import BarChartComponent from "./BarChartComponent";
+import DebtTypeSummary from "./DebtTypeSummary";
+import {
+  generateLineChartData,
+  generateBarChartData,
+  processDebtData,
+  getDebtTypeLabel,
+} from "./chartUtils";
 
 export {
   LineChartComponent,
@@ -10,5 +15,5 @@ export {
   generateLineChartData,
   generateBarChartData,
   processDebtData,
-  getDebtTypeLabel
+  getDebtTypeLabel,
 };

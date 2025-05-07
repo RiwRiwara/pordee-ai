@@ -1,5 +1,3 @@
-import { DebtItem } from "../../types";
-
 export interface DebtPlanData {
   id: string;
   label: string;

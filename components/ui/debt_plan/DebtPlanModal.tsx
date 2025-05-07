@@ -50,10 +50,10 @@ import AdjustPlanScrollRange from "./partials/AdjustPlanScrollRange";
 import OverallDebtSection from "./partials/OverallDebtSection";
 import { DebtPlan, DebtPlanModalProps } from "./types";
 import SurveyModal from "./SurveyModal";
+import MyDebtCarosel from "./partials/MyDebtCarosel";
 
 import { useTracking } from "@/lib/tracking";
 import { getDTIRiskStatus, saveDTIRiskAssessment } from "@/lib/dtiService";
-import MyDebtCarosel from "./partials/MyDebtCarosel";
 
 export default function DebtPlanModal({
   isOpen,
@@ -119,6 +119,7 @@ export default function DebtPlanModal({
     if (debtContext?.length > 0) {
       // --- Use helper utils for accurate calculations ---
       const minPayment = calculateMinimumMonthlyPayment(debtContext);
+
       setMonthlyPayment(minPayment);
       setOriginalMonthlyPayment(minPayment);
       setSliderValue(minPayment);
@@ -129,11 +130,13 @@ export default function DebtPlanModal({
         minPayment,
         paymentStrategy as any,
       );
+
       setTimeInMonths(baseMonths);
       setOriginalTimeInMonths(baseMonths);
 
       // Propose a +20% payment for the comparison plan
       const proposalPayment = Math.round(minPayment * 1.2);
+
       setReducedMonthlyPayment(proposalPayment);
 
       const proposalMonths = calculateMonthsToDebtFree(
@@ -141,6 +144,7 @@ export default function DebtPlanModal({
         proposalPayment,
         paymentStrategy as any,
       );
+
       setReducedTimeInMonths(proposalMonths);
 
       // Time saved
@@ -157,6 +161,7 @@ export default function DebtPlanModal({
         proposalPayment,
         paymentStrategy as any,
       );
+
       setAcceleratedMonthlyPayment(Math.max(0, originalInterest - newInterest));
     }
   }, [debtContext, paymentStrategy]);
@@ -655,33 +660,41 @@ export default function DebtPlanModal({
                 // Use the real calculated time values from MainTabs
                 setOriginalTimeInMonths(origTimeInMonths);
                 setReducedTimeInMonths(newTimeInMonths);
-                
+
                 // Calculate time saved (difference between original and new plan)
-                const timeSaved = Math.max(0, origTimeInMonths - newTimeInMonths);
+                const timeSaved = Math.max(
+                  0,
+                  origTimeInMonths - newTimeInMonths,
+                );
+
                 setAcceleratedTimeInMonths(timeSaved);
-                
+
                 // Use real payment amounts from calculations
                 setOriginalMonthlyPayment(origMonthlyPayment);
                 setReducedMonthlyPayment(newMonthlyPayment);
-                
+
                 // Calculate interest/money saved
-                const interestSaved = Math.max(0, origInterestAmount - newInterestAmount);
+                const interestSaved = Math.max(
+                  0,
+                  origInterestAmount - newInterestAmount,
+                );
+
                 setAcceleratedMonthlyPayment(Math.round(interestSaved));
-                
+
                 // Update the main time value for other calculations
                 setTimeInMonths(newTimeInMonths);
-                
+
                 // Log real values for debugging
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('Debt type selected:', debtTypeId);
-                  console.log('Original time (months):', origTimeInMonths);
-                  console.log('New time (months):', newTimeInMonths);
-                  console.log('Original monthly payment:', origMonthlyPayment);
-                  console.log('New monthly payment:', newMonthlyPayment);
-                  console.log('Original interest:', origInterestAmount);
-                  console.log('New interest:', newInterestAmount);
-                  console.log('Time saved:', timeSaved);
-                  console.log('Interest saved:', interestSaved);
+                if (process.env.NODE_ENV === "development") {
+                  console.log("Debt type selected:", debtTypeId);
+                  console.log("Original time (months):", origTimeInMonths);
+                  console.log("New time (months):", newTimeInMonths);
+                  console.log("Original monthly payment:", origMonthlyPayment);
+                  console.log("New monthly payment:", newMonthlyPayment);
+                  console.log("Original interest:", origInterestAmount);
+                  console.log("New interest:", newInterestAmount);
+                  console.log("Time saved:", timeSaved);
+                  console.log("Interest saved:", interestSaved);
                 }
               }}
             />
@@ -706,8 +719,8 @@ export default function DebtPlanModal({
 
             {/* My Debt Section */}
             <MyDebtCarosel
-              debts={debtContext}
               activeFilter={activeFilter}
+              debts={debtContext}
               formatNumber={formatNumber}
             />
 
@@ -748,6 +761,7 @@ export default function DebtPlanModal({
                   paymentValue,
                   paymentStrategy as any,
                 );
+
                 setAcceleratedMonthlyPayment(
                   Math.max(0, originalInterest - newInterest),
                 );

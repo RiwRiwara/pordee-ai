@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
 import {
   Chart as ChartJS,
@@ -15,16 +15,15 @@ import {
 
 import { DEBT_TYPES } from "../utils/debtPlanUtils";
 import { DebtItem } from "../../types";
+
 import { DebtPlanData } from "./types";
 
 // Import refactored chart components
-import { 
-  LineChartComponent, 
-  BarChartComponent, 
+import {
+  LineChartComponent,
+  BarChartComponent,
   DebtTypeSummary,
   processDebtData as processDebtDataUtil,
-  generateLineChartData,
-  generateBarChartData
 } from "./chart_summary";
 
 // Register ChartJS components including Filler plugin
@@ -83,7 +82,9 @@ export default function MainTabs({
   // States for component
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [syncedDebtData, setSyncedDebtData] = useState<Record<string, DebtPlanData>>({});
+  const [syncedDebtData, setSyncedDebtData] = useState<
+    Record<string, DebtPlanData>
+  >({});
 
   // Get current debt type
   const currentDebtType = DEBT_TYPES[currentDebtTypeIndex];
@@ -95,6 +96,7 @@ export default function MainTabs({
       try {
         // Use the utility function to process debt data
         const processedData = processDebtDataUtil(debtData);
+
         setSyncedDebtData(processedData);
       } catch (err) {
         console.error("Error processing debt data:", err);
@@ -106,34 +108,36 @@ export default function MainTabs({
   }, [debtData]);
 
   // Get current debt data
-  const currentDebtData = 
-    syncedDebtData[currentDebtType.id] || {
-      id: currentDebtType.id,
-      label: currentDebtType.label,
-      originalTotalAmount: 0,
-      newPlanTotalAmount: 0,
-      originalTimeInMonths: 0,
-      newPlanTimeInMonths: 0,
-      originalInterest: 0,
-      newPlanInterest: 0,
-      monthlyData: [],
-    };
+  const currentDebtData = syncedDebtData[currentDebtType.id] || {
+    id: currentDebtType.id,
+    label: currentDebtType.label,
+    originalTotalAmount: 0,
+    newPlanTotalAmount: 0,
+    originalTimeInMonths: 0,
+    newPlanTimeInMonths: 0,
+    originalInterest: 0,
+    newPlanInterest: 0,
+    monthlyData: [],
+  };
 
   // Notify parent component when debt type changes
   useEffect(() => {
     if (onDebtTypeChange && Object.keys(syncedDebtData).length > 0) {
-      const data = syncedDebtData[currentDebtType.id] || syncedDebtData["total"];
-      
+      const data =
+        syncedDebtData[currentDebtType.id] || syncedDebtData["total"];
+
       if (data) {
         // Calculate minimum and recommended monthly payments
-        const minMonthlyPayment = data.originalTimeInMonths > 0 
-          ? data.originalTotalAmount / data.originalTimeInMonths 
-          : 0;
-          
-        const recommendedMonthlyPayment = data.newPlanTimeInMonths > 0 
-          ? data.newPlanTotalAmount / data.newPlanTimeInMonths 
-          : 0;
-          
+        const minMonthlyPayment =
+          data.originalTimeInMonths > 0
+            ? data.originalTotalAmount / data.originalTimeInMonths
+            : 0;
+
+        const recommendedMonthlyPayment =
+          data.newPlanTimeInMonths > 0
+            ? data.newPlanTotalAmount / data.newPlanTimeInMonths
+            : 0;
+
         // Provide data to parent component
         onDebtTypeChange(
           currentDebtType.id,
@@ -142,20 +146,25 @@ export default function MainTabs({
           minMonthlyPayment,
           recommendedMonthlyPayment,
           data.originalInterest,
-          data.newPlanInterest
+          data.newPlanInterest,
         );
       }
     }
-  }, [currentDebtType.id, currentDebtTypeIndex, onDebtTypeChange, syncedDebtData]);
+  }, [
+    currentDebtType.id,
+    currentDebtTypeIndex,
+    onDebtTypeChange,
+    syncedDebtData,
+  ]);
 
   return (
     <div className="rounded-xl bg-white shadow-sm overflow-hidden flex flex-col">
       {/* Debt Type Navigation */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <button
-          onClick={goToPrevDebtType}
-          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
           aria-label="Previous debt type"
+          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+          onClick={goToPrevDebtType}
         >
           <FiArrowLeft />
         </button>
@@ -165,19 +174,18 @@ export default function MainTabs({
         </div>
 
         <button
-          onClick={goToNextDebtType}
-          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
           aria-label="Next debt type"
+          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+          onClick={goToNextDebtType}
         >
           <FiArrowRight />
         </button>
       </div>
 
       {/* Debt Type Summary Card - Using our new DebtTypeSummary component */}
-      <DebtTypeSummary 
+      <DebtTypeSummary
         currentDebtType={currentDebtType}
         debtData={currentDebtData}
-        showAIRecommendation={showAIRecommendation}
       />
 
       {/* Main Content */}
@@ -208,14 +216,14 @@ export default function MainTabs({
           <>
             {/* Chart display based on selected tab */}
             {activeTab === "ยอดหนี้รวม" ? (
-              <LineChartComponent 
-                debtTypeData={currentDebtData}
+              <LineChartComponent
                 chartOptions={chartOptions}
+                debtTypeData={currentDebtData}
               />
             ) : (
-              <BarChartComponent 
-                debtDataByType={syncedDebtData}
+              <BarChartComponent
                 chartOptions={chartOptions}
+                debtDataByType={syncedDebtData}
               />
             )}
           </>

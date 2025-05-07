@@ -16,8 +16,8 @@ import { useSession } from "next-auth/react";
 
 import DebtPlanModal from "./debt_plan/DebtPlanModal";
 import { useCustomToast } from "./ToastNotification";
-import { useTracking } from "@/lib/tracking";
 
+import { useTracking } from "@/lib/tracking";
 import AIService, {
   createDebtPrompt,
   type DebtContext as AIDebtContext,
@@ -105,8 +105,11 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
     useState<boolean>(false);
   const [isDebtPlanModalOpen, setIsDebtPlanModalOpen] =
     useState<boolean>(false);
-  const [isPlanSelectionModalOpen, setIsPlanSelectionModalOpen] = useState<boolean>(false);
-  const [selectedPlan, setSelectedPlan] = useState<"quick" | "save" | "balanced" | null>(null);
+  const [isPlanSelectionModalOpen, setIsPlanSelectionModalOpen] =
+    useState<boolean>(false);
+  const [selectedPlan, setSelectedPlan] = useState<
+    "quick" | "save" | "balanced" | null
+  >(null);
   const { showNotification } = useCustomToast();
   const { trackEdit, trackPlannerStart } = useTracking();
 
@@ -285,12 +288,12 @@ const RiskMeter: React.FC<RiskMeterProps> = ({
       "เลือกแผนสำเร็จ",
       "แผนการชำระหนี้ของคุณถูกบันทึกแล้ว",
       "solid",
-      "success"
+      "success",
     );
-    
+
     // Track edit when user saves a plan
     trackEdit();
-    
+
     // Close plan selection modal and open debt plan modal
     setIsPlanSelectionModalOpen(false);
     setIsDebtPlanModalOpen(true);

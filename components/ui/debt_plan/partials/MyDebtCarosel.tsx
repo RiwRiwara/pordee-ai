@@ -18,15 +18,15 @@ interface MyDebtCaroselProps {
   formatNumber?: (num: number) => string;
 }
 
-export default function MyDebtCarosel({ 
-  debts, 
+export default function MyDebtCarosel({
+  debts,
   activeFilter = "ทั้งหมด",
   formatNumber = (num: number) => {
     return num.toLocaleString("th-TH", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     });
-  }
+  },
 }: MyDebtCaroselProps) {
   // Filter debts based on selected filter
   const filteredDebts = debts.filter((debt) => {

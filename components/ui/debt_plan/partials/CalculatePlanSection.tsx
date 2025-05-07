@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FiClock, FiDollarSign, FiChevronDown } from "react-icons/fi";
+import { FiDollarSign, FiChevronDown } from "react-icons/fi";
 
 import { formatNumber } from "../utils/debtPlanUtils";
 
@@ -29,28 +29,43 @@ export default function CalculatePlanSection({
     originalTotalInterest: 0,
     newPlanTotalInterest: 0,
     timeSavingsPercentage: 0,
-    amountSavingsPercentage: 0
+    amountSavingsPercentage: 0,
   });
-  
+
   // Recalculate values whenever props change
   useEffect(() => {
     // Calculate the correct savedTimeInMonths based on the difference
-    const calculatedSavedTimeInMonths = propSavedTimeInMonths ?? Math.max(0, originalTimeInMonths - newPlanTimeInMonths);
-    
+    const calculatedSavedTimeInMonths =
+      propSavedTimeInMonths ??
+      Math.max(0, originalTimeInMonths - newPlanTimeInMonths);
+
     // Calculate total payments for both plans
-    const calculatedOriginalTotalInterest = originalTimeInMonths * originalMonthlyPayment;
-    const calculatedNewPlanTotalInterest = newPlanTimeInMonths * newPlanMonthlyPayment;
-    
+    const calculatedOriginalTotalInterest =
+      originalTimeInMonths * originalMonthlyPayment;
+    const calculatedNewPlanTotalInterest =
+      newPlanTimeInMonths * newPlanMonthlyPayment;
+
     // Calculate the correct savedAmount based on the difference in total payments
-    const calculatedSavedAmount = propSavedAmount ?? Math.max(0, calculatedOriginalTotalInterest - calculatedNewPlanTotalInterest);
-    
+    const calculatedSavedAmount =
+      propSavedAmount ??
+      Math.max(
+        0,
+        calculatedOriginalTotalInterest - calculatedNewPlanTotalInterest,
+      );
+
     // Calculate percentage savings
-    const timeSavingsPercentage = originalTimeInMonths > 0 ?
-      Math.round((calculatedSavedTimeInMonths / originalTimeInMonths) * 100) : 0;
-    
-    const amountSavingsPercentage = calculatedOriginalTotalInterest > 0 ?
-      Math.round((calculatedSavedAmount / calculatedOriginalTotalInterest) * 100) : 0;
-    
+    const timeSavingsPercentage =
+      originalTimeInMonths > 0
+        ? Math.round((calculatedSavedTimeInMonths / originalTimeInMonths) * 100)
+        : 0;
+
+    const amountSavingsPercentage =
+      calculatedOriginalTotalInterest > 0
+        ? Math.round(
+            (calculatedSavedAmount / calculatedOriginalTotalInterest) * 100,
+          )
+        : 0;
+
     // Update state with new calculations
     setCalculatedValues({
       savedTimeInMonths: calculatedSavedTimeInMonths,
@@ -58,13 +73,19 @@ export default function CalculatePlanSection({
       originalTotalInterest: calculatedOriginalTotalInterest,
       newPlanTotalInterest: calculatedNewPlanTotalInterest,
       timeSavingsPercentage,
-      amountSavingsPercentage
+      amountSavingsPercentage,
     });
-  }, [originalTimeInMonths, originalMonthlyPayment, newPlanTimeInMonths, newPlanMonthlyPayment, propSavedTimeInMonths, propSavedAmount]);
+  }, [
+    originalTimeInMonths,
+    originalMonthlyPayment,
+    newPlanTimeInMonths,
+    newPlanMonthlyPayment,
+    propSavedTimeInMonths,
+    propSavedAmount,
+  ]);
+
   return (
     <div className="grid grid-cols-1 gap-4 my-4">
-
-
       {/* Right Column - ดอกเบี้ยที่ใช้ */}
       <div>
         <div className="bg-[#3C7DD1] text-white py-2 rounded-lg flex items-center justify-center gap-2 mb-4">
@@ -78,14 +99,18 @@ export default function CalculatePlanSection({
             <div className="p-3 flex-1">
               <p className="text-xs text-gray-500">แผนเดิม</p>
               <p className="text-md font-semibold">
-                {originalMonthlyPayment > 0 ? formatNumber(originalMonthlyPayment) : '-'} {originalMonthlyPayment > 0 ? 'บาท' : ''}
+                {originalMonthlyPayment > 0
+                  ? formatNumber(originalMonthlyPayment)
+                  : "-"}{" "}
+                {originalMonthlyPayment > 0 ? "บาท" : ""}
               </p>
             </div>
 
             <div className="border-l border-gray-200 p-3 flex-1">
               <p className="text-xs text-gray-500">ระยะเวลาชำระ</p>
               <p className="text-md font-semibold">
-                {originalTimeInMonths > 0 ? originalTimeInMonths : '-'} {originalTimeInMonths > 0 ? 'เดือน' : ''}
+                {originalTimeInMonths > 0 ? originalTimeInMonths : "-"}{" "}
+                {originalTimeInMonths > 0 ? "เดือน" : ""}
               </p>
             </div>
           </div>
@@ -100,14 +125,18 @@ export default function CalculatePlanSection({
             <div className="p-3 flex-1">
               <p className="text-xs text-gray-500">แผนใหม่</p>
               <p className="text-md font-semibold text-[#3C7DD1]">
-                {newPlanMonthlyPayment > 0 ? formatNumber(newPlanMonthlyPayment) : '-'} {newPlanMonthlyPayment > 0 ? 'บาท' : ''}
+                {newPlanMonthlyPayment > 0
+                  ? formatNumber(newPlanMonthlyPayment)
+                  : "-"}{" "}
+                {newPlanMonthlyPayment > 0 ? "บาท" : ""}
               </p>
             </div>
 
             <div className="border-l border-gray-200 p-3 flex-1">
               <p className="text-xs text-gray-500">ระยะเวลาชำระ</p>
               <p className="text-md font-semibold text-[#3C7DD1]">
-                {newPlanTimeInMonths > 0 ? newPlanTimeInMonths : '-'} {newPlanTimeInMonths > 0 ? 'เดือน' : ''}
+                {newPlanTimeInMonths > 0 ? newPlanTimeInMonths : "-"}{" "}
+                {newPlanTimeInMonths > 0 ? "เดือน" : ""}
               </p>
             </div>
           </div>
@@ -117,7 +146,10 @@ export default function CalculatePlanSection({
             <div className="p-3 flex-1">
               <p className="text-xs text-gray-700">ประหยัดเงิน</p>
               <p className="text-md font-semibold text-[#F59E0B]">
-                {calculatedValues.savedAmount > 0 ? formatNumber(calculatedValues.savedAmount) : '-'} {calculatedValues.savedAmount > 0 ? 'บาท' : ''}
+                {calculatedValues.savedAmount > 0
+                  ? formatNumber(calculatedValues.savedAmount)
+                  : "-"}{" "}
+                {calculatedValues.savedAmount > 0 ? "บาท" : ""}
               </p>
               {calculatedValues.savedAmount > 0 && (
                 <p className="text-xs text-gray-500 mt-1">
@@ -129,7 +161,10 @@ export default function CalculatePlanSection({
             <div className="border-l border-gray-200 p-3 flex-1">
               <p className="text-xs text-gray-700">ลดระยะเวลา</p>
               <p className="text-md font-semibold text-[#F59E0B]">
-                {calculatedValues.savedTimeInMonths > 0 ? calculatedValues.savedTimeInMonths : '-'} {calculatedValues.savedTimeInMonths > 0 ? 'เดือน' : ''}
+                {calculatedValues.savedTimeInMonths > 0
+                  ? calculatedValues.savedTimeInMonths
+                  : "-"}{" "}
+                {calculatedValues.savedTimeInMonths > 0 ? "เดือน" : ""}
               </p>
               {calculatedValues.savedTimeInMonths > 0 && (
                 <p className="text-xs text-gray-500 mt-1">

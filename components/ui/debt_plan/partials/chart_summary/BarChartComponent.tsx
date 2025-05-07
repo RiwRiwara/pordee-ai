@@ -1,6 +1,7 @@
-import React from 'react';
-import { Bar } from 'react-chartjs-2';
-import { generateBarChartData } from './chartUtils';
+import React from "react";
+import { Bar } from "react-chartjs-2";
+
+import { generateBarChartData } from "./chartUtils";
 
 interface BarChartComponentProps {
   debtDataByType: Record<string, any>;
@@ -9,7 +10,7 @@ interface BarChartComponentProps {
 
 const BarChartComponent: React.FC<BarChartComponentProps> = ({
   debtDataByType,
-  chartOptions
+  chartOptions,
 }) => {
   return (
     <div className="h-64 border border-gray-200 rounded-lg p-2">

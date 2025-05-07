@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import MyDebtCarosel from "../debt_plan/partials/MyDebtCarosel";
 
 interface DebtItem {
@@ -116,9 +117,9 @@ export default function MyDebt() {
       </div>
 
       {/* Debt Cards Carousel */}
-      <MyDebtCarosel 
-        debts={debts}
+      <MyDebtCarosel
         activeFilter={activeFilter}
+        debts={debts}
         formatNumber={formatNumber}
       />
     </div>

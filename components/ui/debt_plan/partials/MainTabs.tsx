@@ -15,16 +15,15 @@ import {
 
 import { DEBT_TYPES } from "../utils/debtPlanUtils";
 import { DebtItem } from "../../types";
+
 import { DebtPlanData } from "./types";
 
 // Import refactored chart components
-import { 
-  LineChartComponent, 
-  BarChartComponent, 
+import {
+  LineChartComponent,
+  BarChartComponent,
   DebtTypeSummary,
   processDebtData as processDebtDataUtil,
-  generateLineChartData,
-  generateBarChartData
 } from "./chart_summary";
 
 // Register ChartJS components including Filler plugin
@@ -56,6 +55,7 @@ interface MainTabsProps {
   showAIRecommendation: boolean;
   setShowAIRecommendation: (show: boolean) => void;
   debtData?: DebtItem[];
+  generateChartData?: any; // Add the missing prop that's being passed from DebtPlanModal
   onDebtTypeChange?: (
     debtTypeId: string,
     originalTimeInMonths: number,
@@ -83,17 +83,19 @@ export default function MainTabs({
   // States for component
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [syncedDebtData, setSyncedDebtData] = useState<Record<string, DebtPlanData>>({});
+  const [syncedDebtData, setSyncedDebtData] = useState<
+    Record<string, DebtPlanData>
+  >({});
 
   // Get current debt type
   const currentDebtType = DEBT_TYPES[currentDebtTypeIndex];
-  
+
   // Handle local navigation between debt types with data updates
   const handlePrevDebtType = useCallback(() => {
     goToPrevDebtType();
     // Data will automatically update via useEffect based on currentDebtTypeIndex change
   }, [goToPrevDebtType]);
-  
+
   const handleNextDebtType = useCallback(() => {
     goToNextDebtType();
     // Data will automatically update via useEffect based on currentDebtTypeIndex change
@@ -106,6 +108,7 @@ export default function MainTabs({
       try {
         // Use the utility function to process debt data
         const processedData = processDebtDataUtil(debtData);
+
         setSyncedDebtData(processedData);
       } catch (err) {
         console.error("Error processing debt data:", err);
@@ -123,21 +126,22 @@ export default function MainTabs({
     const sampleReducedAmount = 90000;
     const originalMonths = 24;
     const newPlanMonths = 20;
-    
+
     // Create sample monthly data points for the chart
     const monthlyData = [];
+
     for (let i = 0; i < Math.max(originalMonths, newPlanMonths); i++) {
       const month = i + 1;
       const originalRate = sampleAmount / originalMonths;
       const newRate = sampleReducedAmount / newPlanMonths;
-      
+
       monthlyData.push({
         month,
-        originalAmount: Math.max(0, sampleAmount - (originalRate * month)),
-        newPlanAmount: Math.max(0, sampleReducedAmount - (newRate * month))
+        originalAmount: Math.max(0, sampleAmount - originalRate * month),
+        newPlanAmount: Math.max(0, sampleReducedAmount - newRate * month),
       });
     }
-    
+
     return {
       id: debtTypeId,
       label: label,
@@ -152,24 +156,31 @@ export default function MainTabs({
   };
 
   // Get current debt data with fallback to sample data
-  const currentDebtData = 
-    syncedDebtData[currentDebtType.id] || 
-    (Object.keys(syncedDebtData).length > 0 ? syncedDebtData["total"] : createSampleData(currentDebtType.id, currentDebtType.label));
+  const currentDebtData =
+    syncedDebtData[currentDebtType.id] ||
+    (Object.keys(syncedDebtData).length > 0
+      ? syncedDebtData["total"]
+      : createSampleData(currentDebtType.id, currentDebtType.label));
 
   // Add effect to refresh data when debt type changes
   useEffect(() => {
-    console.log('Current debt type changed to:', currentDebtType.label);
+    console.log("Current debt type changed to:", currentDebtType.label);
     // This will trigger a re-render with the new debt type data
-    
+
     if (syncedDebtData && currentDebtType.id) {
-      const data = syncedDebtData[currentDebtType.id] || 
-        (Object.keys(syncedDebtData).length > 0 ? syncedDebtData["total"] : null);
-      
+      const data =
+        syncedDebtData[currentDebtType.id] ||
+        (Object.keys(syncedDebtData).length > 0
+          ? syncedDebtData["total"]
+          : null);
+
       if (data && onDebtTypeChange) {
         // Calculate minimum payment
-        const minMonthlyPayment = data.originalTotalAmount / data.originalTimeInMonths;
-        const recommendedMonthlyPayment = data.newPlanTotalAmount / data.newPlanTimeInMonths;
-        
+        const minMonthlyPayment =
+          data.originalTotalAmount / data.originalTimeInMonths;
+        const recommendedMonthlyPayment =
+          data.newPlanTotalAmount / data.newPlanTimeInMonths;
+
         // Notify parent component of the change
         onDebtTypeChange(
           currentDebtType.id,
@@ -178,27 +189,35 @@ export default function MainTabs({
           minMonthlyPayment,
           recommendedMonthlyPayment,
           data.originalInterest,
-          data.newPlanInterest
+          data.newPlanInterest,
         );
       }
     }
-  }, [currentDebtType.id, currentDebtTypeIndex, syncedDebtData, onDebtTypeChange]);
+  }, [
+    currentDebtType.id,
+    currentDebtTypeIndex,
+    syncedDebtData,
+    onDebtTypeChange,
+  ]);
 
   // Notify parent component when debt type changes
   useEffect(() => {
     if (onDebtTypeChange && Object.keys(syncedDebtData).length > 0) {
-      const data = syncedDebtData[currentDebtType.id] || syncedDebtData["total"];
-      
+      const data =
+        syncedDebtData[currentDebtType.id] || syncedDebtData["total"];
+
       if (data) {
         // Calculate minimum and recommended monthly payments
-        const minMonthlyPayment = data.originalTimeInMonths > 0 
-          ? data.originalTotalAmount / data.originalTimeInMonths 
-          : 0;
-          
-        const recommendedMonthlyPayment = data.newPlanTimeInMonths > 0 
-          ? data.newPlanTotalAmount / data.newPlanTimeInMonths 
-          : 0;
-          
+        const minMonthlyPayment =
+          data.originalTimeInMonths > 0
+            ? data.originalTotalAmount / data.originalTimeInMonths
+            : 0;
+
+        const recommendedMonthlyPayment =
+          data.newPlanTimeInMonths > 0
+            ? data.newPlanTotalAmount / data.newPlanTimeInMonths
+            : 0;
+
         // Provide data to parent component
         onDebtTypeChange(
           currentDebtType.id,
@@ -207,21 +226,26 @@ export default function MainTabs({
           minMonthlyPayment,
           recommendedMonthlyPayment,
           data.originalInterest,
-          data.newPlanInterest
+          data.newPlanInterest,
         );
       }
     }
-  }, [currentDebtType.id, currentDebtTypeIndex, onDebtTypeChange, syncedDebtData]);
+  }, [
+    currentDebtType.id,
+    currentDebtTypeIndex,
+    onDebtTypeChange,
+    syncedDebtData,
+  ]);
 
   return (
     <div className="rounded-xl bg-white shadow-sm overflow-hidden flex flex-col">
       {/* Debt Type Navigation */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <button
-          onClick={handlePrevDebtType}
-          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
           aria-label="Previous debt type"
+          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
           disabled={isLoading}
+          onClick={handlePrevDebtType}
         >
           <FiArrowLeft />
         </button>
@@ -231,17 +255,17 @@ export default function MainTabs({
         </div>
 
         <button
-          onClick={handleNextDebtType}
-          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
           aria-label="Next debt type"
+          className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
           disabled={isLoading}
+          onClick={handleNextDebtType}
         >
           <FiArrowRight />
         </button>
       </div>
 
       {/* Debt Type Summary Card - Using our new DebtTypeSummary component */}
-      <DebtTypeSummary 
+      <DebtTypeSummary
         currentDebtType={currentDebtType}
         debtData={currentDebtData}
       />
@@ -274,14 +298,14 @@ export default function MainTabs({
           <>
             {/* Chart display based on selected tab */}
             {activeTab === "ยอดหนี้รวม" ? (
-              <LineChartComponent 
-                debtTypeData={currentDebtData}
+              <LineChartComponent
                 chartOptions={chartOptions}
+                debtTypeData={currentDebtData}
               />
             ) : (
-              <BarChartComponent 
-                debtDataByType={syncedDebtData}
+              <BarChartComponent
                 chartOptions={chartOptions}
+                debtDataByType={syncedDebtData}
               />
             )}
           </>

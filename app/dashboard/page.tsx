@@ -242,7 +242,7 @@ export default function Dashboard() {
       </div>
 
       {/* Plan selected section */}
-      <div className="mb-6 px-4" hidden>
+      <div hidden className="mb-6 px-4">
         <PlanSection
           selectedPlan={selectedPlan}
           onPlanChange={async (plan) => {
