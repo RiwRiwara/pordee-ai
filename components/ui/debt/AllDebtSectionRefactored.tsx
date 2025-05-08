@@ -192,7 +192,16 @@ export default function AllDebtSection({
 
       {/* Debt Categories */}
       <div className="space-y-4">
-        {/* 1. หนี้สินหมุนเวียน (Revolving Debt) */}
+        {/* 1. บัตรเครดิต (Credit Card) */}
+        <DebtTypeSection
+          debts={debtsByCategory[DebtCategory.CreditCard]}
+          formatNumber={formatNumber}
+          interestRateColor="bg-blue-600"
+          title="บัตรเครดิต (Credit Card)"
+          onEdit={openEditModal}
+        />
+        
+        {/* 2. หนี้สินหมุนเวียน (Revolving Debt) */}
         <DebtTypeSection
           debts={debtsByCategory[DebtCategory.RevolvingDebt]}
           formatNumber={formatNumber}
@@ -201,7 +210,7 @@ export default function AllDebtSection({
           onEdit={openEditModal}
         />
 
-        {/* 2. หนี้สินผ่อนสินค้า (Product Installment) */}
+        {/* 3. หนี้สินผ่อนสินค้า (Product Installment) */}
         <DebtTypeSection
           debts={debtsByCategory[DebtCategory.ProductInstallment]}
           formatNumber={formatNumber}
@@ -210,7 +219,7 @@ export default function AllDebtSection({
           onEdit={openEditModal}
         />
 
-        {/* 3. สินเชื่อส่วนบุคคล (Personal Loan) */}
+        {/* 4. สินเชื่อส่วนบุคคล (Personal Loan) */}
         <DebtTypeSection
           debts={debtsByCategory[DebtCategory.PersonalLoan]}
           formatNumber={formatNumber}
@@ -219,7 +228,7 @@ export default function AllDebtSection({
           onEdit={openEditModal}
         />
 
-        {/* 4. สินเชื่อที่อยู่อาศัย (Housing Loan) */}
+        {/* 5. สินเชื่อที่อยู่อาศัย (Housing Loan) */}
         <DebtTypeSection
           debts={debtsByCategory[DebtCategory.HousingLoan]}
           formatNumber={formatNumber}
@@ -228,7 +237,7 @@ export default function AllDebtSection({
           onEdit={openEditModal}
         />
 
-        {/* 5. สินเชื่อรถยนต์ (Vehicle Loan) */}
+        {/* 6. สินเชื่อรถยนต์ (Vehicle Loan) */}
         <DebtTypeSection
           debts={debtsByCategory[DebtCategory.VehicleLoan]}
           formatNumber={formatNumber}
@@ -236,8 +245,17 @@ export default function AllDebtSection({
           title="สินเชื่อรถยนต์ (Vehicle Loan)"
           onEdit={openEditModal}
         />
+        
+        {/* 7. สินเชื่อธุรกิจ (Business Loan) */}
+        <DebtTypeSection
+          debts={debtsByCategory[DebtCategory.BusinessLoan]}
+          formatNumber={formatNumber}
+          interestRateColor="bg-amber-500"
+          title="สินเชื่อธุรกิจ (Business Loan)"
+          onEdit={openEditModal}
+        />
 
-        {/* 6. เงินกู้นอกระบบ (Informal Loan) */}
+        {/* 8. เงินกู้นอกระบบ (Informal Loan) */}
         <DebtTypeSection
           debts={debtsByCategory[DebtCategory.InformalLoan]}
           formatNumber={formatNumber}
