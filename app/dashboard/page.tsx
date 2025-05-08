@@ -15,9 +15,10 @@ import AllDebtSectionRefactored from "@/components/ui/debt/AllDebtSectionRefacto
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [monthlyIncome, setMonthlyIncome] = useState("0.00");
-  const [monthlyExpense, setMonthlyExpense] = useState("0.00");
-  const [disposableIncome, setDisposableIncome] = useState("0.00");
+  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState("0.00"); // รายได้รวม
+  const [monthlyIncome, setMonthlyIncome] = useState("0.00");      // รายได้สุทธิ
+  const [monthlyExpense, setMonthlyExpense] = useState("0.00");    // รายจ่ายรวม
+  const [disposableIncome, setDisposableIncome] = useState("0.00");  // รายได้สุทธิหลังหักรายจ่าย
   const [isDebtFormOpen, setIsDebtFormOpen] = useState(false);
   const [isIncomeExpenseDrawerOpen, setIsIncomeExpenseDrawerOpen] =
     useState(false);
@@ -37,8 +38,9 @@ export default function Dashboard() {
 
   // Calculate debt risk percentage based on debt-to-income ratio
   const calculateDebtRiskPercentage = () => {
-    // Parse income and get total monthly debt payments
-    const income = parseFloat(monthlyIncome.replace(/,/g, ""));
+    // Parse gross income and get total monthly debt payments
+    // Use gross income for DTI calculation as per financial standard practice
+    const income = parseFloat(grossMonthlyIncome.replace(/,/g, "") || monthlyIncome.replace(/,/g, ""));
 
     // Calculate total monthly debt payments
     let totalMonthlyDebtPayment = 0;
@@ -103,6 +105,10 @@ export default function Dashboard() {
     // Create the debt context object that matches dtiService.DebtContext
     return {
       debtItems,
+      // Use grossIncome field for DTI calculation - this matches the formula: 
+      // (all minimum debt / all income before expense and tax) * 100
+      grossIncome: grossMonthlyIncome.replace(/,/g, ""),
+      // Keep income for backward compatibility
       income: monthlyIncome.replace(/,/g, ""),
     };
   };
@@ -132,16 +138,22 @@ export default function Dashboard() {
         const { finance } = await financeResponse.json();
 
         if (finance) {
-          // Format values for display
-          setMonthlyIncome(formatCurrency(finance.monthlyIncome));
-          setMonthlyExpense(formatCurrency(finance.monthlyExpense));
-
-          // Calculate disposable income
-          const disposable = finance.monthlyIncome - finance.monthlyExpense;
-
-          setDisposableIncome(formatCurrency(Math.max(0, disposable)));
-
-          // Set selected plan
+          // Set gross monthly income (add fallback to monthlyIncome for backward compatibility)
+          setGrossMonthlyIncome(formatCurrency(finance.grossMonthlyIncome || finance.monthlyIncome || 0));
+          
+          // Set monthly income
+          setMonthlyIncome(formatCurrency(finance.monthlyIncome || 0));
+          
+          // Set monthly expense
+          setMonthlyExpense(formatCurrency(finance.monthlyExpense || 0));
+          
+          // Calculate disposable income based on net income
+          setDisposableIncome(
+            formatCurrency(
+              (finance.monthlyIncome || 0) - (finance.monthlyExpense || 0),
+            ),
+          );
+          
           setSelectedPlan(finance.selectedPlan);
         }
       }
@@ -289,63 +301,57 @@ export default function Dashboard() {
       {/* Income Expense Modal */}
       <IncomeExpenseModal
         initialData={{
-          monthlyIncome: monthlyIncome,
-          monthlyExpense: monthlyExpense,
+          grossMonthlyIncome: grossMonthlyIncome, // รายได้รวมก่อนหักค่าใช้จ่าย/ภาษี
+          monthlyIncome: monthlyIncome, // รายได้สุทธิ
+          monthlyExpense: monthlyExpense, // รายจ่าย
         }}
         isOpen={isIncomeExpenseDrawerOpen}
         onClose={() => setIsIncomeExpenseDrawerOpen(false)}
-        onSave={async ({
-          monthlyIncome,
-          monthlyExpense,
-          incomeAttachments,
-          expenseAttachments,
-        }) => {
-          // Update local state
-          setMonthlyIncome(monthlyIncome);
-          setMonthlyExpense(monthlyExpense);
-
-          // Calculate disposable income
-          const income = parseFloat(monthlyIncome);
-          const expense = parseFloat(monthlyExpense);
-          const disposable = Math.max(0, income - expense);
-
-          setDisposableIncome(formatCurrency(disposable));
-
-          // Update risk calculation
-          calculateDebtRiskPercentage();
-
-          // If user is authenticated, save to database
-          if (isAuthenticated) {
-            try {
+        onSave={async (data) => {
+          try {
+            if (isAuthenticated) {
+              // Save data to backend if user is authenticated
               const response = await fetch("/api/finance", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  monthlyIncome: income,
-                  monthlyExpense: expense,
-                  incomeAttachments: incomeAttachments || [],
-                  expenseAttachments: expenseAttachments || [],
+                  grossMonthlyIncome: parseFloat(
+                    data.grossMonthlyIncome?.replace(/,/g, "") || "0",
+                  ),
+                  monthlyIncome: parseFloat(
+                    data.monthlyIncome?.replace(/,/g, "") || "0",
+                  ),
+                  monthlyExpense: parseFloat(
+                    data.monthlyExpense?.replace(/,/g, "") || "0",
+                  ),
+                  selectedPlan,
                 }),
               });
 
               if (!response.ok) {
-                showNotification(
-                  "ข้อผิดพลาด",
-                  "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
-                  "solid",
-                  "danger",
-                );
+                throw new Error("Failed to save finance data");
               }
-            } catch (error) {
-              showNotification(
-                "ข้อผิดพลาด",
-                "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
-                "solid",
-                "danger",
+
+              // Update local state with formatted values
+              setGrossMonthlyIncome(data.grossMonthlyIncome || "0.00");
+              setMonthlyIncome(data.monthlyIncome || "0.00");
+              setMonthlyExpense(data.monthlyExpense || "0.00");
+              setDisposableIncome(
+                formatCurrency(
+                  parseFloat(data.monthlyIncome?.replace(/,/g, "") || "0") -
+                    parseFloat(data.monthlyExpense?.replace(/,/g, "") || "0"),
+                ),
               );
             }
+          } catch (error) {
+            showNotification(
+              "ข้อผิดพลาด",
+              "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
+              "solid",
+              "danger",
+            );
           }
         }}
       />

@@ -21,7 +21,8 @@ export interface DTIRiskStatus {
 // Shared interface for debt context
 export interface DebtContext {
   debtItems: DebtItem[];
-  income?: number | string;
+  grossIncome?: number | string; // รายได้รวมก่อนหักค่าใช้จ่าย/ภาษี (gross income before expenses/tax)
+  income?: number | string;     // รายได้สุทธิ (net income) - kept for backward compatibility
 }
 
 /**
@@ -41,17 +42,23 @@ export function calculateDTI(debtContext?: DebtContext): number {
     return sum + minimumPayment;
   }, 0);
 
-  // Get income before expenses and tax
-  const income =
-    typeof debtContext.income === "string"
+  // Use gross income (if available) or fall back to income for backward compatibility
+  let incomeToUse = 0;
+  if (debtContext.grossIncome !== undefined) {
+    incomeToUse = typeof debtContext.grossIncome === "string"
+      ? parseFloat(debtContext.grossIncome || "0")
+      : debtContext.grossIncome || 0;
+  } else if (debtContext.income !== undefined) {
+    incomeToUse = typeof debtContext.income === "string"
       ? parseFloat(debtContext.income || "0")
       : debtContext.income || 0;
+  }
 
   // Avoid division by zero
-  if (income <= 0) return 0;
+  if (incomeToUse <= 0) return 0;
 
   // Calculate debt-to-income ratio: (all minimum debt / income) * 100
-  return (totalMinimumDebt / income) * 100;
+  return (totalMinimumDebt / incomeToUse) * 100;
 }
 
 /**

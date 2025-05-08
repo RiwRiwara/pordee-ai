@@ -432,15 +432,26 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
       trackEdit();
 
       // Parse values to ensure they're valid numbers with 2 decimal places
+      // Use null checks to avoid errors with undefined values
+      const grossIncomeValue = parseFloat(
+        parseFloat(
+          (data.grossMonthlyIncome ? data.grossMonthlyIncome.replace(/,/g, "") : "0") || "0"
+        ).toFixed(2),
+      );
       const incomeValue = parseFloat(
-        parseFloat(data.monthlyIncome.replace(/,/g, "") || "0").toFixed(2),
+        parseFloat(
+          (data.monthlyIncome ? data.monthlyIncome.replace(/,/g, "") : "0") || "0"
+        ).toFixed(2),
       );
       const expenseValue = parseFloat(
-        parseFloat(data.monthlyExpense.replace(/,/g, "") || "0").toFixed(2),
+        parseFloat(
+          (data.monthlyExpense ? data.monthlyExpense.replace(/,/g, "") : "0") || "0"
+        ).toFixed(2),
       );
 
       // Format the values for display
       const formattedData = {
+        grossMonthlyIncome: formatNumber(grossIncomeValue),
         monthlyIncome: formatNumber(incomeValue),
         monthlyExpense: formatNumber(expenseValue),
       };
@@ -507,6 +518,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
       }
 
       const finalData = {
+        grossMonthlyIncome: grossIncomeValue.toString(), // Add gross income for DTI calculation
         monthlyIncome: incomeValue.toString(),
         monthlyExpense: expenseValue.toString(),
         incomeAttachments:
@@ -519,6 +531,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
             : undefined,
       };
 
+      // Call onSave with the updated data including grossMonthlyIncome
       onSave(finalData);
 
       showNotification(

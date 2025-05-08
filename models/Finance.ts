@@ -2,8 +2,9 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IFinance extends Document {
   userId: mongoose.Types.ObjectId;
-  monthlyIncome: number;
-  monthlyExpense: number;
+  grossMonthlyIncome: number;  // รายได้รวมก่อนหักค่าใช้จ่าย/ภาษี
+  monthlyIncome: number;       // รายได้สุทธิหลังหักค่าใช้จ่าย/ภาษี
+  monthlyExpense: number;      // รายจ่ายรวม
   selectedPlan: "quick" | "save" | "balanced" | null;
   createdAt: Date;
   updatedAt: Date;
@@ -16,6 +17,11 @@ const FinanceSchema: Schema = new Schema(
       ref: "User",
       required: true,
       index: true,
+    },
+    grossMonthlyIncome: {
+      type: Number,
+      required: true,
+      default: 0,
     },
     monthlyIncome: {
       type: Number,

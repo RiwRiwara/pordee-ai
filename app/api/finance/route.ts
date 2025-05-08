@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
       // Create a default finance record if none exists
       finance = await Finance.create({
         userId: session.user.id,
+        grossMonthlyIncome: 0, // New field for gross income
         monthlyIncome: 0,
         monthlyExpense: 0,
         selectedPlan: null,
@@ -51,10 +52,11 @@ export async function POST(request: NextRequest) {
     await connectToDatabase();
 
     const body = await request.json();
-    const { monthlyIncome, monthlyExpense, selectedPlan } = body;
+    const { grossMonthlyIncome, monthlyIncome, monthlyExpense, selectedPlan } = body;
 
     // Validate input
     if (
+      grossMonthlyIncome === undefined &&
       monthlyIncome === undefined &&
       monthlyExpense === undefined &&
       selectedPlan === undefined
@@ -68,6 +70,8 @@ export async function POST(request: NextRequest) {
     // Build update object
     const updateData: any = {};
 
+    if (grossMonthlyIncome !== undefined)
+      updateData.grossMonthlyIncome = parseFloat(grossMonthlyIncome);
     if (monthlyIncome !== undefined)
       updateData.monthlyIncome = parseFloat(monthlyIncome);
     if (monthlyExpense !== undefined)

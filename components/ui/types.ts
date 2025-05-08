@@ -18,8 +18,9 @@ export interface DebtItem {
   updatedAt?: string;
 }
 export interface IncomeExpenseData {
-  monthlyIncome: string;
-  monthlyExpense: string;
+  grossMonthlyIncome: string; // รายได้รวม (gross income before expenses & tax)
+  monthlyIncome: string;      // รายได้สุทธิ (net income)
+  monthlyExpense: string;     // รายจ่าย (expenses)
 }
 
 export interface FileData {
