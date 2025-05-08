@@ -218,13 +218,28 @@ export default function DebtModal({
                           errors.debtType ? "border-red-500" : "border-gray-300"
                         } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                         id="debtType"
+                        onChange={(e) => {
+                          field.onChange(e);
+                          // Set default interest rate to 16% for "จ่ายคืนบางส่วน"
+                          if (e.target.value === "จ่ายคืนบางส่วน") {
+                            const interestRateField = document.getElementById("interestRate") as HTMLInputElement;
+                            if (interestRateField) {
+                              interestRateField.value = "16.00";
+                              // Trigger change event to update form state
+                              const event = new Event("input", { bubbles: true });
+                              interestRateField.dispatchEvent(event);
+                            }
+                          }
+                        }}
                       >
                         <option disabled value="">
                           เลือกประเภทหนี้
                         </option>
+                        <option value={DebtCategory.CreditCard}>
+                          {DebtCategory.CreditCard}
+                        </option>
                         <option value={DebtCategory.RevolvingDebt}>
-                          {DebtCategory.RevolvingDebt} (บัตรเครดิต,
-                          บัตรกดเงินสด)
+                          {DebtCategory.RevolvingDebt} (บัตรกดเงินสด)
                         </option>
                         <option value={DebtCategory.ProductInstallment}>
                           {DebtCategory.ProductInstallment} (ผ่อนสินค้า,
@@ -239,8 +254,17 @@ export default function DebtModal({
                         <option value={DebtCategory.VehicleLoan}>
                           {DebtCategory.VehicleLoan} (ผ่อนรถ, มอเตอร์ไซค์)
                         </option>
+                        <option value={DebtCategory.BusinessLoan}>
+                          {DebtCategory.BusinessLoan} 
+                        </option>
                         <option value={DebtCategory.InformalLoan}>
                           {DebtCategory.InformalLoan} (เงินกู้นอกระบบ)
+                        </option>
+                        <option value="ผ่อนชำระรายงวด">
+                          ผ่อนชำระรายงวด
+                        </option>
+                        <option value="จ่ายคืนบางส่วน">
+                          จ่ายคืนบางส่วน
                         </option>
                         <option value={DebtCategory.Other}>
                           {DebtCategory.Other} (หนี้ประเภทอื่นๆ)

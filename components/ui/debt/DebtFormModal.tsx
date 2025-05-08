@@ -695,9 +695,13 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                               className="form-radio text-yellow-500 focus:ring-yellow-500"
                               name="paymentType"
                               type="radio"
-                              onChange={() => field.onChange("installment")}
+                              onChange={() => {
+                                field.onChange("installment");
+                                // Set default interest rate to 16% when "จ่ายคืนบางส่วน" is selected
+                                setValue("interestRate", "16");
+                              }}
                             />
-                            <span className="ml-2">ผ่อนชำระรายงวด</span>
+                            <span className="ml-2">จ่ายคืนบางส่วน</span>
                           </label>
                         </div>
                       )}
