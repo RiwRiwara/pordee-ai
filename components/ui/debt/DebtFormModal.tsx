@@ -435,11 +435,11 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
         files.map((f) =>
           f.name === file.name
             ? {
-                ...f,
-                isProcessing: false,
-                isOcrProcessed: true,
-                ocrData,
-              }
+              ...f,
+              isProcessing: false,
+              isOcrProcessed: true,
+              ocrData,
+            }
             : f,
         );
 
@@ -687,7 +687,7 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                               type="radio"
                               onChange={() => field.onChange("revolving")}
                             />
-                            <span className="ml-2">หมุนเวียน</span>
+                            <span className="ml-2">จ่ายคืนบางส่วน</span>
                           </label>
                           <label className="inline-flex items-center">
                             <input
@@ -697,11 +697,10 @@ const DebtFormModal: React.FC<DebtFormModalProps> = ({
                               type="radio"
                               onChange={() => {
                                 field.onChange("installment");
-                                // Set default interest rate to 16% when "จ่ายคืนบางส่วน" is selected
                                 setValue("interestRate", "16");
                               }}
                             />
-                            <span className="ml-2">จ่ายคืนบางส่วน</span>
+                            <span className="ml-2">ผ่อนชำระรายงวด</span>
                           </label>
                         </div>
                       )}

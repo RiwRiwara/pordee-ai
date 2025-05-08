@@ -73,17 +73,43 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    // Initial calculation of viewport height
     const handleResize = () => {
       const vh = window.innerHeight * 0.01;
-
       document.documentElement.style.setProperty("--vh", `${vh}px`);
     };
 
+    // Set initial viewport height
     handleResize();
+    
+    // Add event listeners for various mobile scenarios
     window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    
+    // For iOS devices specifically
+    const handleFocus = () => {
+      // Add small delay to ensure the keyboard is fully open
+      setTimeout(() => {
+        // Scroll the focused element into view
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    };
+    
+    // Apply focus handling to all input elements in the modal
+    const inputElements = document.querySelectorAll('input, textarea');
+    inputElements.forEach(input => {
+      input.addEventListener('focus', handleFocus);
+    });
 
     return () => {
+      // Clean up all event listeners
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+      inputElements.forEach(input => {
+        input.removeEventListener('focus', handleFocus);
+      });
     };
   }, [isOpen]);
 
@@ -528,18 +554,29 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
   // Format input value to show proper decimal places
   const formatInputValue = (value: string) => {
     // Remove all non-numeric characters except decimal point
-    const cleanValue = value.replace(/[^0-9.]/g, "");
+    let numericValue = value.replace(/[^0-9.]/g, "");
 
-    // Handle multiple decimal points (keep only the first one)
-    const parts = cleanValue.split(".");
-    let formattedValue = parts[0];
-
-    if (parts.length > 1) {
-      // Add decimal point and limit to 2 decimal places
-      formattedValue += "." + parts[1].substring(0, 2);
+    // Ensure only one decimal point
+    const parts = numericValue.split(".");
+    if (parts.length > 2) {
+      numericValue = parts[0] + "." + parts.slice(1).join("");
+    }
+    
+    // Limit to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+      numericValue = parts[0] + "." + parts[1].substring(0, 2);
     }
 
-    return formattedValue;
+    // Format with commas for thousands
+    if (numericValue) {
+      const [integerPart, decimalPart] = numericValue.split(".");
+      return (
+        integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+        (decimalPart ? "." + decimalPart : "")
+      );
+    }
+
+    return numericValue;
   };
 
   return (
@@ -579,7 +616,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
       size="2xl"
       onClose={onClose}
     >
-      <ModalContent>
+      <ModalContent className="w-full max-w-[95vw] sm:max-w-md md:max-w-lg max-h-[calc(100vh-40px)] sm:max-h-[calc(100vh-60px)] overflow-hidden pb-safe">
         {(onCloseAction) => (
           <>
             <ModalHeader className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
@@ -591,7 +628,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                   กรอกข้อมูลเพื่อวางแผนการเงินและชำระหนี้
                   หรืออัพโหลดเอกสารเพื่อให้ระบบวิเคราะห์ให้อัตโนมัติ
                 </p>
-                <div className="mt-2 text-xs bg-blue-50 p-2 rounded-md border border-blue-100 text-blue-700">
+                <div className="mt-2 text-xs bg-blue-50 p-2 rounded-md border border-blue-100 text-blue-700 hidden">
                   <p className="font-medium">
                     อัตราส่วนหนี้ต่อรายได้ (Debt-to-Income Ratio):
                   </p>
@@ -618,7 +655,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
               </div>
             </ModalHeader>
 
-            <ModalBody className="px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto max-h-[60vh] sm:max-h-[65vh]">
+            <ModalBody className="px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto max-h-[50vh] sm:max-h-[65vh] md:max-h-[70vh] overscroll-contain">
               <form id="income-expense-form" onSubmit={handleSubmit(onSubmit)}>
                 <FileUploadSection
                   acceptOcrRecommendation={(file) =>
@@ -682,7 +719,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                           <Input
                             {...field}
                             aria-label="รายได้ต่อเดือน"
-                            className="border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 w-full"
+                            className="border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 w-full touch-manipulation"
                             endContent={
                               <span className="text-gray-400">บาท</span>
                             }
@@ -698,6 +735,12 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                             }
                             type="text"
                             value={field.value || ""}
+                            onBlur={() => {
+                              // Force scroll to top of input field on blur
+                              if (window.innerWidth < 640) { // Mobile only
+                                setTimeout(() => window.scrollTo(0, 0), 50);
+                              }
+                            }}
                             onChange={(e) => {
                               const formattedValue = formatInputValue(
                                 e.target.value,
@@ -752,13 +795,19 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
                       <Input
                         {...field}
                         aria-label="รายจ่ายต่อเดือน"
-                        className="border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 w-full"
+                        className="border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 w-full touch-manipulation"
                         endContent={<span className="text-gray-400">บาท</span>}
                         inputMode="decimal"
                         placeholder="0.00"
                         startContent={<span className="text-gray-400">฿</span>}
                         type="text"
                         value={field.value || ""}
+                        onBlur={() => {
+                          // Force scroll to top of input field on blur
+                          if (window.innerWidth < 640) { // Mobile only
+                            setTimeout(() => window.scrollTo(0, 0), 50);
+                          }
+                        }}
                         onChange={(e) => {
                           const formattedValue = formatInputValue(
                             e.target.value,
@@ -794,7 +843,7 @@ const IncomeExpenseModal: React.FC<IncomeExpenseModalProps> = ({
               </form>
             </ModalBody>
 
-            <ModalFooter className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200 flex justify-end gap-2">
+            <ModalFooter className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200 flex justify-end gap-2 mt-auto sticky bottom-0 bg-white pb-safe">
               <Button
                 aria-label="ยกเลิก"
                 className="bg-gray-200 text-gray-700 hover:bg-gray-300"
