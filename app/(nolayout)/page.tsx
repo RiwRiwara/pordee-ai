@@ -3,7 +3,7 @@
 import Image from "next/image";
 import clsx from "clsx";
 
-import { Providers } from "./providers";
+import { Providers } from "@/app/providers";
 
 import { fontSans } from "@/config/fonts";
 
@@ -429,12 +429,12 @@ export default function LandingPage() {
                       เพื่อให้คุณเห็นภาพรวมสถานะการเงินของคุณอย่างชัดเจน
                     </p>
                     <div className="text-right">
-                      <div className="inline-block bg-yellow-400 rounded-lg p-2">
+                      <a href="/planning" className="inline-block bg-yellow-400 rounded-lg p-2">
                         <span className="text-xl font-bold text-white">
                           ต่อไป
                         </span>
                         <span className="text-yellow-600 ml-2">▶</span>
-                      </div>
+                      </a>
                     </div>
                   </div>
                 </div>

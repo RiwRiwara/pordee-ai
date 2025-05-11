@@ -27,7 +27,7 @@ export default function ProfileSetting({
   languagePreference,
   notificationsEnabled = true,
   onLanguageToggle,
-  onNotificationToggle = () => {},
+  onNotificationToggle = () => { },
 }: ProfileSettingProps) {
   const { logout } = useAuth();
   const router = useRouter();
@@ -232,7 +232,7 @@ export default function ProfileSetting({
                 color="warning"
                 size="sm"
                 variant="flat"
-                onClick={() => setIsResetModalOpen(true)}
+                onPress={() => setIsResetModalOpen(true)}
               >
                 รีเซ็ต
               </Button>
@@ -253,9 +253,21 @@ export default function ProfileSetting({
                 color="danger"
                 size="sm"
                 variant="flat"
-                onClick={handleDeleteAccount}
+                onPress={handleDeleteAccount}
               >
                 ลบ
+              </Button>
+            </div>
+
+
+            {/* Logout Button */}
+            <div className="mt-4">
+              <Button
+                className="w-full bg-red-50 text-red-600 hover:bg-red-100"
+                variant="flat"
+                onPress={logout}
+              >
+                ออกจากระบบ
               </Button>
             </div>
           </div>
